@@ -32,13 +32,8 @@
             </dependency>
 
             <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>euler-web-starter</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>euler-web-autoconfigure</artifactId>
+                <groupId>org.eulerframework.boot</groupId>
+                <artifactId>spring-boot-starter-euler-web</artifactId>
                 <version>${revision}</version>
             </dependency>
 
