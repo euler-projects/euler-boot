@@ -23,7 +23,7 @@
         <module>euler-boot-dependencies</module>
         <module>euler-boot-parent</module>
         <module>euler-boot-autoconfigure</module>
-        <module>sprint-boot-starter-euler-web</module>
+        <module>spring-boot-starter-euler-web</module>
     </modules>
 
     <scm>
