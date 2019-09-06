@@ -51,6 +51,10 @@
                         <groupId>redis.clients</groupId>
                         <artifactId>jedis</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>org.quartz-scheduler</groupId>
+                        <artifactId>quartz</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
             <dependency>

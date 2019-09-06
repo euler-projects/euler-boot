@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
 import org.springframework.util.Assert;
 
@@ -33,9 +34,10 @@ public class EulerApplicationProperties implements InitializingBean {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static final String SPRING_APPLICATION_NAME = "spring.application.name";
+    private static final String DEFAULT_APPLICATION_NAME = "euler-boot";
 
     @Autowired
-    private Environment environment;
+    private ConfigurableEnvironment environment;
 
     private static final String DEFAULT_RUNTIME_PATH_PREFIX = "/var/run";
     private static final String DEFAULT_TEMP_PATH_PREFIX = "/var/tmp";
@@ -63,11 +65,18 @@ public class EulerApplicationProperties implements InitializingBean {
     public void afterPropertiesSet() {
         this.runtimePath = this.handlePath(
                 this.runtimePath,
-                () -> DEFAULT_RUNTIME_PATH_PREFIX + "/" + this.environment.getProperty(SPRING_APPLICATION_NAME),
+                () -> {
+                    String applicationName = this.environment.getProperty(SPRING_APPLICATION_NAME);
+                    return DEFAULT_RUNTIME_PATH_PREFIX + "/" + (StringUtils.hasText(applicationName) ? applicationName : DEFAULT_APPLICATION_NAME);
+                },
                 "euler.application.runtime-path");
+
         this.tmpPath = this.handlePath(
                 this.tmpPath,
-                () -> DEFAULT_TEMP_PATH_PREFIX + "/" + this.environment.getProperty(SPRING_APPLICATION_NAME),
+                () -> {
+                    String applicationName = this.environment.getProperty(SPRING_APPLICATION_NAME);
+                    return DEFAULT_TEMP_PATH_PREFIX + "/" + (StringUtils.hasText(applicationName) ? applicationName : DEFAULT_APPLICATION_NAME);
+                },
                 "euler.application.tmp-path");
     }
 
