@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>euler-boot</artifactId>
@@ -42,18 +42,44 @@
                 <artifactId>euler-web-core</artifactId>
                 <version>${euler-framework.verison}</version>
                 <exclusions>
+                    <!-- Spring Boot will manage all Spring Framework dependencies -->
+                    <exclusion>
+                        <groupId>org.springframework</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
                     <!-- Exclude redis-related dependencies, otherwise actuator will perform health checks on redis links. -->
                     <exclusion>
                         <groupId>org.springframework.data</groupId>
                         <artifactId>spring-data-redis</artifactId>
                     </exclusion>
-                    <exclusion>
-                        <groupId>redis.clients</groupId>
-                        <artifactId>jedis</artifactId>
-                    </exclusion>
+                    <!-- Exclude any other useless dependencies -->
                     <exclusion>
                         <groupId>org.quartz-scheduler</groupId>
                         <artifactId>quartz</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>javax.servlet</groupId>
+                        <artifactId>jstl</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>javax.inject</groupId>
+                        <artifactId>javax.inject</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>javax.validation</groupId>
+                        <artifactId>validation-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>javax.transaction</groupId>
+                        <artifactId>jta</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.aspectj</groupId>
+                        <artifactId>aspectjweaver</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.hibernate</groupId>
+                        <artifactId>hibernate-validator</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -61,6 +87,21 @@
                 <groupId>org.eulerframework</groupId>
                 <artifactId>euler-web-orm-jpa</artifactId>
                 <version>${euler-framework.verison}</version>
+                <exclusions>
+                    <!-- Spring Boot will manage all Spring Framework dependencies -->
+                    <exclusion>
+                        <groupId>org.springframework</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.springframework.data</groupId>
+                        <artifactId>spring-data-jpa</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.hibernate</groupId>
+                        <artifactId>hibernate-entitymanager</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.eulerframework</groupId>
@@ -197,29 +238,29 @@
                     </execution>
                 </executions>
             </plugin>
-<!--            <plugin>-->
-<!--                <groupId>org.codehaus.mojo</groupId>-->
-<!--                <artifactId>build-helper-maven-plugin</artifactId>-->
-<!--                <inherited>false</inherited>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        &lt;!&ndash; Attach effective POM &ndash;&gt;-->
-<!--                        <id>attach-artifacts</id>-->
-<!--                        <phase>package</phase>-->
-<!--                        <goals>-->
-<!--                            <goal>attach-artifact</goal>-->
-<!--                        </goals>-->
-<!--                        <configuration>-->
-<!--                            <artifacts>-->
-<!--                                <artifact>-->
-<!--                                    <file>${project.build.directory}/effective-pom/euler-boot-dependencies.xml</file>-->
-<!--                                    <type>effective-pom</type>-->
-<!--                                </artifact>-->
-<!--                            </artifacts>-->
-<!--                        </configuration>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
+            <!--            <plugin>-->
+            <!--                <groupId>org.codehaus.mojo</groupId>-->
+            <!--                <artifactId>build-helper-maven-plugin</artifactId>-->
+            <!--                <inherited>false</inherited>-->
+            <!--                <executions>-->
+            <!--                    <execution>-->
+            <!--                        &lt;!&ndash; Attach effective POM &ndash;&gt;-->
+            <!--                        <id>attach-artifacts</id>-->
+            <!--                        <phase>package</phase>-->
+            <!--                        <goals>-->
+            <!--                            <goal>attach-artifact</goal>-->
+            <!--                        </goals>-->
+            <!--                        <configuration>-->
+            <!--                            <artifacts>-->
+            <!--                                <artifact>-->
+            <!--                                    <file>${project.build.directory}/effective-pom/euler-boot-dependencies.xml</file>-->
+            <!--                                    <type>effective-pom</type>-->
+            <!--                                </artifact>-->
+            <!--                            </artifacts>-->
+            <!--                        </configuration>-->
+            <!--                    </execution>-->
+            <!--                </executions>-->
+            <!--            </plugin>-->
         </plugins>
     </build>
 </project>
