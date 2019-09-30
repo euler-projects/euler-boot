@@ -17,30 +17,31 @@ package org.eulerframework.boot.autoconfigure.web;
 
 import org.eulerframework.common.util.CommonUtils;
 import org.eulerframework.common.util.StringUtils;
-import org.eulerframework.web.util.SystemUtils;
+import org.eulerframework.web.config.ConfigUtils;
+import org.eulerframework.web.config.WebConfig;
+import org.eulerframework.web.config.WebConfig.WebConfigDefault;
+import org.eulerframework.web.config.WebConfig.WebConfigKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.Environment;
-import org.springframework.util.Assert;
 
-import java.util.function.Supplier;
+import java.nio.file.FileSystemException;
 
 @ConfigurationProperties(prefix = "euler.application")
 public class EulerApplicationProperties implements InitializingBean {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private static final String SPRING_APPLICATION_NAME = "spring.application.name";
-    private static final String DEFAULT_APPLICATION_NAME = "euler-boot";
+    private static final String SPRING_APPLICATION_NAME = WebConfigKey.SPRING_APPLICATION_NAME;
+    private static final String DEFAULT_APPLICATION_NAME = WebConfigDefault.DEFAULT_APPLICATION_NAME;
+
+    private static final String DEFAULT_RUNTIME_PATH_PREFIX = WebConfigDefault.DEFAULT_RUNTIME_PATH_PREFIX;
+    private static final String DEFAULT_TEMP_PATH_PREFIX = WebConfigDefault.DEFAULT_TEMP_PATH_PREFIX;
 
     @Autowired
     private ConfigurableEnvironment environment;
-
-    private static final String DEFAULT_RUNTIME_PATH_PREFIX = "/var/run";
-    private static final String DEFAULT_TEMP_PATH_PREFIX = "/var/tmp";
 
     private String runtimePath;
     private String tmpPath;
@@ -62,8 +63,8 @@ public class EulerApplicationProperties implements InitializingBean {
     }
 
     @Override
-    public void afterPropertiesSet() {
-        this.runtimePath = this.handlePath(
+    public void afterPropertiesSet() throws FileSystemException {
+        this.runtimePath = ConfigUtils.handleApplicationPath(
                 this.runtimePath,
                 () -> {
                     String applicationName = this.environment.getProperty(SPRING_APPLICATION_NAME);
@@ -71,40 +72,12 @@ public class EulerApplicationProperties implements InitializingBean {
                 },
                 "euler.application.runtime-path");
 
-        this.tmpPath = this.handlePath(
+        this.tmpPath = ConfigUtils.handleApplicationPath(
                 this.tmpPath,
                 () -> {
                     String applicationName = this.environment.getProperty(SPRING_APPLICATION_NAME);
                     return DEFAULT_TEMP_PATH_PREFIX + "/" + (StringUtils.hasText(applicationName) ? applicationName : DEFAULT_APPLICATION_NAME);
                 },
                 "euler.application.tmp-path");
-    }
-
-    private String handlePath(String path, Supplier<String> defaultIfPathIsEmpty, String propertyName) {
-        if (StringUtils.isEmpty(path)) {
-            path = defaultIfPathIsEmpty.get();
-            logger.info("'{}' is not configured, use {} as the default.", propertyName, path);
-        }
-
-        path = CommonUtils.convertDirToUnixFormat(path, false);
-
-//        Assert.isTrue(path.startsWith("/") || path.startsWith("file://"),
-//                () -> String.format("'%s' must begin with 'file://' or '/'", propertyName));
-
-        if (path.startsWith("file://")) {
-            path = path.substring("file://".length());
-        }
-
-        if (!path.startsWith("/")) {
-            String classPath = ClassLoader.getSystemResource("").getPath();
-            path = CommonUtils.convertDirToUnixFormat(classPath, false) + "/" + path;
-        } else if (SystemUtils.isWindows() && path.startsWith("/")) {
-            //当配置的路径为*inx格式的绝对路径，且当前环境是Windows时，默认放在C盘
-            logger.warn("Application is running under Windows. '{}' does not specify a partition, use C: for default", propertyName);
-            path = "C:" + path;
-        }
-
-        logger.info("'{}' is '{}'.", propertyName, path);
-        return path;
     }
 }

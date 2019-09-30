@@ -15,6 +15,9 @@
  */
 package org.eulerframework.boot.autoconfigure.web.support;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eulerframework.boot.autoconfigure.web.EulerCacheProperties;
 import org.eulerframework.boot.autoconfigure.web.EulerWebProperties;
 import org.eulerframework.web.config.WebConfig;
@@ -35,6 +38,14 @@ public class EulerWebSupportConfiguration {
     public EulerWebSupportConfiguration(EulerWebProperties eulerWebProperties, EulerCacheProperties eulerCacheProperties) {
         this.eulerWebProperties = eulerWebProperties;
         this.eulerCacheProperties = eulerCacheProperties;
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setSerializationInclusion(Include.NON_NULL);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return mapper;
     }
 
     @Bean

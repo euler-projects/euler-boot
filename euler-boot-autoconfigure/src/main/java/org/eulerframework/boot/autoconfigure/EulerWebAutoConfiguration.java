@@ -18,6 +18,7 @@ package org.eulerframework.boot.autoconfigure;
 import org.eulerframework.boot.autoconfigure.web.EulerCacheProperties;
 import org.eulerframework.boot.autoconfigure.web.EulerApplicationProperties;
 import org.eulerframework.boot.autoconfigure.web.EulerWebProperties;
+import org.eulerframework.boot.autoconfigure.web.security.EulerBootWebSecurityConfiguration;
 import org.eulerframework.boot.autoconfigure.web.support.EulerWebSupportConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type;
@@ -27,7 +28,14 @@ import org.springframework.context.annotation.Import;
 
 @Configuration
 @ConditionalOnWebApplication(type = Type.SERVLET)
-@EnableConfigurationProperties({EulerApplicationProperties.class, EulerCacheProperties.class, EulerWebProperties.class})
-@Import({EulerWebSupportConfiguration.class})
+@EnableConfigurationProperties({
+        EulerApplicationProperties.class,
+        EulerCacheProperties.class,
+        EulerWebProperties.class
+})
+@Import({
+        EulerWebSupportConfiguration.class//,
+        //EulerBootWebSecurityConfiguration.class
+})
 public class EulerWebAutoConfiguration {
 }

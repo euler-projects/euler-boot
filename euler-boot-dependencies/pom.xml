@@ -36,6 +36,11 @@
                 <artifactId>spring-boot-starter-euler-web</artifactId>
                 <version>${revision}</version>
             </dependency>
+            <dependency>
+                <groupId>org.eulerframework.boot</groupId>
+                <artifactId>spring-boot-starter-euler-web-security</artifactId>
+                <version>${revision}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.eulerframework</groupId>
@@ -95,11 +100,31 @@
                     </exclusion>
                     <exclusion>
                         <groupId>org.springframework.data</groupId>
-                        <artifactId>spring-data-jpa</artifactId>
+                        <artifactId>*</artifactId>
                     </exclusion>
                     <exclusion>
                         <groupId>org.hibernate</groupId>
                         <artifactId>hibernate-entitymanager</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.eulerframework</groupId>
+                <artifactId>euler-web-authentication</artifactId>
+                <version>${euler-framework.verison}</version>
+                <exclusions>
+                    <!-- Spring Boot will manage all Spring Framework dependencies -->
+                    <exclusion>
+                        <groupId>org.springframework</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.springframework.data</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.springframework.security</groupId>
+                        <artifactId>*</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
