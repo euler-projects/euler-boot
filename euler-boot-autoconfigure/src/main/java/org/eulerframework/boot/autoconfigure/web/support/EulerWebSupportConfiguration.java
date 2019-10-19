@@ -20,14 +20,19 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eulerframework.boot.autoconfigure.web.EulerCacheProperties;
 import org.eulerframework.boot.autoconfigure.web.EulerWebProperties;
-import org.eulerframework.web.config.WebConfig;
 import org.eulerframework.web.core.i18n.ClassPathReloadableResourceBundleMessageSource;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.InitBinder;
 
+import java.beans.PropertyEditorSupport;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
 
 @Configuration
 public class EulerWebSupportConfiguration {
@@ -58,5 +63,32 @@ public class EulerWebSupportConfiguration {
         messageSource.setUseCodeAsDefaultMessage(true);
         messageSource.setBasename(this.eulerWebProperties.getI18n().getResourcePath());
         return messageSource;
+    }
+
+    @ControllerAdvice
+    public static class GlobalParameterBinder {
+        /**
+         * 尝试以时间戳的方式格式化时间,如果失败则传递原始字符串
+         *
+         * @param binder
+         */
+        @InitBinder
+        public void initBinder(WebDataBinder binder) {
+            binder.registerCustomEditor(Date.class, new PropertyEditorSupport() {
+                @Override
+                public void setAsText(String value) {
+                    if (StringUtils.hasText(value)) {
+                        try {
+                            long timestamp = Long.parseLong(value);
+                            setValue(new Date(timestamp));
+                        } catch (NumberFormatException e) {
+                            setValue(value);
+                        }
+                    } else {
+                        setValue(value);
+                    }
+                }
+            });
+        }
     }
 }

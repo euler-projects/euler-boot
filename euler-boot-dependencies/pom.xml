@@ -13,8 +13,8 @@
 
     <properties>
         <main.basedir>${basedir}/..</main.basedir>
-        <spring-boot.version>2.1.6.RELEASE</spring-boot.version>
-        <euler-framework.verison>1.0.0.M4-SNAPSHOT</euler-framework.verison>
+        <spring-boot.version>2.1.9.RELEASE</spring-boot.version>
+        <euler-framework.verison>1.0.0.M7-SNAPSHOT</euler-framework.verison>
 
         <build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>
         <flatten-maven-plugin.version>1.1.0</flatten-maven-plugin.version>
