@@ -11,6 +11,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>spring-boot-starter-euler-web</artifactId>
+    <description>Starter For Euler Framework Core</description>
 
     <dependencies>
         <dependency>

@@ -11,6 +11,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>spring-boot-starter-euler-web-security</artifactId>
+    <description>Starter For Euler Framework Security</description>
 
     <dependencies>
         <dependency>

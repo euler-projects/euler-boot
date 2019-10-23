@@ -12,6 +12,7 @@
 
     <artifactId>euler-boot-parent</artifactId>
     <packaging>pom</packaging>
+    <description>Euler Boot Parent</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
