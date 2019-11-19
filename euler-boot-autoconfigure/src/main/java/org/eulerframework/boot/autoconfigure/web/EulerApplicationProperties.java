@@ -15,6 +15,7 @@
  */
 package org.eulerframework.boot.autoconfigure.web;
 
+import org.eulerframework.boot.autoconfigure.web.support.SpringBootPropertySource;
 import org.eulerframework.common.util.CommonUtils;
 import org.eulerframework.common.util.StringUtils;
 import org.eulerframework.web.config.ConfigUtils;
@@ -34,17 +35,15 @@ import java.nio.file.FileSystemException;
 public class EulerApplicationProperties implements InitializingBean {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private static final String SPRING_APPLICATION_NAME = WebConfigKey.SPRING_APPLICATION_NAME;
-    private static final String DEFAULT_APPLICATION_NAME = WebConfigDefault.DEFAULT_APPLICATION_NAME;
-
-    private static final String DEFAULT_RUNTIME_PATH_PREFIX = WebConfigDefault.DEFAULT_RUNTIME_PATH_PREFIX;
-    private static final String DEFAULT_TEMP_PATH_PREFIX = WebConfigDefault.DEFAULT_TEMP_PATH_PREFIX;
+    private static final String DEFAULT_APPLICATION_NAME = "euler-boot";
+    private static final String DEFAULT_RUNTIME_PATH_PREFIX = "/var/run";
+    private static final String DEFAULT_TEMP_PATH_PREFIX = "/var/tmp";
 
     @Autowired
     private ConfigurableEnvironment environment;
 
     private String runtimePath;
-    private String tmpPath;
+    private String tempPath;
 
     public String getRuntimePath() {
         return runtimePath;
@@ -54,12 +53,12 @@ public class EulerApplicationProperties implements InitializingBean {
         this.runtimePath = CommonUtils.convertDirToUnixFormat(runtimePath, false);
     }
 
-    public String getTmpPath() {
-        return tmpPath;
+    public String getTempPath() {
+        return tempPath;
     }
 
-    public void setTmpPath(String tmpPath) {
-        this.tmpPath = CommonUtils.convertDirToUnixFormat(tmpPath, false);
+    public void setTempPath(String tempPath) {
+        this.tempPath = CommonUtils.convertDirToUnixFormat(tempPath, false);
     }
 
     @Override
@@ -67,17 +66,17 @@ public class EulerApplicationProperties implements InitializingBean {
         this.runtimePath = ConfigUtils.handleApplicationPath(
                 this.runtimePath,
                 () -> {
-                    String applicationName = this.environment.getProperty(SPRING_APPLICATION_NAME);
+                    String applicationName = this.environment.getProperty(SpringBootPropertySource.SPRING_APPLICATION_NAME);
                     return DEFAULT_RUNTIME_PATH_PREFIX + "/" + (StringUtils.hasText(applicationName) ? applicationName : DEFAULT_APPLICATION_NAME);
                 },
                 "euler.application.runtime-path");
 
-        this.tmpPath = ConfigUtils.handleApplicationPath(
-                this.tmpPath,
+        this.tempPath = ConfigUtils.handleApplicationPath(
+                this.tempPath,
                 () -> {
-                    String applicationName = this.environment.getProperty(SPRING_APPLICATION_NAME);
+                    String applicationName = this.environment.getProperty(SpringBootPropertySource.SPRING_APPLICATION_NAME);
                     return DEFAULT_TEMP_PATH_PREFIX + "/" + (StringUtils.hasText(applicationName) ? applicationName : DEFAULT_APPLICATION_NAME);
                 },
-                "euler.application.tmp-path");
+                "euler.application.temp-path");
     }
 }

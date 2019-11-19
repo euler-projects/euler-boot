@@ -9,11 +9,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SpringBootPropertySource implements PropertySource {
+    public static final String SPRING_APPLICATION_NAME = "spring.application.name";
+
     private static final Map<String, String> CONFIG_KEY_MAPPING = new HashMap<>();
 
     static {
+        CONFIG_KEY_MAPPING.put(WebConfigKey.CORE_APPLICATION_NAME, SPRING_APPLICATION_NAME);
         CONFIG_KEY_MAPPING.put(WebConfigKey.CORE_RUNTIME_PATH, "euler.application.runtime-path");
-        CONFIG_KEY_MAPPING.put(WebConfigKey.CORE_TMP_PATH, "euler.application.tmp-path");
+        CONFIG_KEY_MAPPING.put(WebConfigKey.CORE_TEMP_PATH, "euler.application.temp-path");
     }
 
     private final ConfigurableEnvironment environment;
