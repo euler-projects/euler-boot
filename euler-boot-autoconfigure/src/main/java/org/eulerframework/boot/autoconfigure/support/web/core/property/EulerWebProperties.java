@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.eulerframework.boot.autoconfigure.web;
+package org.eulerframework.boot.autoconfigure.support.web.core.property;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

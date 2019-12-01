@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.eulerframework.boot.autoconfigure.web;
+package org.eulerframework.boot.autoconfigure.property;
 
-import org.eulerframework.boot.autoconfigure.web.support.SpringBootPropertySource;
+import org.eulerframework.boot.autoconfigure.support.web.core.SpringBootPropertySource;
 import org.eulerframework.common.util.CommonUtils;
 import org.eulerframework.common.util.StringUtils;
 import org.eulerframework.web.config.ConfigUtils;
-import org.eulerframework.web.config.WebConfig;
-import org.eulerframework.web.config.WebConfig.WebConfigDefault;
-import org.eulerframework.web.config.WebConfig.WebConfigKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -30,7 +27,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.env.ConfigurableEnvironment;
 
 import java.nio.file.FileSystemException;
-import java.time.Duration;
 
 @ConfigurationProperties(prefix = "euler.application")
 public class EulerApplicationProperties implements InitializingBean {

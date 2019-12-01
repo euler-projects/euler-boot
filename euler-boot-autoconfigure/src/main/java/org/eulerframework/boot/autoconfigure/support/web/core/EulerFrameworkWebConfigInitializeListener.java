@@ -1,12 +1,9 @@
-package org.eulerframework.boot.autoconfigure.web.support;
+package org.eulerframework.boot.autoconfigure.support.web.core;
 
-import org.eulerframework.boot.autoconfigure.web.EulerApplicationProperties;
-import org.eulerframework.boot.autoconfigure.web.EulerCacheProperties;
 import org.eulerframework.common.util.property.PropertyReader;
 import org.eulerframework.web.config.WebConfig;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationListener;
-import org.springframework.core.env.ConfigurableEnvironment;
 
 public class EulerFrameworkWebConfigInitializeListener implements ApplicationListener<ApplicationStartedEvent> {
 

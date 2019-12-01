@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.eulerframework.boot.autoconfigure.web.support;
+package org.eulerframework.boot.autoconfigure.support.web.core;
 
 import org.springframework.boot.convert.DurationFormat;
 import org.springframework.boot.convert.DurationStyle;

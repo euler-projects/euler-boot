@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.eulerframework.boot.autoconfigure.web.support;
+package org.eulerframework.boot.autoconfigure.support.web.core;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eulerframework.boot.autoconfigure.web.EulerApplicationProperties;
-import org.eulerframework.boot.autoconfigure.web.EulerCacheProperties;
-import org.eulerframework.boot.autoconfigure.web.EulerWebProperties;
+import org.eulerframework.boot.autoconfigure.property.EulerApplicationProperties;
+import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCacheProperties;
+import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebProperties;
 import org.eulerframework.web.core.i18n.ClassPathReloadableResourceBundleMessageSource;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,18 +34,22 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.InitBinder;
 
-import javax.swing.*;
 import java.beans.PropertyEditorSupport;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Configuration
-public class EulerWebSupportConfiguration {
+@EnableConfigurationProperties({
+        EulerCacheProperties.class,
+        EulerWebProperties.class
+})
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+public class EulerWebSupportAutoConfiguration {
 
     private final EulerWebProperties eulerWebProperties;
     private final EulerCacheProperties eulerCacheProperties;
 
-    public EulerWebSupportConfiguration(EulerWebProperties eulerWebProperties, EulerCacheProperties eulerCacheProperties) {
+    public EulerWebSupportAutoConfiguration(EulerWebProperties eulerWebProperties, EulerCacheProperties eulerCacheProperties) {
         this.eulerWebProperties = eulerWebProperties;
         this.eulerCacheProperties = eulerCacheProperties;
     }

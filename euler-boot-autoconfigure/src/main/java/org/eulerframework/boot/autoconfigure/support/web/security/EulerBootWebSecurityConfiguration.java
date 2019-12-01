@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.eulerframework.boot.autoconfigure.web.security;
+package org.eulerframework.boot.autoconfigure.support.web.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eulerframework.web.module.authentication.conf.SecurityConfig;

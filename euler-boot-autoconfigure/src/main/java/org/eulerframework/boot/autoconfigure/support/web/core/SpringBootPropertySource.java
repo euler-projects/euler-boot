@@ -1,7 +1,7 @@
-package org.eulerframework.boot.autoconfigure.web.support;
+package org.eulerframework.boot.autoconfigure.support.web.core;
 
-import org.eulerframework.boot.autoconfigure.web.EulerApplicationProperties;
-import org.eulerframework.boot.autoconfigure.web.EulerCacheProperties;
+import org.eulerframework.boot.autoconfigure.property.EulerApplicationProperties;
+import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCacheProperties;
 import org.eulerframework.common.util.property.PropertyNotFoundException;
 import org.eulerframework.common.util.property.PropertySource;
 import org.eulerframework.web.config.WebConfig.WebConfigKey;

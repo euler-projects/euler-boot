@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.eulerframework.boot.autoconfigure.web;
+package org.eulerframework.boot.autoconfigure.support.web.security;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Import;
 
-import java.time.Duration;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-@ConfigurationProperties(prefix = "euler.cache")
-public class EulerCacheProperties {
-    private Duration ramCachePoolCleanFreq = Duration.ofMinutes(1);
-
-    public Duration getRamCachePoolCleanFreq() {
-        return ramCachePoolCleanFreq;
-    }
-
-    public void setRamCachePoolCleanFreq(Duration ramCachePoolCleanFreq) {
-        this.ramCachePoolCleanFreq = ramCachePoolCleanFreq;
-    }
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Inherited
+@Import({EulerBootWebSecurityConfiguration.class})
+public @interface EnableWebSecurity {
 }
