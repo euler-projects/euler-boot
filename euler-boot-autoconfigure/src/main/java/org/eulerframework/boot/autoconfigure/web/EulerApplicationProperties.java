@@ -30,6 +30,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.env.ConfigurableEnvironment;
 
 import java.nio.file.FileSystemException;
+import java.time.Duration;
 
 @ConfigurationProperties(prefix = "euler.application")
 public class EulerApplicationProperties implements InitializingBean {

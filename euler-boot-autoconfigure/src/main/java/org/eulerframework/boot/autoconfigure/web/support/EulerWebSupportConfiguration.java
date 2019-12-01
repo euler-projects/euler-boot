@@ -18,6 +18,7 @@ package org.eulerframework.boot.autoconfigure.web.support;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eulerframework.boot.autoconfigure.web.EulerApplicationProperties;
 import org.eulerframework.boot.autoconfigure.web.EulerCacheProperties;
 import org.eulerframework.boot.autoconfigure.web.EulerWebProperties;
 import org.eulerframework.web.core.i18n.ClassPathReloadableResourceBundleMessageSource;
@@ -25,11 +26,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.InitBinder;
 
+import javax.swing.*;
 import java.beans.PropertyEditorSupport;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -57,12 +60,18 @@ public class EulerWebSupportConfiguration {
     @ConditionalOnClass(ClassPathReloadableResourceBundleMessageSource.class)
     public MessageSource messageSource() {
         ClassPathReloadableResourceBundleMessageSource messageSource = new ClassPathReloadableResourceBundleMessageSource();
-        long i18nCacheLifeSeconds = this.eulerCacheProperties.getI18n().getTimeToLive().getSeconds();
-        messageSource.setCacheSeconds(i18nCacheLifeSeconds > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) i18nCacheLifeSeconds);
         messageSource.setDefaultEncoding(StandardCharsets.UTF_8.name());
         messageSource.setUseCodeAsDefaultMessage(true);
         messageSource.setBasename(this.eulerWebProperties.getI18n().getResourcePath());
         return messageSource;
+    }
+
+    @Bean
+    public SpringBootPropertySource springBootPropertySource(
+            ConfigurableEnvironment configurableEnvironment,
+            EulerApplicationProperties eulerApplicationProperties,
+            EulerCacheProperties eulerCacheProperties) {
+        return new SpringBootPropertySource(configurableEnvironment, eulerApplicationProperties, eulerCacheProperties);
     }
 
     @ControllerAdvice

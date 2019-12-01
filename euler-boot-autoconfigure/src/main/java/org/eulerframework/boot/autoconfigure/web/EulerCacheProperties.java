@@ -21,26 +21,13 @@ import java.time.Duration;
 
 @ConfigurationProperties(prefix = "euler.cache")
 public class EulerCacheProperties {
+    private Duration ramCachePoolCleanFreq = Duration.ofMinutes(1);
 
-    private I18n i18n = new I18n();
-
-    public I18n getI18n() {
-        return i18n;
+    public Duration getRamCachePoolCleanFreq() {
+        return ramCachePoolCleanFreq;
     }
 
-    public void setI18n(I18n i18n) {
-        this.i18n = i18n;
-    }
-
-    public static class I18n {
-        private Duration timeToLive = Duration.ofHours(24);
-
-        public Duration getTimeToLive() {
-            return timeToLive;
-        }
-
-        public void setTimeToLive(Duration timeToLive) {
-            this.timeToLive = timeToLive;
-        }
+    public void setRamCachePoolCleanFreq(Duration ramCachePoolCleanFreq) {
+        this.ramCachePoolCleanFreq = ramCachePoolCleanFreq;
     }
 }
