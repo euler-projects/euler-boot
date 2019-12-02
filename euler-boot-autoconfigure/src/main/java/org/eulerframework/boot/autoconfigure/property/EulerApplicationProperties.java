@@ -15,7 +15,7 @@
  */
 package org.eulerframework.boot.autoconfigure.property;
 
-import org.eulerframework.boot.autoconfigure.support.web.core.SpringBootPropertySource;
+import org.eulerframework.boot.autoconfigure.support.web.core.ConfigurableEnvironmentPropertySource;
 import org.eulerframework.common.util.CommonUtils;
 import org.eulerframework.common.util.StringUtils;
 import org.eulerframework.web.config.ConfigUtils;
@@ -63,7 +63,7 @@ public class EulerApplicationProperties implements InitializingBean {
         this.runtimePath = ConfigUtils.handleApplicationPath(
                 this.runtimePath,
                 () -> {
-                    String applicationName = this.environment.getProperty(SpringBootPropertySource.SPRING_APPLICATION_NAME);
+                    String applicationName = this.environment.getProperty(ConfigurableEnvironmentPropertySource.SPRING_APPLICATION_NAME);
                     return DEFAULT_RUNTIME_PATH_PREFIX + "/" + (StringUtils.hasText(applicationName) ? applicationName : DEFAULT_APPLICATION_NAME);
                 },
                 "euler.application.runtime-path");
@@ -71,7 +71,7 @@ public class EulerApplicationProperties implements InitializingBean {
         this.tempPath = ConfigUtils.handleApplicationPath(
                 this.tempPath,
                 () -> {
-                    String applicationName = this.environment.getProperty(SpringBootPropertySource.SPRING_APPLICATION_NAME);
+                    String applicationName = this.environment.getProperty(ConfigurableEnvironmentPropertySource.SPRING_APPLICATION_NAME);
                     return DEFAULT_TEMP_PATH_PREFIX + "/" + (StringUtils.hasText(applicationName) ? applicationName : DEFAULT_APPLICATION_NAME);
                 },
                 "euler.application.temp-path");

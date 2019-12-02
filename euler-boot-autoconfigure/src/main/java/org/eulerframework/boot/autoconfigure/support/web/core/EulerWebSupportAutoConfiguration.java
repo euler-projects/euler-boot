@@ -28,6 +28,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.WebDataBinder;
@@ -45,15 +46,6 @@ import java.util.Date;
 })
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class EulerWebSupportAutoConfiguration {
-
-    private final EulerWebProperties eulerWebProperties;
-    private final EulerCacheProperties eulerCacheProperties;
-
-    public EulerWebSupportAutoConfiguration(EulerWebProperties eulerWebProperties, EulerCacheProperties eulerCacheProperties) {
-        this.eulerWebProperties = eulerWebProperties;
-        this.eulerCacheProperties = eulerCacheProperties;
-    }
-
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
@@ -64,20 +56,22 @@ public class EulerWebSupportAutoConfiguration {
 
     @Bean
     @ConditionalOnClass(ClassPathReloadableResourceBundleMessageSource.class)
-    public MessageSource messageSource() {
+    public MessageSource messageSource(EulerWebProperties eulerWebProperties) {
         ClassPathReloadableResourceBundleMessageSource messageSource = new ClassPathReloadableResourceBundleMessageSource();
         messageSource.setDefaultEncoding(StandardCharsets.UTF_8.name());
         messageSource.setUseCodeAsDefaultMessage(true);
-        messageSource.setBasename(this.eulerWebProperties.getI18n().getResourcePath());
+        messageSource.setBasename(eulerWebProperties.getI18n().getResourcePath());
         return messageSource;
     }
 
     @Bean
-    public SpringBootPropertySource springBootPropertySource(
+    public ConfigurableEnvironmentPropertySource springBootPropertySource(
+            ConversionService conversionService,
             ConfigurableEnvironment configurableEnvironment,
             EulerApplicationProperties eulerApplicationProperties,
+            EulerWebProperties eulerWebProperties,
             EulerCacheProperties eulerCacheProperties) {
-        return new SpringBootPropertySource(configurableEnvironment, eulerApplicationProperties, eulerCacheProperties);
+        return new ConfigurableEnvironmentPropertySource(conversionService, configurableEnvironment, eulerApplicationProperties, eulerWebProperties, eulerCacheProperties);
     }
 
     @ControllerAdvice
