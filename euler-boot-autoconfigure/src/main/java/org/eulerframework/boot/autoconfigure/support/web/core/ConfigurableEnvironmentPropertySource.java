@@ -5,7 +5,7 @@ import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCach
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebProperties;
 import org.eulerframework.common.util.property.PropertyNotFoundException;
 import org.eulerframework.common.util.property.PropertySource;
-import org.eulerframework.common.util.property.converter.RawTypeConverterUtils;
+import org.eulerframework.common.util.type.TypeUtils;
 import org.eulerframework.web.config.WebConfig.WebConfigKey;
 import org.springframework.beans.SimpleTypeConverter;
 import org.springframework.core.convert.ConversionService;
@@ -95,7 +95,7 @@ public class ConfigurableEnvironmentPropertySource implements PropertySource {
 
     @Override
     public <T> T getProperty(String key, Class<T> requireType) throws PropertyNotFoundException {
-        return RawTypeConverterUtils.convert(this.getProperty(key), requireType);
+        return TypeUtils.convert(this.getProperty(key), requireType);
     }
 
     private interface ValueMapper {
