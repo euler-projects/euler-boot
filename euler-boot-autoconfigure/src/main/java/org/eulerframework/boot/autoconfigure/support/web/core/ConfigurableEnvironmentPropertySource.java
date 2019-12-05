@@ -21,14 +21,7 @@ public class ConfigurableEnvironmentPropertySource implements PropertySource {
     public static final String SPRING_APPLICATION_NAME = "spring.application.name";
 
     private static final Map<String, String> CONFIG_KEY_MAPPING = new HashMap<>();
-    private static final Map<String, ValueMapper> CONFIG_VALUE_MAPPER = new HashMap<>();
     private static final Map<String, Object> CONFIG_DEFAULT_VALUE_MAPPING = new HashMap<>();
-
-    private static final StringToDurationConverter STRING_TO_DURATION_CONVERTER = new StringToDurationConverter();
-
-    private static final TypeDescriptor STRING_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(String.class);
-    private static final TypeDescriptor DURATION_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Duration.class);
-    private static final TypeDescriptor LOCALE_ARRAY_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Locale[].class);
 
     static {
         CONFIG_KEY_MAPPING.put(WebConfigKey.CORE_APPLICATION_NAME, SPRING_APPLICATION_NAME);
@@ -40,31 +33,17 @@ public class ConfigurableEnvironmentPropertySource implements PropertySource {
     }
 
     private final ConfigurableEnvironment environment;
-    private final ConversionService conversionService;
-    private final SimpleTypeConverter simpleTypeConverter = new SimpleTypeConverter();
 
     public ConfigurableEnvironmentPropertySource(
-            ConversionService conversionService,
             ConfigurableEnvironment environment,
             EulerApplicationProperties eulerApplicationProperties,
             EulerWebProperties eulerWebProperties,
             EulerCacheProperties eulerCacheProperties) {
         this.environment = environment;
-        this.conversionService = conversionService;
-
-        CONFIG_VALUE_MAPPER.put(WebConfigKey.CORE_CACHE_RAM_CACHE_POOL_CLEAN_FREQ, value -> {
-            Duration duration = (Duration) STRING_TO_DURATION_CONVERTER.convert(value, STRING_TYPE_DESCRIPTOR, DURATION_TYPE_DESCRIPTOR);
-            return duration == null ? null : duration.toMillis();
-        });
-        CONFIG_VALUE_MAPPER.put(WebConfigKey.WEB_LANGUAGE_DEFAULT, value -> this.simpleTypeConverter.convertIfNecessary(value, Locale.class));
-        CONFIG_VALUE_MAPPER.put(WebConfigKey.WEB_LANGUAGE_SUPPORT_LANGUAGES, value -> {
-            DelimitedStringToArrayConverter delimitedStringToArrayConverter = new DelimitedStringToArrayConverter(this.conversionService);
-            return delimitedStringToArrayConverter.convert(value, STRING_TYPE_DESCRIPTOR, LOCALE_ARRAY_TYPE_DESCRIPTOR);
-        });
 
         CONFIG_DEFAULT_VALUE_MAPPING.put(WebConfigKey.CORE_RUNTIME_PATH, eulerApplicationProperties.getRuntimePath());
         CONFIG_DEFAULT_VALUE_MAPPING.put(WebConfigKey.CORE_TEMP_PATH, eulerApplicationProperties.getTempPath());
-        CONFIG_DEFAULT_VALUE_MAPPING.put(WebConfigKey.CORE_CACHE_RAM_CACHE_POOL_CLEAN_FREQ, eulerCacheProperties.getRamCachePoolCleanFreq().toMillis());
+        CONFIG_DEFAULT_VALUE_MAPPING.put(WebConfigKey.CORE_CACHE_RAM_CACHE_POOL_CLEAN_FREQ, eulerCacheProperties.getRamCachePoolCleanFreq());
         CONFIG_DEFAULT_VALUE_MAPPING.put(WebConfigKey.WEB_LANGUAGE_DEFAULT, eulerWebProperties.getI18n().getDefaultLanguage());
         CONFIG_DEFAULT_VALUE_MAPPING.put(WebConfigKey.WEB_LANGUAGE_SUPPORT_LANGUAGES, eulerWebProperties.getI18n().getSupportLanguages());
     }
@@ -75,22 +54,14 @@ public class ConfigurableEnvironmentPropertySource implements PropertySource {
         final String value = this.environment.getProperty(eulerBootKey);
 
         if (value == null) {
-            Object defaultValue = CONFIG_DEFAULT_VALUE_MAPPING.get(key);
-
-            if (defaultValue == null) {
+            if(CONFIG_DEFAULT_VALUE_MAPPING.containsKey(key)) {
+                return CONFIG_DEFAULT_VALUE_MAPPING.get(key);
+            } else  {
                 throw new PropertyNotFoundException();
             }
-
-            return defaultValue;
-        }
-
-        ValueMapper valueMapper = CONFIG_VALUE_MAPPER.get(key);
-
-        if (valueMapper == null) {
+        } else  {
             return value;
         }
-
-        return valueMapper.map(value);
     }
 
     @Override

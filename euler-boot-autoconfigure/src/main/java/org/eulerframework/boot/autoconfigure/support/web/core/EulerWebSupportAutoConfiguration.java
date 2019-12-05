@@ -28,7 +28,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.convert.ConversionService;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.WebDataBinder;
@@ -66,12 +65,11 @@ public class EulerWebSupportAutoConfiguration {
 
     @Bean
     public ConfigurableEnvironmentPropertySource springBootPropertySource(
-            ConversionService conversionService,
             ConfigurableEnvironment configurableEnvironment,
             EulerApplicationProperties eulerApplicationProperties,
             EulerWebProperties eulerWebProperties,
             EulerCacheProperties eulerCacheProperties) {
-        return new ConfigurableEnvironmentPropertySource(conversionService, configurableEnvironment, eulerApplicationProperties, eulerWebProperties, eulerCacheProperties);
+        return new ConfigurableEnvironmentPropertySource(configurableEnvironment, eulerApplicationProperties, eulerWebProperties, eulerCacheProperties);
     }
 
     @ControllerAdvice
