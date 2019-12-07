@@ -66,7 +66,8 @@ public class EulerApplicationProperties implements InitializingBean {
                     String applicationName = this.environment.getProperty(ConfigurableEnvironmentPropertySource.SPRING_APPLICATION_NAME);
                     return DEFAULT_RUNTIME_PATH_PREFIX + "/" + (StringUtils.hasText(applicationName) ? applicationName : DEFAULT_APPLICATION_NAME);
                 },
-                "euler.application.runtime-path");
+                "euler.application.runtime-path",
+                true);
 
         this.tempPath = ConfigUtils.handleApplicationPath(
                 this.tempPath,
@@ -74,6 +75,7 @@ public class EulerApplicationProperties implements InitializingBean {
                     String applicationName = this.environment.getProperty(ConfigurableEnvironmentPropertySource.SPRING_APPLICATION_NAME);
                     return DEFAULT_TEMP_PATH_PREFIX + "/" + (StringUtils.hasText(applicationName) ? applicationName : DEFAULT_APPLICATION_NAME);
                 },
-                "euler.application.temp-path");
+                "euler.application.temp-path",
+                true);
     }
 }
