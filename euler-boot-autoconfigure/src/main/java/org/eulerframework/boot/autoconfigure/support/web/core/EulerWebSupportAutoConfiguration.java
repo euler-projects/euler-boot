@@ -64,12 +64,12 @@ public class EulerWebSupportAutoConfiguration {
     }
 
     @Bean
-    public ConfigurableEnvironmentPropertySource springBootPropertySource(
+    public EulerBootPropertySource springBootPropertySource(
             ConfigurableEnvironment configurableEnvironment,
             EulerApplicationProperties eulerApplicationProperties,
             EulerWebProperties eulerWebProperties,
             EulerCacheProperties eulerCacheProperties) {
-        return new ConfigurableEnvironmentPropertySource(configurableEnvironment, eulerApplicationProperties, eulerWebProperties, eulerCacheProperties);
+        return new EulerBootPropertySource(configurableEnvironment, eulerApplicationProperties, eulerWebProperties, eulerCacheProperties);
     }
 
     @ControllerAdvice

@@ -9,7 +9,7 @@ public class EulerFrameworkWebConfigInitializeListener implements ApplicationLis
 
     @Override
     public void onApplicationEvent(ApplicationStartedEvent event) {
-        ConfigurableEnvironmentPropertySource configurableEnvironmentPropertySource = event.getApplicationContext().getBean(ConfigurableEnvironmentPropertySource.class);
-        WebConfig.setPropertyReader(new PropertyReader(configurableEnvironmentPropertySource));
+        EulerBootPropertySource eulerBootPropertySource = event.getApplicationContext().getBean(EulerBootPropertySource.class);
+        WebConfig.setPropertyReader(new PropertyReader(eulerBootPropertySource));
     }
 }
