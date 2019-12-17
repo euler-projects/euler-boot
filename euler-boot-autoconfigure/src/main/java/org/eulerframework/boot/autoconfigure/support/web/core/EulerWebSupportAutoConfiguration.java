@@ -20,10 +20,12 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eulerframework.boot.autoconfigure.property.EulerApplicationProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCacheProperties;
-import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebProperties;
+import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebI18nProperties;
+import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebSiteProperties;
 import org.eulerframework.web.core.i18n.ClassPathReloadableResourceBundleMessageSource;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
@@ -41,7 +43,8 @@ import java.util.Date;
 @Configuration
 @EnableConfigurationProperties({
         EulerCacheProperties.class,
-        EulerWebProperties.class
+        EulerWebSiteProperties.class,
+        EulerWebI18nProperties.class
 })
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class EulerWebSupportAutoConfiguration {
@@ -55,21 +58,23 @@ public class EulerWebSupportAutoConfiguration {
 
     @Bean
     @ConditionalOnClass(ClassPathReloadableResourceBundleMessageSource.class)
-    public MessageSource messageSource(EulerWebProperties eulerWebProperties) {
+    public MessageSource messageSource(EulerWebI18nProperties eulerWebI18nProperties) {
         ClassPathReloadableResourceBundleMessageSource messageSource = new ClassPathReloadableResourceBundleMessageSource();
         messageSource.setDefaultEncoding(StandardCharsets.UTF_8.name());
         messageSource.setUseCodeAsDefaultMessage(true);
-        messageSource.setBasename(eulerWebProperties.getI18n().getResourcePath());
+        messageSource.setBasename(eulerWebI18nProperties.getResourcePath());
         return messageSource;
     }
 
     @Bean
     public EulerBootPropertySource springBootPropertySource(
             ConfigurableEnvironment configurableEnvironment,
+            MultipartProperties multipartProperties,
             EulerApplicationProperties eulerApplicationProperties,
-            EulerWebProperties eulerWebProperties,
+            EulerWebSiteProperties eulerWebSiteProperties,
+            EulerWebI18nProperties eulerWebI18nProperties,
             EulerCacheProperties eulerCacheProperties) {
-        return new EulerBootPropertySource(configurableEnvironment, eulerApplicationProperties, eulerWebProperties, eulerCacheProperties);
+        return new EulerBootPropertySource(configurableEnvironment, multipartProperties, eulerApplicationProperties, eulerWebSiteProperties, eulerWebI18nProperties, eulerCacheProperties);
     }
 
     @ControllerAdvice
