@@ -1,5 +1,5 @@
 org.springframework.context.ApplicationListener=\
-  org.eulerframework.boot.autoconfigure.support.web.core.EulerFrameworkWebConfigInitializeListener
+  org.eulerframework.boot.autoconfigure.support.web.core.EulerFrameworkInitializeListener
 
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
   org.eulerframework.boot.autoconfigure.EulerBootAutoConfiguration,\

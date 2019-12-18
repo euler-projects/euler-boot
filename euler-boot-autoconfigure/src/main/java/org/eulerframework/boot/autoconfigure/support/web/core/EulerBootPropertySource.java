@@ -33,6 +33,7 @@ public class EulerBootPropertySource implements PropertySource {
         CONFIG_VALUE_MAPPING.put(WebConfigKey.CORE_APPLICATION_NAME, () -> this.environment.getProperty(SPRING_APPLICATION_NAME));
         CONFIG_VALUE_MAPPING.put(WebConfigKey.CORE_RUNTIME_PATH, eulerApplicationProperties::getRuntimePath);
         CONFIG_VALUE_MAPPING.put(WebConfigKey.CORE_TEMP_PATH, eulerApplicationProperties::getTempPath);
+        CONFIG_VALUE_MAPPING.put(WebConfigKey.CORE_ADDITIONAL_CONF_PATH, () -> this.environment.getProperty("spring.config.additional-location"));
 
         // [core.cache]
         CONFIG_VALUE_MAPPING.put(WebConfigKey.CORE_CACHE_RAM_CACHE_POOL_CLEAN_FREQ, eulerCacheProperties::getRamCachePoolCleanFreq);
