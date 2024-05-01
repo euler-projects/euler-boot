@@ -20,8 +20,6 @@ import org.eulerframework.web.module.authentication.conf.SecurityConfig;
 import org.eulerframework.web.module.authentication.extend.EulerAccessDeniedHandler;
 import org.eulerframework.web.module.authentication.extend.EulerLoginUrlAuthenticationEntryPoint;
 import org.eulerframework.web.module.authentication.extend.EulerUrlAuthenticationFailureHandler;
-import org.eulerframework.web.module.authentication.filter.CaptchaUsernamePasswordAuthenticationFilter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -30,15 +28,11 @@ import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.SecurityBuilder;
+import org.springframework.security.config.annotation.web.WebSecurityConfigurer;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -47,111 +41,116 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Configuration
-@ConditionalOnClass(WebSecurityConfigurerAdapter.class)
+@ConditionalOnClass(WebSecurityConfigurer.class)
 @ConditionalOnWebApplication(type = Type.SERVLET)
 public class EulerBootWebSecurityConfiguration {
 
     @Configuration
     @Order(SecurityProperties.BASIC_AUTH_ORDER)
-    static class EulerBootWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapter {
+    static class EulerBootWebSecurityConfigurerAdapter implements WebSecurityConfigurer {
 
-        @Autowired
-        private UserDetailsService userDetailsService;
-        @Autowired
-        private PasswordEncoder passwordEncoder;
-        @Autowired(required = false)
-        private List<OrderedAuthenticationProvider> additionalAuthenticationProviders;
+//        @Autowired
+//        private UserDetailsService userDetailsService;
+//        @Autowired
+//        private PasswordEncoder passwordEncoder;
+//        @Autowired(required = false)
+//        private List<OrderedAuthenticationProvider> additionalAuthenticationProviders;
+//
+//
+//        @Autowired
+//        private SessionRegistry sessionRegistry;
+//        @Autowired
+//        private AuthenticationEntryPoint authenticationEntryPoint;
+//        @Autowired
+//        private AntPathRequestMatcher requiresAuthenticationRequestMatcher;
+//        @Autowired
+//        private AuthenticationSuccessHandler authenticationSuccessHandler;
+//        @Autowired
+//        private AuthenticationFailureHandler authenticationFailureHandler;
+//
+        @Override
+        public void init(SecurityBuilder builder) throws Exception {
 
+        }
 
-        @Autowired
-        private SessionRegistry sessionRegistry;
-        @Autowired
-        private AuthenticationEntryPoint authenticationEntryPoint;
-        @Autowired
-        private AntPathRequestMatcher requiresAuthenticationRequestMatcher;
-        @Autowired
-        private AuthenticationSuccessHandler authenticationSuccessHandler;
-        @Autowired
-        private AuthenticationFailureHandler authenticationFailureHandler;
+        @Override
+        public void configure(SecurityBuilder builder) throws Exception {
+
+        }
 
         public interface OrderedAuthenticationProvider extends AuthenticationProvider {
             int order();
         }
 
-        @Override
-        protected void configure(AuthenticationManagerBuilder auth) {
-            DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
-            daoAuthenticationProvider.setUserDetailsService(userDetailsService);
-            daoAuthenticationProvider.setPasswordEncoder(passwordEncoder);
-            auth.authenticationProvider(daoAuthenticationProvider);
-
-            Optional.ofNullable(this.additionalAuthenticationProviders).orElse(Collections.emptyList())
-                    .stream()
-                    .sorted(Comparator.comparingInt(OrderedAuthenticationProvider::order))
-                    .forEach(auth::authenticationProvider);
-        }
-
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
-            http.authorizeRequests()
-                    .antMatchers("/demo/**").authenticated()
-                    .and()
-                    .exceptionHandling()
-                    .defaultAuthenticationEntryPointFor(this.authenticationEntryPoint, new AntPathRequestMatcher("/**", null))
-                    .and()
-                    .addFilterAt(this.formLoginFilter(), UsernamePasswordAuthenticationFilter.class)
-                    .logout()
-                    .logoutUrl("/signout")
-                    .logoutSuccessUrl("/")
-                    .invalidateHttpSession(true)
-                    .deleteCookies("JSESSIONID")
-                    .and()
-                    .csrf().disable()
-                    .headers()
-                    .cacheControl().disable()
-                    .contentTypeOptions()
-                    .and()
-                    .httpStrictTransportSecurity()
-                    .and()
-                    .frameOptions().sameOrigin()
-                    .xssProtection()
-                    .and()
-                    .and()
-                    .sessionManagement()
-                    .invalidSessionUrl("/")
-                    .sessionFixation().migrateSession()
-                    .maximumSessions(20)
-                    //.expiredSessionStrategy()
-                    .sessionRegistry(this.sessionRegistry);
-        }
-
-        @Bean(name = "authenticationManager")
-        public AuthenticationManager authenticationManagerBean() throws Exception {
-            return super.authenticationManagerBean();
-        }
-
-        @Bean(name = "formLoginFilter")
-        public UsernamePasswordAuthenticationFilter formLoginFilter() throws Exception {
-            CaptchaUsernamePasswordAuthenticationFilter captchaUsernamePasswordAuthenticationFilter = new CaptchaUsernamePasswordAuthenticationFilter();
-            captchaUsernamePasswordAuthenticationFilter.setEnableCaptcha(SecurityConfig.isSignUpEnableCaptcha());
-            captchaUsernamePasswordAuthenticationFilter.setAuthenticationManager(this.authenticationManager());
-            captchaUsernamePasswordAuthenticationFilter.setRequiresAuthenticationRequestMatcher(this.requiresAuthenticationRequestMatcher);
-            captchaUsernamePasswordAuthenticationFilter.setAuthenticationSuccessHandler(this.authenticationSuccessHandler);
-            captchaUsernamePasswordAuthenticationFilter.setAuthenticationFailureHandler(this.authenticationFailureHandler);
-            return captchaUsernamePasswordAuthenticationFilter;
-        }
+//        @Override
+//        protected void configure(AuthenticationManagerBuilder auth) {
+//            DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
+//            daoAuthenticationProvider.setUserDetailsService(userDetailsService);
+//            daoAuthenticationProvider.setPasswordEncoder(passwordEncoder);
+//            auth.authenticationProvider(daoAuthenticationProvider);
+//
+//            Optional.ofNullable(this.additionalAuthenticationProviders).orElse(Collections.emptyList())
+//                    .stream()
+//                    .sorted(Comparator.comparingInt(OrderedAuthenticationProvider::order))
+//                    .forEach(auth::authenticationProvider);
+//        }
+//
+//        @Override
+//        protected void configure(HttpSecurity http) throws Exception {
+//            http.authorizeRequests()
+//                    .antMatchers("/demo/**").authenticated()
+//                    .and()
+//                    .exceptionHandling()
+//                    .defaultAuthenticationEntryPointFor(this.authenticationEntryPoint, new AntPathRequestMatcher("/**", null))
+//                    .and()
+//                    .addFilterAt(this.formLoginFilter(), UsernamePasswordAuthenticationFilter.class)
+//                    .logout()
+//                    .logoutUrl("/signout")
+//                    .logoutSuccessUrl("/")
+//                    .invalidateHttpSession(true)
+//                    .deleteCookies("JSESSIONID")
+//                    .and()
+//                    .csrf().disable()
+//                    .headers()
+//                    .cacheControl().disable()
+//                    .contentTypeOptions()
+//                    .and()
+//                    .httpStrictTransportSecurity()
+//                    .and()
+//                    .frameOptions().sameOrigin()
+//                    .xssProtection()
+//                    .and()
+//                    .and()
+//                    .sessionManagement()
+//                    .invalidSessionUrl("/")
+//                    .sessionFixation().migrateSession()
+//                    .maximumSessions(20)
+//                    //.expiredSessionStrategy()
+//                    .sessionRegistry(this.sessionRegistry);
+//        }
+//
+//        @Bean(name = "authenticationManager")
+//        public AuthenticationManager authenticationManagerBean() throws Exception {
+//            return super.authenticationManagerBean();
+//        }
+//
+//        @Bean(name = "formLoginFilter")
+//        public UsernamePasswordAuthenticationFilter formLoginFilter() throws Exception {
+//            CaptchaUsernamePasswordAuthenticationFilter captchaUsernamePasswordAuthenticationFilter = new CaptchaUsernamePasswordAuthenticationFilter();
+//            captchaUsernamePasswordAuthenticationFilter.setEnableCaptcha(SecurityConfig.isSignUpEnableCaptcha());
+//            captchaUsernamePasswordAuthenticationFilter.setAuthenticationManager(this.authenticationManager());
+//            captchaUsernamePasswordAuthenticationFilter.setRequiresAuthenticationRequestMatcher(this.requiresAuthenticationRequestMatcher);
+//            captchaUsernamePasswordAuthenticationFilter.setAuthenticationSuccessHandler(this.authenticationSuccessHandler);
+//            captchaUsernamePasswordAuthenticationFilter.setAuthenticationFailureHandler(this.authenticationFailureHandler);
+//            return captchaUsernamePasswordAuthenticationFilter;
+//        }
     }
 
     @Bean

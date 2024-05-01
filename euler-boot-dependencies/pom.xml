@@ -6,7 +6,6 @@
         <artifactId>euler-boot</artifactId>
         <groupId>org.eulerframework.boot</groupId>
         <version>${revision}</version>
-        <relativePath>../</relativePath>
     </parent>
     <artifactId>euler-boot-dependencies</artifactId>
     <packaging>pom</packaging>
@@ -14,8 +13,7 @@
 
     <properties>
         <main.basedir>${basedir}/..</main.basedir>
-        <spring-boot.version>2.2.2.RELEASE</spring-boot.version>
-        <euler-framework.verison>1.0.0.M7-SNAPSHOT</euler-framework.verison>
+        <eulerframework.version>1.0.0.M7.JDK17-SNAPSHOT</eulerframework.version>
 
         <build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>
         <flatten-maven-plugin.version>1.1.0</flatten-maven-plugin.version>
@@ -24,14 +22,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring-boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
             <dependency>
                 <groupId>org.eulerframework.boot</groupId>
                 <artifactId>spring-boot-starter-euler-web</artifactId>
@@ -42,21 +32,25 @@
                 <artifactId>spring-boot-starter-euler-web-security</artifactId>
                 <version>${revision}</version>
             </dependency>
+            <dependency>
+                <groupId>org.eulerframework.boot</groupId>
+                <artifactId>spring-boot-starter-euler-data-jpa</artifactId>
+                <version>${revision}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.eulerframework</groupId>
                 <artifactId>euler-web-core</artifactId>
-                <version>${euler-framework.verison}</version>
+                <version>${eulerframework.version}</version>
                 <exclusions>
                     <!-- Spring Boot will manage all Spring Framework dependencies -->
                     <exclusion>
                         <groupId>org.springframework</groupId>
                         <artifactId>*</artifactId>
                     </exclusion>
-                    <!-- Exclude redis-related dependencies, otherwise actuator will perform health checks on redis links. -->
                     <exclusion>
                         <groupId>org.springframework.data</groupId>
-                        <artifactId>spring-data-redis</artifactId>
+                        <artifactId>*</artifactId>
                     </exclusion>
                     <!-- Exclude any other useless dependencies -->
                     <exclusion>
@@ -64,35 +58,19 @@
                         <artifactId>quartz</artifactId>
                     </exclusion>
                     <exclusion>
-                        <groupId>javax.servlet</groupId>
-                        <artifactId>jstl</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>javax.inject</groupId>
-                        <artifactId>javax.inject</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>javax.validation</groupId>
-                        <artifactId>validation-api</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>javax.transaction</groupId>
-                        <artifactId>jta</artifactId>
-                    </exclusion>
-                    <exclusion>
                         <groupId>org.aspectj</groupId>
                         <artifactId>aspectjweaver</artifactId>
                     </exclusion>
                     <exclusion>
-                        <groupId>org.hibernate</groupId>
+                        <groupId>org.hibernate.validator</groupId>
                         <artifactId>hibernate-validator</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.eulerframework</groupId>
-                <artifactId>euler-web-orm-jpa</artifactId>
-                <version>${euler-framework.verison}</version>
+                <artifactId>euler-data-jpa</artifactId>
+                <version>${eulerframework.version}</version>
                 <exclusions>
                     <!-- Spring Boot will manage all Spring Framework dependencies -->
                     <exclusion>
@@ -105,14 +83,14 @@
                     </exclusion>
                     <exclusion>
                         <groupId>org.hibernate</groupId>
-                        <artifactId>hibernate-entitymanager</artifactId>
+                        <artifactId>hibernate-core</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.eulerframework</groupId>
                 <artifactId>euler-web-authentication</artifactId>
-                <version>${euler-framework.verison}</version>
+                <version>${eulerframework.version}</version>
                 <exclusions>
                     <!-- Spring Boot will manage all Spring Framework dependencies -->
                     <exclusion>
@@ -132,7 +110,7 @@
             <dependency>
                 <groupId>org.eulerframework</groupId>
                 <artifactId>euler-web-oauth2-util</artifactId>
-                <version>${euler-framework.verison}</version>
+                <version>${eulerframework.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

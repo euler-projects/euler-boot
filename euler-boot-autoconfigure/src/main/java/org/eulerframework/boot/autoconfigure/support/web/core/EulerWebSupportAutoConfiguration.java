@@ -15,21 +15,20 @@
  */
 package org.eulerframework.boot.autoconfigure.support.web.core;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eulerframework.boot.autoconfigure.property.EulerApplicationProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCacheProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebI18nProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebSiteProperties;
+import org.eulerframework.common.util.json.JacksonUtils;
 import org.eulerframework.web.core.i18n.ClassPathReloadableResourceBundleMessageSource;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.WebDataBinder;
@@ -40,7 +39,7 @@ import java.beans.PropertyEditorSupport;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
-@Configuration
+@AutoConfiguration
 @EnableConfigurationProperties({
         EulerCacheProperties.class,
         EulerWebSiteProperties.class,
@@ -50,10 +49,7 @@ import java.util.Date;
 public class EulerWebSupportAutoConfiguration {
     @Bean
     public ObjectMapper objectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.setSerializationInclusion(Include.NON_NULL);
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return mapper;
+        return JacksonUtils.getDefaultObjectMapper();
     }
 
     @Bean
@@ -67,7 +63,7 @@ public class EulerWebSupportAutoConfiguration {
     }
 
     @Bean
-    public EulerBootPropertySource springBootPropertySource(
+    public EulerBootPropertySource eulerBootPropertySource(
             ConfigurableEnvironment configurableEnvironment,
             MultipartProperties multipartProperties,
             EulerApplicationProperties eulerApplicationProperties,

@@ -1,0 +1,2 @@
+org.eulerframework.boot.autoconfigure.EulerBootAutoConfiguration
+org.eulerframework.boot.autoconfigure.support.web.core.EulerWebSupportAutoConfiguration

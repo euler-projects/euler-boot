@@ -15,6 +15,7 @@
  */
 package org.eulerframework.boot.autoconfigure.property;
 
+import jakarta.annotation.Resource;
 import org.eulerframework.boot.autoconfigure.support.web.core.EulerBootPropertySource;
 import org.eulerframework.common.util.CommonUtils;
 import org.eulerframework.common.util.StringUtils;
@@ -22,7 +23,6 @@ import org.eulerframework.web.config.ConfigUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.env.ConfigurableEnvironment;
 
@@ -36,7 +36,7 @@ public class EulerApplicationProperties implements InitializingBean {
     private static final String DEFAULT_RUNTIME_PATH_PREFIX = "/var/run";
     private static final String DEFAULT_TEMP_PATH_PREFIX = "/var/tmp";
 
-    @Autowired
+    @Resource
     private ConfigurableEnvironment environment;
 
     private String runtimePath;

@@ -10,8 +10,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>spring-boot-starter-euler-web</artifactId>
-    <description>Starter For Euler Framework</description>
+    <artifactId>spring-boot-starter-euler-data-jpa</artifactId>
+    <description>Starter For Euler Framework JPA Module</description>
 
     <dependencies>
         <dependency>
@@ -22,7 +22,7 @@
 
         <dependency>
             <groupId>org.eulerframework</groupId>
-            <artifactId>euler-web-core</artifactId>
+            <artifactId>euler-data-jpa</artifactId>
         </dependency>
     </dependencies>
 </project>

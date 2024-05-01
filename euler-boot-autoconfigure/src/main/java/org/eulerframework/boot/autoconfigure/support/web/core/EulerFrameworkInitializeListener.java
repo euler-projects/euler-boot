@@ -12,7 +12,7 @@ import org.springframework.boot.web.servlet.context.ServletWebServerInitializedE
 import org.springframework.context.ApplicationListener;
 import org.springframework.util.Assert;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 public class EulerFrameworkInitializeListener implements ApplicationListener<ServletWebServerInitializedEvent> {
 

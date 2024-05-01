@@ -16,10 +16,10 @@
 package org.eulerframework.boot.autoconfigure;
 
 import org.eulerframework.boot.autoconfigure.property.EulerApplicationProperties;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
-@Configuration
+@AutoConfiguration
 @EnableConfigurationProperties({
         EulerApplicationProperties.class
 })
