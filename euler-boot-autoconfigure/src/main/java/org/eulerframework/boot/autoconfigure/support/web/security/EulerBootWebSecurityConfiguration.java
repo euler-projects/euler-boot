@@ -15,46 +15,18 @@
  */
 package org.eulerframework.boot.autoconfigure.support.web.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eulerframework.web.module.authentication.conf.SecurityConfig;
-import org.eulerframework.web.module.authentication.extend.EulerAccessDeniedHandler;
-import org.eulerframework.web.module.authentication.extend.EulerLoginUrlAuthenticationEntryPoint;
-import org.eulerframework.web.module.authentication.extend.EulerUrlAuthenticationFailureHandler;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.config.annotation.SecurityBuilder;
-import org.springframework.security.config.annotation.web.WebSecurityConfigurer;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.session.SessionRegistryImpl;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.AuthenticationEntryPoint;
-import org.springframework.security.web.access.AccessDeniedHandler;
-import org.springframework.security.web.authentication.AuthenticationFailureHandler;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.RequestMatcher;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Configuration
-@ConditionalOnClass(WebSecurityConfigurer.class)
+//@ConditionalOnClass(WebSecurityConfigurer.class)
 @ConditionalOnWebApplication(type = Type.SERVLET)
 public class EulerBootWebSecurityConfiguration {
 
-    @Configuration
-    @Order(SecurityProperties.BASIC_AUTH_ORDER)
-    static class EulerBootWebSecurityConfigurerAdapter implements WebSecurityConfigurer {
+//    @Configuration
+//    @Order(SecurityProperties.BASIC_AUTH_ORDER)
+//    static class EulerBootWebSecurityConfigurerAdapter implements WebSecurityConfigurer {
 
 //        @Autowired
 //        private UserDetailsService userDetailsService;
@@ -75,19 +47,19 @@ public class EulerBootWebSecurityConfiguration {
 //        @Autowired
 //        private AuthenticationFailureHandler authenticationFailureHandler;
 //
-        @Override
-        public void init(SecurityBuilder builder) throws Exception {
-
-        }
-
-        @Override
-        public void configure(SecurityBuilder builder) throws Exception {
-
-        }
-
-        public interface OrderedAuthenticationProvider extends AuthenticationProvider {
-            int order();
-        }
+//        @Override
+//        public void init(SecurityBuilder builder) throws Exception {
+//
+//        }
+//
+//        @Override
+//        public void configure(SecurityBuilder builder) throws Exception {
+//
+//        }
+//
+//        public interface OrderedAuthenticationProvider extends AuthenticationProvider {
+//            int order();
+//        }
 
 //        @Override
 //        protected void configure(AuthenticationManagerBuilder auth) {
@@ -151,84 +123,84 @@ public class EulerBootWebSecurityConfiguration {
 //            captchaUsernamePasswordAuthenticationFilter.setAuthenticationFailureHandler(this.authenticationFailureHandler);
 //            return captchaUsernamePasswordAuthenticationFilter;
 //        }
-    }
+//    }
 
-    @Bean
-    @ConditionalOnMissingBean(AccessDeniedHandler.class)
-    public AccessDeniedHandler accessDeniedHandler() {
-        return new EulerAccessDeniedHandler();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(SessionRegistry.class)
-    public SessionRegistry sessionRegistry() {
-        return new SessionRegistryImpl();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(AuthenticationEntryPoint.class)
-    public AuthenticationEntryPoint authenticationEntryPoint(ObjectMapper objectMapper) {
-        return new EulerLoginUrlAuthenticationEntryPoint(
-                SecurityConfig.getLoginPage(),
-                objectMapper
-        );
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(RequestMatcher.class)
-    public AntPathRequestMatcher requiresAuthenticationRequestMatcher() {
-        return new AntPathRequestMatcher(
-                SecurityConfig.getLoginProcessingUrl(),
-                "POST"
-        );
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(AuthenticationSuccessHandler.class)
-    public AuthenticationSuccessHandler authenticationSuccessHandler() {
-        SimpleUrlAuthenticationSuccessHandler authenticationSuccessHandler = new SimpleUrlAuthenticationSuccessHandler();
-        authenticationSuccessHandler.setDefaultTargetUrl(SecurityConfig.getLoginDefaultTargetUrl());
-        authenticationSuccessHandler.setTargetUrlParameter("redirectUrl");
-        return authenticationSuccessHandler;
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(AuthenticationFailureHandler.class)
-    public AuthenticationFailureHandler authenticationFailureHandler() {
-        return new EulerUrlAuthenticationFailureHandler();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(PasswordEncoder.class)
-    public PasswordEncoder passwordEncoder() {
-        String encodingId = "bcrypt";
-        Map<String, PasswordEncoder> encoders = new HashMap<>();
-        encoders.put(encodingId, new BCryptPasswordEncoder());
-//        encoders.put("ldap", new org.springframework.security.crypto.password.LdapShaPasswordEncoder());
-//        encoders.put("MD4", new org.springframework.security.crypto.password.Md4PasswordEncoder());
-//        encoders.put("MD5", new org.springframework.security.crypto.password.MessageDigestPasswordEncoder("MD5"));
-//        encoders.put("noop", org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance());
-//        encoders.put("pbkdf2", new Pbkdf2PasswordEncoder());
-//        encoders.put("scrypt", new SCryptPasswordEncoder());
-//        encoders.put("SHA-1", new org.springframework.security.crypto.password.MessageDigestPasswordEncoder("SHA-1"));
-//        encoders.put("SHA-256", new org.springframework.security.crypto.password.MessageDigestPasswordEncoder("SHA-256"));
-//        encoders.put("sha256", new org.springframework.security.crypto.password.StandardPasswordEncoder());
-
-        encoders.put("plain-text", new PlainTextPasswordEncoder());
-
-        return new DelegatingPasswordEncoder(encodingId, encoders);
-    }
-
-    static class PlainTextPasswordEncoder implements PasswordEncoder {
-        @Override
-        public String encode(CharSequence rawPassword) {
-            return rawPassword == null ? null : rawPassword.toString();
-        }
-
-        @Override
-        public boolean matches(CharSequence rawPassword, String encodedPassword) {
-            return rawPassword != null && rawPassword.equals(encodedPassword);
-        }
-    }
+//    @Bean
+//    @ConditionalOnMissingBean(AccessDeniedHandler.class)
+//    public AccessDeniedHandler accessDeniedHandler() {
+//        return new EulerAccessDeniedHandler();
+//    }
+//
+//    @Bean
+//    @ConditionalOnMissingBean(SessionRegistry.class)
+//    public SessionRegistry sessionRegistry() {
+//        return new SessionRegistryImpl();
+//    }
+//
+//    @Bean
+//    @ConditionalOnMissingBean(AuthenticationEntryPoint.class)
+//    public AuthenticationEntryPoint authenticationEntryPoint(ObjectMapper objectMapper) {
+//        return new EulerLoginUrlAuthenticationEntryPoint(
+//                SecurityConfig.getLoginPage(),
+//                objectMapper
+//        );
+//    }
+//
+//    @Bean
+//    @ConditionalOnMissingBean(RequestMatcher.class)
+//    public AntPathRequestMatcher requiresAuthenticationRequestMatcher() {
+//        return new AntPathRequestMatcher(
+//                SecurityConfig.getLoginProcessingUrl(),
+//                "POST"
+//        );
+//    }
+//
+//    @Bean
+//    @ConditionalOnMissingBean(AuthenticationSuccessHandler.class)
+//    public AuthenticationSuccessHandler authenticationSuccessHandler() {
+//        SimpleUrlAuthenticationSuccessHandler authenticationSuccessHandler = new SimpleUrlAuthenticationSuccessHandler();
+//        authenticationSuccessHandler.setDefaultTargetUrl(SecurityConfig.getLoginDefaultTargetUrl());
+//        authenticationSuccessHandler.setTargetUrlParameter("redirectUrl");
+//        return authenticationSuccessHandler;
+//    }
+//
+//    @Bean
+//    @ConditionalOnMissingBean(AuthenticationFailureHandler.class)
+//    public AuthenticationFailureHandler authenticationFailureHandler() {
+//        return new EulerUrlAuthenticationFailureHandler();
+//    }
+//
+//    @Bean
+//    @ConditionalOnMissingBean(PasswordEncoder.class)
+//    public PasswordEncoder passwordEncoder() {
+//        String encodingId = "bcrypt";
+//        Map<String, PasswordEncoder> encoders = new HashMap<>();
+//        encoders.put(encodingId, new BCryptPasswordEncoder());
+////        encoders.put("ldap", new org.springframework.security.crypto.password.LdapShaPasswordEncoder());
+////        encoders.put("MD4", new org.springframework.security.crypto.password.Md4PasswordEncoder());
+////        encoders.put("MD5", new org.springframework.security.crypto.password.MessageDigestPasswordEncoder("MD5"));
+////        encoders.put("noop", org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance());
+////        encoders.put("pbkdf2", new Pbkdf2PasswordEncoder());
+////        encoders.put("scrypt", new SCryptPasswordEncoder());
+////        encoders.put("SHA-1", new org.springframework.security.crypto.password.MessageDigestPasswordEncoder("SHA-1"));
+////        encoders.put("SHA-256", new org.springframework.security.crypto.password.MessageDigestPasswordEncoder("SHA-256"));
+////        encoders.put("sha256", new org.springframework.security.crypto.password.StandardPasswordEncoder());
+//
+//        encoders.put("plain-text", new PlainTextPasswordEncoder());
+//
+//        return new DelegatingPasswordEncoder(encodingId, encoders);
+//    }
+//
+//    static class PlainTextPasswordEncoder implements PasswordEncoder {
+//        @Override
+//        public String encode(CharSequence rawPassword) {
+//            return rawPassword == null ? null : rawPassword.toString();
+//        }
+//
+//        @Override
+//        public boolean matches(CharSequence rawPassword, String encodedPassword) {
+//            return rawPassword != null && rawPassword.equals(encodedPassword);
+//        }
+//    }
 
 }

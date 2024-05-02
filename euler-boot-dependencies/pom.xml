@@ -29,7 +29,7 @@
             </dependency>
             <dependency>
                 <groupId>org.eulerframework.boot</groupId>
-                <artifactId>spring-boot-starter-euler-web-security</artifactId>
+                <artifactId>spring-boot-starter-euler-security</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
@@ -89,7 +89,7 @@
             </dependency>
             <dependency>
                 <groupId>org.eulerframework</groupId>
-                <artifactId>euler-web-authentication</artifactId>
+                <artifactId>euler-web-security</artifactId>
                 <version>${eulerframework.version}</version>
                 <exclusions>
                     <!-- Spring Boot will manage all Spring Framework dependencies -->

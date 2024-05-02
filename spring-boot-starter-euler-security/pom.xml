@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>spring-boot-starter-euler-web-security</artifactId>
+    <artifactId>spring-boot-starter-euler-security</artifactId>
     <description>Starter For Euler Framework Security</description>
 
     <dependencies>
@@ -28,20 +28,7 @@
 
         <dependency>
             <groupId>org.eulerframework</groupId>
-            <artifactId>euler-web-authentication</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-config</artifactId>
+            <artifactId>euler-web-security</artifactId>
         </dependency>
     </dependencies>
 </project>
