@@ -22,6 +22,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
         <spring-boot.version>3.2.5</spring-boot.version>
+        <querydsl.version>5.1.0</querydsl.version>
     </properties>
 
     <dependencyManagement>
@@ -32,6 +33,13 @@
                 <version>${spring-boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.querydsl</groupId>
+                <artifactId>querydsl-jpa</artifactId>
+                <version>${querydsl.version}</version>
+                <classifier>jakarta</classifier>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -1,51 +1,57 @@
 package org.eulerframework.boot.autoconfigure.support.security;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.eulerframework.security.core.EulerUserService;
+import org.eulerframework.security.spring.userdetails.EulerUserDetailsService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.core.annotation.Order;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.Arrays;
+import java.util.List;
 
 @AutoConfiguration
-//@ConditionalOnClass(WebSecurity.class)
+@ConditionalOnBean(EulerUserService.class)
 @EnableConfigurationProperties({
         EulerBootSecurityProperties.class
 })
 public class EulerBootSecurityAutoConfiguration {
+    @Bean
+    public EulerUserDetailsService eulerUserDetailsService(
+            EulerUserService eulerUserService,
+            EulerBootSecurityProperties eulerBootSecurityProperties
+    ) {
+        return new EulerUserDetailsService(
+                eulerUserService,
+                eulerBootSecurityProperties.isEnableEmailSignIn(),
+                eulerBootSecurityProperties.isEnableMobileSignIn(),
+                eulerBootSecurityProperties.getUserDetailsCacheExpireTime().toMillis());
+    }
 
-//    @ConditionalOnClass(WebSecurity.class)
-//    @Order(SecurityProperties.IGNORED_ORDER)
-//    //@Configuration
-//    public static class IgnoredPathsWebSecurityConfigurer
-//            implements WebSecurityConfigurer<WebSecurity> {
-//        private final Logger logger = LoggerFactory.getLogger(this.getClass());
-//
-//        @Autowired
-//        private EulerBootSecurityProperties eulerBootSecurityProperties;
-//
-//        @Override
-//        public void init(WebSecurity builder) {
-//            String[] ignoredPatterns = this.eulerBootSecurityProperties.getIgnoredPatterns();
-//            if(ignoredPatterns != null && ignoredPatterns.length > 0) {
-//                if(this.logger.isInfoEnabled()) {
-//                    this.logger.info("config ignored patterns: {}", Arrays.toString(ignoredPatterns));
-//                }
-//
-//                builder.ignoring().requestMatchers(
-//                        Arrays.stream(ignoredPatterns)
-//                                .map(AntPathRequestMatcher::new)
-//                                .toArray(AntPathRequestMatcher[]::new));
-//            }
-//        }
-//
-//        @Override
-//        public void configure(WebSecurity builder) {
-//        }
-//
-//    }
+    @Bean
+    public AuthenticationManager authenticationManager(List<AuthenticationProvider> providers) {
+        return new ProviderManager(providers);
+    }
+
+    @Bean
+    public DaoAuthenticationProvider daoAuthenticationProvider(
+            UserDetailsService userDetailsService,
+            PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider(passwordEncoder);
+        daoAuthenticationProvider.setUserDetailsService(userDetailsService);
+        return daoAuthenticationProvider;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(PasswordEncoder.class)
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }

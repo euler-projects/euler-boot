@@ -34,6 +34,11 @@
             </dependency>
             <dependency>
                 <groupId>org.eulerframework.boot</groupId>
+                <artifactId>spring-boot-starter-euler-oauth2-authorization-server</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eulerframework.boot</groupId>
                 <artifactId>spring-boot-starter-euler-data-jpa</artifactId>
                 <version>${revision}</version>
             </dependency>
@@ -83,13 +88,37 @@
                     </exclusion>
                     <exclusion>
                         <groupId>org.hibernate</groupId>
-                        <artifactId>hibernate-core</artifactId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.querydsl</groupId>
+                        <artifactId>*</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.eulerframework</groupId>
                 <artifactId>euler-web-security</artifactId>
+                <version>${eulerframework.version}</version>
+                <exclusions>
+                    <!-- Spring Boot will manage all Spring Framework dependencies -->
+                    <exclusion>
+                        <groupId>org.springframework</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.springframework.data</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.springframework.security</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.eulerframework</groupId>
+                <artifactId>euler-web-oauth2-authorization-server</artifactId>
                 <version>${eulerframework.version}</version>
                 <exclusions>
                     <!-- Spring Boot will manage all Spring Framework dependencies -->

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>euler-boot-parent</artifactId>
+        <groupId>org.eulerframework.boot</groupId>
+        <version>${revision}</version>
+        <relativePath>../euler-boot-parent</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>spring-boot-starter-euler-oauth2-authorization-server</artifactId>
+    <description>Starter For Euler Framework Security</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>euler-boot-autoconfigure</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>spring-boot-starter-euler-web</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eulerframework</groupId>
+            <artifactId>euler-web-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eulerframework</groupId>
+            <artifactId>euler-web-oauth2-authorization-server</artifactId>
+        </dependency>
+    </dependencies>
+</project>
