@@ -12,7 +12,7 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
@@ -23,6 +23,7 @@ import java.util.List;
         EulerBootSecurityProperties.class
 })
 public class EulerBootSecurityAutoConfiguration {
+
     @Bean
     public EulerUserDetailsService eulerUserDetailsService(
             EulerUserService eulerUserService,
@@ -52,6 +53,6 @@ public class EulerBootSecurityAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(PasswordEncoder.class)
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 }
