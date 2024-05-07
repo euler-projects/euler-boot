@@ -138,8 +138,23 @@
             </dependency>
             <dependency>
                 <groupId>org.eulerframework</groupId>
-                <artifactId>euler-web-oauth2-util</artifactId>
+                <artifactId>euler-web-oauth2-core</artifactId>
                 <version>${eulerframework.version}</version>
+                <exclusions>
+                    <!-- Spring Boot will manage all Spring Framework dependencies -->
+                    <exclusion>
+                        <groupId>org.springframework</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.springframework.data</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.springframework.security</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
         </dependencies>
     </dependencyManagement>
