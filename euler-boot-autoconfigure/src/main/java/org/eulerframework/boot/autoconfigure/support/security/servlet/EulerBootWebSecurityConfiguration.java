@@ -2,7 +2,11 @@ package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
 import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityProperties;
 import org.eulerframework.security.core.EulerUserService;
+import org.eulerframework.security.core.UserContext;
+import org.eulerframework.security.core.UserDetailsPrincipalUserContext;
 import org.eulerframework.security.spring.userdetails.EulerUserDetailsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -28,10 +32,13 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @ConditionalOnBean(EulerUserService.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class EulerBootWebSecurityConfiguration {
+    private final Logger logger = LoggerFactory.getLogger(EulerBootWebSecurityConfiguration.class);
 
     @Bean
     @Order(SecurityProperties.BASIC_AUTH_ORDER)
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+        this.logger.debug("Create default security filter chain");
+
         http
                 .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
                 .formLogin(withDefaults());
@@ -68,5 +75,11 @@ public class EulerBootWebSecurityConfiguration {
     @ConditionalOnMissingBean(PasswordEncoder.class)
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(UserContext.class)
+    public UserContext userContext() {
+        return new UserDetailsPrincipalUserContext();
     }
 }

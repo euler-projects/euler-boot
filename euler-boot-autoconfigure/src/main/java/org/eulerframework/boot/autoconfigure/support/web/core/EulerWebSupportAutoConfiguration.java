@@ -21,7 +21,10 @@ import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCach
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebI18nProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebSiteProperties;
 import org.eulerframework.common.util.json.JacksonUtils;
+import org.eulerframework.web.core.base.response.ErrorResponse;
 import org.eulerframework.web.core.i18n.ClassPathReloadableResourceBundleMessageSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -30,10 +33,10 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.*;
 
 import java.beans.PropertyEditorSupport;
 import java.nio.charset.StandardCharsets;
@@ -47,8 +50,10 @@ import java.util.Date;
 })
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class EulerWebSupportAutoConfiguration {
+    private final Logger logger = LoggerFactory.getLogger(EulerWebSupportAutoConfiguration.class);
     @Bean
     public ObjectMapper objectMapper() {
+        this.logger.debug("Create ObjectMapper use JacksonUtils");
         return JacksonUtils.getDefaultObjectMapper();
     }
 
@@ -74,7 +79,8 @@ public class EulerWebSupportAutoConfiguration {
     }
 
     @ControllerAdvice
-    public static class GlobalParameterBinder {
+    public static class GlobalControllerAdvice {
+
         /**
          * 尝试以时间戳的方式格式化时间,如果失败则传递原始字符串
          *
@@ -97,6 +103,23 @@ public class EulerWebSupportAutoConfiguration {
                     }
                 }
             });
+        }
+
+    }
+
+    @RestControllerAdvice
+    public static class GlobalRestControllerAdvice {
+        private final Logger logger = LoggerFactory.getLogger(GlobalRestControllerAdvice.class);
+        /**
+         * 用于在程序发生{@link Exception}异常时统一返回错误信息
+         *
+         * @return 包含错误信息的Ajax响应体
+         */
+        @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+        @ExceptionHandler(Exception.class)
+        public Object exception(Exception e) {
+            this.logger.error(e.getMessage(), e);
+            return new ErrorResponse();
         }
     }
 }

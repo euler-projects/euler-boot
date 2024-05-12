@@ -28,6 +28,7 @@
         <module>spring-boot-starter-euler-web</module>
         <module>spring-boot-starter-euler-security</module>
         <module>spring-boot-starter-euler-oauth2-authorization-server</module>
+        <module>spring-boot-starter-euler-oauth2-resource-server</module>
         <module>spring-boot-starter-euler-data-jpa</module>
     </modules>
 
