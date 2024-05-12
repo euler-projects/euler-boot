@@ -11,10 +11,8 @@ import org.springframework.security.oauth2.server.resource.authentication.Bearer
 
 @AutoConfiguration(
         before = {
-                EulerBootSecurityWebAutoConfiguration.class
-        },
-        after = {
-                OAuth2ResourceServerAutoConfiguration.class,
+                EulerBootSecurityWebAutoConfiguration.class,
+                OAuth2ResourceServerAutoConfiguration.class
         })
 @ConditionalOnClass(BearerTokenAuthenticationToken.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
