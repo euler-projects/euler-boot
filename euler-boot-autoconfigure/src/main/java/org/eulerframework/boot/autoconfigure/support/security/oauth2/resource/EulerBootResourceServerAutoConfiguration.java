@@ -14,12 +14,14 @@ import org.springframework.security.oauth2.server.resource.authentication.Bearer
                 EulerBootSecurityWebAutoConfiguration.class,
                 OAuth2ResourceServerAutoConfiguration.class
         })
+@EnableConfigurationProperties(EulerBootResourceServerProperties.class)
 @ConditionalOnClass(BearerTokenAuthenticationToken.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-@EnableConfigurationProperties(EulerBootResourceServerProperties.class)
 @Import({
-        NativeAuthorizationServiceResourceServerConfiguration.class,
-        RemoteAuthorizationServiceResourceServerConfiguration.class
+        EulerBootResourceServerConfiguration.LocalAuthorizationServerResourceServerConfiguration.class,
+        EulerBootResourceServerConfiguration.OpaqueTokenResourceServerConfiguration.class,
+        EulerBootResourceServerConfiguration.JwkSetUriResourceServerConfiguration.class,
+        EulerBootResourceServerConfiguration.KeyValueJwtResourceServerConfiguration.class
 })
 public class EulerBootResourceServerAutoConfiguration {
 

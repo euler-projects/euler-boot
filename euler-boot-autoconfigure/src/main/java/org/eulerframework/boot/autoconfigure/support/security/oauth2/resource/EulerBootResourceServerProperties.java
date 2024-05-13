@@ -21,7 +21,7 @@ import java.time.Duration;
 
 @ConfigurationProperties(prefix = "euler.security.oauth2.resourceserver")
 public class EulerBootResourceServerProperties {
-    private String[] urlPatterns = new String[] {"/**"};
+    private String[] urlPatterns;
 
     public String[] getUrlPatterns() {
         return urlPatterns;
