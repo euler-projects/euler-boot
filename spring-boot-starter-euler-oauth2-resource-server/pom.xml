@@ -28,11 +28,11 @@
 
         <dependency>
             <groupId>org.eulerframework</groupId>
-            <artifactId>euler-web-security</artifactId>
+            <artifactId>euler-security-web</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eulerframework</groupId>
-            <artifactId>euler-web-oauth2-resource-server</artifactId>
+            <artifactId>euler-security-oauth2-resource-server</artifactId>
         </dependency>
     </dependencies>
 </project>

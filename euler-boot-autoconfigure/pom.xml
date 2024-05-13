@@ -42,17 +42,17 @@
         </dependency>
         <dependency>
             <groupId>org.eulerframework</groupId>
-            <artifactId>euler-web-security</artifactId>
+            <artifactId>euler-security-web</artifactId>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.eulerframework</groupId>
-            <artifactId>euler-web-oauth2-authorization-server</artifactId>
+            <artifactId>euler-security-oauth2-authorization-server</artifactId>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.eulerframework</groupId>
-            <artifactId>euler-web-oauth2-resource-server</artifactId>
+            <artifactId>euler-security-oauth2-resource-server</artifactId>
             <optional>true</optional>
         </dependency>
 

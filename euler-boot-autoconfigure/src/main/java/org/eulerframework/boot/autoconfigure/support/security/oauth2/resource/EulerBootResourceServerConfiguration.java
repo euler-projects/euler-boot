@@ -37,12 +37,12 @@ class EulerBootResourceServerConfiguration {
 
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnMissingClass("org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService")
+    @Conditional(KeyValueCondition.class)
     static class KeyValueJwtResourceServerConfiguration {
 
         @Bean(SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
         @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
         @Order(SecurityProperties.BASIC_AUTH_ORDER - 1)
-        @Conditional(KeyValueCondition.class)
         SecurityFilterChain resourceServerSecurityFilterChain(
                 HttpSecurity http,
                 EulerBootResourceServerProperties eulerBootResourceServerProperties) throws Exception {
@@ -54,12 +54,12 @@ class EulerBootResourceServerConfiguration {
 
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnMissingClass("org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService")
+    @ConditionalOnProperty(name = "spring.security.oauth2.resourceserver.jwt.jwk-set-uri")
     static class JwkSetUriResourceServerConfiguration {
 
         @Bean(SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
         @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
         @Order(SecurityProperties.BASIC_AUTH_ORDER - 1)
-        @ConditionalOnProperty(name = "spring.security.oauth2.resourceserver.jwt.jwk-set-uri")
         SecurityFilterChain resourceServerSecurityFilterChain(
                 HttpSecurity http,
                 EulerBootResourceServerProperties eulerBootResourceServerProperties) throws Exception {
@@ -71,12 +71,12 @@ class EulerBootResourceServerConfiguration {
 
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnMissingClass("org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService")
+    @ConditionalOnProperty(name = "spring.security.oauth2.resourceserver.opaquetoken.introspection-uri")
     static class OpaqueTokenResourceServerConfiguration {
 
         @Bean(SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
         @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
         @Order(SecurityProperties.BASIC_AUTH_ORDER - 1)
-        @ConditionalOnProperty(name = "spring.security.oauth2.resourceserver.opaquetoken.introspection-uri")
         SecurityFilterChain resourceServerSecurityFilterChain(
                 HttpSecurity http,
                 EulerBootResourceServerProperties eulerBootResourceServerProperties) throws Exception {
@@ -93,7 +93,6 @@ class EulerBootResourceServerConfiguration {
         @Bean(SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
         @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
         @Order(SecurityProperties.BASIC_AUTH_ORDER - 1)
-        @ConditionalOnBean(OAuth2AuthorizationService.class)
         SecurityFilterChain resourceServerSecurityFilterChain(
                 HttpSecurity http,
                 OAuth2AuthorizationService authorizationService,
@@ -105,7 +104,8 @@ class EulerBootResourceServerConfiguration {
                 http.securityMatcher(eulerBootResourceServerProperties.getUrlPatterns());
             }
 
-            http.oauth2ResourceServer(resourceServer -> resourceServer.authenticationManagerResolver(context -> authenticationManager));
+            http.oauth2ResourceServer(resourceServer -> resourceServer
+                    .authenticationManagerResolver(request -> authenticationManager));
             return http.build();
         }
     }

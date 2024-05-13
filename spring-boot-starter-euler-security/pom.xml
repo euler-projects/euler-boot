@@ -28,7 +28,7 @@
 
         <dependency>
             <groupId>org.eulerframework</groupId>
-            <artifactId>euler-web-security</artifactId>
+            <artifactId>euler-security-web</artifactId>
         </dependency>
     </dependencies>
 </project>
