@@ -1,13 +1,12 @@
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
-import org.eulerframework.security.core.DelegatingPrincipalUserContext;
-import org.eulerframework.security.core.UserContext;
-import org.eulerframework.security.core.UserDetailsPrincipalUserContext;
+import org.eulerframework.security.core.context.DelegatingPrincipalUserContext;
+import org.eulerframework.security.core.context.UserContext;
+import org.eulerframework.security.core.context.UserDetailsPrincipalUserContext;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;

@@ -23,8 +23,6 @@ import java.time.Duration;
 public class EulerBootSecurityWebProperties {
     private String[] urlPatterns;
     private boolean enabled = false;
-    private boolean enableEmailSignIn = false;
-    private boolean enableMobileSignIn = false;
     private Duration userDetailsCacheExpireTime = Duration.ofMinutes(1);
 
     public String[] getUrlPatterns() {
@@ -41,22 +39,6 @@ public class EulerBootSecurityWebProperties {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-    }
-
-    public boolean isEnableEmailSignIn() {
-        return enableEmailSignIn;
-    }
-
-    public void setEnableEmailSignIn(boolean enableEmailSignIn) {
-        this.enableEmailSignIn = enableEmailSignIn;
-    }
-
-    public boolean isEnableMobileSignIn() {
-        return enableMobileSignIn;
-    }
-
-    public void setEnableMobileSignIn(boolean enableMobileSignIn) {
-        this.enableMobileSignIn = enableMobileSignIn;
     }
 
     public Duration getUserDetailsCacheExpireTime() {

@@ -1,6 +1,6 @@
 package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
-import org.eulerframework.security.core.userdetails.EulerUserDetails;
+import org.eulerframework.security.core.userdetails.EulerUserDetailsService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Import;
         UserDetailsServiceAutoConfiguration.class
 })
 @EnableConfigurationProperties(EulerBootSecurityWebProperties.class)
-@ConditionalOnClass(EulerUserDetails.class)
+@ConditionalOnClass(EulerUserDetailsService.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @Import({
         EulerBootWebSecurityConfiguration.class,

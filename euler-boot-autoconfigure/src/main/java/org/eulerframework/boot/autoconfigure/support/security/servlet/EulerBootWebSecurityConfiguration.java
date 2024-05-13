@@ -19,7 +19,6 @@ import org.springframework.util.Assert;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration(proxyBeanMethods = false)
-//@ConditionalOnBean(EulerUserDetailsService.class)
 @ConditionalOnProperty(prefix = "euler.security.web", name = "enabled", havingValue = "true")
 public class EulerBootWebSecurityConfiguration {
     private final Logger logger = LoggerFactory.getLogger(EulerBootWebSecurityConfiguration.class);

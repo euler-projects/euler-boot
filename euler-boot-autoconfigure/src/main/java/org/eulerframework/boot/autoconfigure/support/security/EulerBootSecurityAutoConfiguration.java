@@ -1,5 +1,6 @@
 package org.eulerframework.boot.autoconfigure.support.security;
 
+import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootSecurityWebAutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
@@ -9,7 +10,8 @@ import org.springframework.security.authentication.DefaultAuthenticationEventPub
 
 @AutoConfiguration(before = {
         SecurityAutoConfiguration.class,
-        UserDetailsServiceAutoConfiguration.class
+        UserDetailsServiceAutoConfiguration.class,
+        EulerBootSecurityWebAutoConfiguration.class
 })
 @EnableConfigurationProperties({
         EulerBootSecurityProperties.class
