@@ -1,6 +1,6 @@
 package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
-import org.eulerframework.security.spring.principal.EulerUserDetails;
+import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;

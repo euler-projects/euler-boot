@@ -1,9 +1,9 @@
 package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
-import org.eulerframework.security.core.EulerUserService;
 import org.eulerframework.security.core.UserContext;
 import org.eulerframework.security.core.UserDetailsPrincipalUserContext;
-import org.eulerframework.security.spring.userdetails.EulerUserDetailsService;
+import org.eulerframework.security.core.userdetails.EulerUserDetailsProvider;
+import org.eulerframework.security.core.userdetails.EulerUserDetailsService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -19,19 +19,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
 
 @Configuration(proxyBeanMethods = false)
-@ConditionalOnBean(EulerUserService.class)
+@ConditionalOnBean(EulerUserDetailsProvider.class)
 public class EulerUserDetailsServiceConfiguration {
 
     @Bean
     public EulerUserDetailsService eulerUserDetailsService(
-            EulerUserService eulerUserService,
-            EulerBootSecurityWebProperties eulerBootSecurityProperties
+            List<EulerUserDetailsProvider> eulerUserDetailsProviders
     ) {
-        return new EulerUserDetailsService(
-                eulerUserService,
-                eulerBootSecurityProperties.isEnableEmailSignIn(),
-                eulerBootSecurityProperties.isEnableMobileSignIn(),
-                eulerBootSecurityProperties.getUserDetailsCacheExpireTime().toMillis());
+        return new EulerUserDetailsService(eulerUserDetailsProviders);
     }
 
     @Bean

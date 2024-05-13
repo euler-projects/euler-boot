@@ -2,7 +2,7 @@ package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
-import org.eulerframework.security.core.EulerUserService;
+import org.eulerframework.security.core.userdetails.EulerUserDetailsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -19,7 +19,7 @@ import org.springframework.util.Assert;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration(proxyBeanMethods = false)
-@ConditionalOnBean(EulerUserService.class)
+//@ConditionalOnBean(EulerUserDetailsService.class)
 @ConditionalOnProperty(prefix = "euler.security.web", name = "enabled", havingValue = "true")
 public class EulerBootWebSecurityConfiguration {
     private final Logger logger = LoggerFactory.getLogger(EulerBootWebSecurityConfiguration.class);
