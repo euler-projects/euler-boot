@@ -17,13 +17,11 @@ package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.time.Duration;
-
 @ConfigurationProperties(prefix = "euler.security.web")
 public class EulerBootSecurityWebProperties {
     private String[] urlPatterns;
+    private String[] ignoredUrlPatterns;
     private boolean enabled = false;
-    private Duration userDetailsCacheExpireTime = Duration.ofMinutes(1);
 
     public String[] getUrlPatterns() {
         return urlPatterns;
@@ -33,19 +31,19 @@ public class EulerBootSecurityWebProperties {
         this.urlPatterns = urlPatterns;
     }
 
+    public String[] getIgnoredUrlPatterns() {
+        return ignoredUrlPatterns;
+    }
+
+    public void setIgnoredUrlPatterns(String[] ignoredUrlPatterns) {
+        this.ignoredUrlPatterns = ignoredUrlPatterns;
+    }
+
     public boolean isEnabled() {
         return enabled;
     }
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-    }
-
-    public Duration getUserDetailsCacheExpireTime() {
-        return userDetailsCacheExpireTime;
-    }
-
-    public void setUserDetailsCacheExpireTime(Duration userDetailsCacheExpireTime) {
-        this.userDetailsCacheExpireTime = userDetailsCacheExpireTime;
     }
 }

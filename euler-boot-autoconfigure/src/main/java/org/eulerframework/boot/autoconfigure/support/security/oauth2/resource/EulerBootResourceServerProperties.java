@@ -17,11 +17,10 @@ package org.eulerframework.boot.autoconfigure.support.security.oauth2.resource;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.time.Duration;
-
 @ConfigurationProperties(prefix = "euler.security.oauth2.resourceserver")
 public class EulerBootResourceServerProperties {
     private String[] urlPatterns;
+    private String[] ignoredUrlPatterns;
 
     public String[] getUrlPatterns() {
         return urlPatterns;
@@ -29,5 +28,13 @@ public class EulerBootResourceServerProperties {
 
     public void setUrlPatterns(String[] urlPatterns) {
         this.urlPatterns = urlPatterns;
+    }
+
+    public String[] getIgnoredUrlPatterns() {
+        return ignoredUrlPatterns;
+    }
+
+    public void setIgnoredUrlPatterns(String[] ignoredUrlPatterns) {
+        this.ignoredUrlPatterns = ignoredUrlPatterns;
     }
 }
