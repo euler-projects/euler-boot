@@ -1,7 +1,7 @@
 package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
 import org.eulerframework.security.core.context.UserContext;
-import org.eulerframework.security.core.context.UserDetailsPrincipalUserContext;
+import org.eulerframework.security.web.context.UsernamePasswordAuthenticationUserContext;
 import org.eulerframework.security.core.userdetails.EulerUserDetailsProvider;
 import org.eulerframework.security.core.userdetails.EulerUserDetailsService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -52,6 +52,6 @@ public class EulerUserDetailsServiceConfiguration {
     @Bean
     @ConditionalOnMissingBean(UserContext.class)
     public UserContext userContext() {
-        return new UserDetailsPrincipalUserContext();
+        return new UsernamePasswordAuthenticationUserContext();
     }
 }

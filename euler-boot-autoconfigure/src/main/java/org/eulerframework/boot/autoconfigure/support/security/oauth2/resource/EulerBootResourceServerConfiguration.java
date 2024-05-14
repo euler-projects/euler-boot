@@ -2,7 +2,9 @@ package org.eulerframework.boot.autoconfigure.support.security.oauth2.resource;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
+import org.eulerframework.security.core.context.UserContext;
 import org.eulerframework.security.oauth2.resource.OAuth2NativeTokenAuthenticationManager;
+import org.eulerframework.security.oauth2.resource.context.BearerTokenAuthenticationUserContext;
 import org.eulerframework.security.web.util.matcher.RequestMatcherCreator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -67,6 +69,12 @@ class EulerBootResourceServerConfiguration {
             http.oauth2ResourceServer(resourceServer -> resourceServer.jwt(withDefaults()));
             return http.build();
         }
+
+        @Bean
+        @ConditionalOnMissingBean(UserContext.class)
+        public UserContext userContext() {
+            return new BearerTokenAuthenticationUserContext();
+        }
     }
 
     @Configuration(proxyBeanMethods = false)
@@ -84,6 +92,12 @@ class EulerBootResourceServerConfiguration {
             http.oauth2ResourceServer(resourceServer -> resourceServer.jwt(withDefaults()));
             return http.build();
         }
+
+        @Bean
+        @ConditionalOnMissingBean(UserContext.class)
+        public UserContext userContext() {
+            return new BearerTokenAuthenticationUserContext();
+        }
     }
 
     @Configuration(proxyBeanMethods = false)
@@ -100,6 +114,12 @@ class EulerBootResourceServerConfiguration {
             EulerBootResourceServerConfiguration.applyCommonConfiguration(http, eulerBootResourceServerProperties);
             http.oauth2ResourceServer(resourceServer -> resourceServer.opaqueToken(withDefaults()));
             return http.build();
+        }
+
+        @Bean
+        @ConditionalOnMissingBean(UserContext.class)
+        public UserContext userContext() {
+            return new BearerTokenAuthenticationUserContext();
         }
     }
 
@@ -119,6 +139,12 @@ class EulerBootResourceServerConfiguration {
             http.oauth2ResourceServer(resourceServer -> resourceServer
                     .authenticationManagerResolver(request -> authenticationManager));
             return http.build();
+        }
+
+        @Bean
+        @ConditionalOnMissingBean(UserContext.class)
+        public UserContext userContext() {
+            return new BearerTokenAuthenticationUserContext();
         }
     }
 }

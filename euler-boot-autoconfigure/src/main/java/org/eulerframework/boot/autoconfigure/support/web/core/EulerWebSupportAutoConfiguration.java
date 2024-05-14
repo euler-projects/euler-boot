@@ -119,6 +119,9 @@ public class EulerWebSupportAutoConfiguration {
         @ExceptionHandler(Exception.class)
         public Object exception(Exception e) {
             this.logger.error(e.getMessage(), e);
+            if(e instanceof org.springframework.web.ErrorResponse) {
+                return e;
+            }
             return new ErrorResponse();
         }
     }

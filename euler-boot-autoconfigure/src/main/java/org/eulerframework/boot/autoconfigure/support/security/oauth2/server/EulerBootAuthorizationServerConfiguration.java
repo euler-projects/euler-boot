@@ -1,9 +1,9 @@
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
-import org.eulerframework.security.core.context.DelegatingPrincipalUserContext;
+import org.eulerframework.security.core.context.DelegatingUserContext;
 import org.eulerframework.security.core.context.UserContext;
-import org.eulerframework.security.core.context.UserDetailsPrincipalUserContext;
+import org.eulerframework.security.web.context.UsernamePasswordAuthenticationUserContext;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -15,7 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.oauth2.core.context.OAuth2AuthenticatedPrincipalUserContext;
+import org.eulerframework.security.oauth2.resource.context.BearerTokenAuthenticationUserContext;
 import org.springframework.security.oauth2.server.authorization.EulerJdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
@@ -74,9 +74,9 @@ public class EulerBootAuthorizationServerConfiguration {
     @Bean
     @ConditionalOnMissingBean(UserContext.class)
     public UserContext userContext() {
-        OAuth2AuthenticatedPrincipalUserContext oauth2AuthenticatedPrincipalUserContext = new OAuth2AuthenticatedPrincipalUserContext();
-        UserDetailsPrincipalUserContext userDetailsPrincipalUserContext = new UserDetailsPrincipalUserContext();
-        return new DelegatingPrincipalUserContext(oauth2AuthenticatedPrincipalUserContext, userDetailsPrincipalUserContext);
+        BearerTokenAuthenticationUserContext oauth2AuthenticatedPrincipalUserContext = new BearerTokenAuthenticationUserContext();
+        UsernamePasswordAuthenticationUserContext usernamePasswordAuthenticationUserContext = new UsernamePasswordAuthenticationUserContext();
+        return new DelegatingUserContext(oauth2AuthenticatedPrincipalUserContext, usernamePasswordAuthenticationUserContext);
     }
 
     private static RequestMatcher createRequestMatcher() {

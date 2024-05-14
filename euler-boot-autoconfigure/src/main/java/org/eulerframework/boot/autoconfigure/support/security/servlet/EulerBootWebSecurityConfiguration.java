@@ -2,11 +2,11 @@ package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
-import org.eulerframework.security.core.userdetails.EulerUserDetailsService;
+import org.eulerframework.security.core.context.UserContext;
+import org.eulerframework.security.web.context.UsernamePasswordAuthenticationUserContext;
 import org.eulerframework.security.web.util.matcher.RequestMatcherCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
@@ -55,5 +55,11 @@ public class EulerBootWebSecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
                 .formLogin(withDefaults());
         return http.build();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(UserContext.class)
+    public UserContext userContext() {
+        return new UsernamePasswordAuthenticationUserContext();
     }
 }
