@@ -1,5 +1,6 @@
 package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAutoConfiguration;
 import org.eulerframework.security.core.userdetails.EulerUserDetailsService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -10,6 +11,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Import;
 
 @AutoConfiguration(before = {
+        EulerBootSecurityAutoConfiguration.class,
         SecurityAutoConfiguration.class,
         UserDetailsServiceAutoConfiguration.class
 })

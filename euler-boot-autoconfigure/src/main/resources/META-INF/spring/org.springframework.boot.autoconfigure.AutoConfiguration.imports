@@ -5,3 +5,4 @@ org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootSecurity
 org.eulerframework.boot.autoconfigure.support.security.oauth2.resource.EulerBootResourceServerAutoConfiguration
 org.eulerframework.boot.autoconfigure.support.security.oauth2.server.EulerBootAuthorizationServerAutoConfiguration
 org.eulerframework.boot.autoconfigure.support.data.jpa.EulerBootDataJpaAutoConfiguration
+org.eulerframework.boot.autoconfigure.support.data.jpa.EulerBootDataJpaAuditingAutoConfiguration

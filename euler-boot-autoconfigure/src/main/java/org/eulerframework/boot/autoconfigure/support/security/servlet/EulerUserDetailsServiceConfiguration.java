@@ -4,6 +4,7 @@ import org.eulerframework.security.core.context.UserContext;
 import org.eulerframework.security.web.context.UsernamePasswordAuthenticationUserContext;
 import org.eulerframework.security.core.userdetails.EulerUserDetailsProvider;
 import org.eulerframework.security.core.userdetails.EulerUserDetailsService;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +21,7 @@ import java.util.List;
 
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(EulerUserDetailsService.class)
+@ConditionalOnBean(EulerUserDetailsProvider.class)
 public class EulerUserDetailsServiceConfiguration {
 
     @Bean
