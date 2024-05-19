@@ -21,7 +21,8 @@ import org.springframework.security.oauth2.server.resource.authentication.Bearer
         EulerBootResourceServerConfiguration.LocalAuthorizationServerResourceServerConfiguration.class,
         EulerBootResourceServerConfiguration.OpaqueTokenResourceServerConfiguration.class,
         EulerBootResourceServerConfiguration.JwkSetUriResourceServerConfiguration.class,
-        EulerBootResourceServerConfiguration.KeyValueJwtResourceServerConfiguration.class
+        EulerBootResourceServerConfiguration.KeyValueJwtResourceServerConfiguration.class,
+        EulerBootResourceServerConfiguration.UserContextConfiguration.class
 })
 public class EulerBootResourceServerAutoConfiguration {
 
