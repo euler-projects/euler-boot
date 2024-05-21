@@ -11,15 +11,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.eulerframework.security.oauth2.resource.context.BearerTokenAuthenticationUserContext;
-import org.springframework.security.oauth2.server.authorization.EulerJdbcOAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.*;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.EulerAuthorizationServerConfiguration;
@@ -29,6 +27,7 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
+import java.time.Duration;
 import java.util.Set;
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -58,10 +57,15 @@ public class EulerBootAuthorizationServerConfiguration {
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnProperty(prefix = "euler.security.oauth2.authorizationserver", name = "token-store-type", havingValue = "jdbc")
     static class JdbcAuthorizationServerConfiguration {
+//        @Bean
+//        @ConditionalOnMissingBean(OAuth2AuthorizationService.class)
+//        public OAuth2AuthorizationService jdbcOAuth2AuthorizationService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
+//            return new EulerJdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository);
+//        }
         @Bean
         @ConditionalOnMissingBean(OAuth2AuthorizationService.class)
-        public OAuth2AuthorizationService jdbcOAuth2AuthorizationService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
-            return new EulerJdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository);
+        public OAuth2AuthorizationService redisOAuth2AuthorizationService(StringRedisTemplate stringRedisTemplate, RegisteredClientRepository registeredClientRepository) {
+            return new EulerRedisOAuth2AuthorizationService(stringRedisTemplate, registeredClientRepository, Duration.ofMinutes(10));
         }
 
         @Bean
