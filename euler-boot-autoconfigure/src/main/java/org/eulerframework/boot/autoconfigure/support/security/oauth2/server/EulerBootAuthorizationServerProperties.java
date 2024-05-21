@@ -17,16 +17,36 @@ package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.time.Duration;
+
 @ConfigurationProperties(prefix = "euler.security.oauth2.authorizationserver")
 public class EulerBootAuthorizationServerProperties {
-    private TokenStoreType tokenStoreType = TokenStoreType.IN_MEMORY;
+    private TokenStoreType authorizationStoreType = TokenStoreType.IN_MEMORY;
+    private Duration authorizationLifetime = Duration.ofDays(7);
+    private String redisKeyPrefix = "euler:oauth2:auth";
 
-    public TokenStoreType getTokenStoreType() {
-        return tokenStoreType;
+    public TokenStoreType getAuthorizationStoreType() {
+        return authorizationStoreType;
     }
 
-    public void setTokenStoreType(TokenStoreType tokenStoreType) {
-        this.tokenStoreType = tokenStoreType;
+    public void setAuthorizationStoreType(TokenStoreType authorizationStoreType) {
+        this.authorizationStoreType = authorizationStoreType;
+    }
+
+    public Duration getAuthorizationLifetime() {
+        return authorizationLifetime;
+    }
+
+    public void setAuthorizationLifetime(Duration authorizationLifetime) {
+        this.authorizationLifetime = authorizationLifetime;
+    }
+
+    public String getRedisKeyPrefix() {
+        return redisKeyPrefix;
+    }
+
+    public void setRedisKeyPrefix(String redisKeyPrefix) {
+        this.redisKeyPrefix = redisKeyPrefix;
     }
 
     public enum TokenStoreType {

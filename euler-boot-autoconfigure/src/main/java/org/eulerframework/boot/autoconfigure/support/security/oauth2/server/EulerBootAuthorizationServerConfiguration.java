@@ -3,6 +3,7 @@ package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.security.core.context.DelegatingUserContext;
 import org.eulerframework.security.core.context.UserContext;
+import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationService;
 import org.eulerframework.security.web.context.UsernamePasswordAuthenticationUserContext;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -55,17 +56,37 @@ public class EulerBootAuthorizationServerConfiguration {
     }
 
     @Configuration(proxyBeanMethods = false)
-    @ConditionalOnProperty(prefix = "euler.security.oauth2.authorizationserver", name = "token-store-type", havingValue = "jdbc")
+    @ConditionalOnProperty(prefix = "euler.security.oauth2.authorizationserver", name = "authorization-store-type", havingValue = "jdbc")
     static class JdbcAuthorizationServerConfiguration {
-//        @Bean
-//        @ConditionalOnMissingBean(OAuth2AuthorizationService.class)
-//        public OAuth2AuthorizationService jdbcOAuth2AuthorizationService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
-//            return new EulerJdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository);
-//        }
         @Bean
         @ConditionalOnMissingBean(OAuth2AuthorizationService.class)
-        public OAuth2AuthorizationService redisOAuth2AuthorizationService(StringRedisTemplate stringRedisTemplate, RegisteredClientRepository registeredClientRepository) {
-            return new EulerRedisOAuth2AuthorizationService(stringRedisTemplate, registeredClientRepository, Duration.ofMinutes(10));
+        public OAuth2AuthorizationService jdbcOAuth2AuthorizationService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
+            return new EulerJdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository);
+        }
+
+        @Bean
+        @ConditionalOnMissingBean(OAuth2AuthorizationConsentService.class)
+        public OAuth2AuthorizationConsentService jdbcOAuth2AuthorizationConsentService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
+            return new JdbcOAuth2AuthorizationConsentService(jdbcTemplate, registeredClientRepository);
+        }
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnProperty(prefix = "euler.security.oauth2.authorizationserver", name = "authorization-store-type", havingValue = "redis")
+    static class RedisAuthorizationServerConfiguration {
+
+        @Bean
+        @ConditionalOnMissingBean(OAuth2AuthorizationService.class)
+        public OAuth2AuthorizationService redisOAuth2AuthorizationService(
+                StringRedisTemplate stringRedisTemplate,
+                RegisteredClientRepository registeredClientRepository,
+                EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties) {
+            EulerRedisOAuth2AuthorizationService authorizationService = new EulerRedisOAuth2AuthorizationService(
+                    stringRedisTemplate,
+                    registeredClientRepository,
+                    eulerBootAuthorizationServerProperties.getAuthorizationLifetime());
+            authorizationService.setKeyPrefix(eulerBootAuthorizationServerProperties.getRedisKeyPrefix());
+            return authorizationService;
         }
 
         @Bean
