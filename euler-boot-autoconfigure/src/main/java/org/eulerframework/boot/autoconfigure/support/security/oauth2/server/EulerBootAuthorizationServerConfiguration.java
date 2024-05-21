@@ -3,6 +3,7 @@ package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.security.core.context.DelegatingUserContext;
 import org.eulerframework.security.core.context.UserContext;
+import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationConsentService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationService;
 import org.eulerframework.security.web.context.UsernamePasswordAuthenticationUserContext;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -91,8 +92,16 @@ public class EulerBootAuthorizationServerConfiguration {
 
         @Bean
         @ConditionalOnMissingBean(OAuth2AuthorizationConsentService.class)
-        public OAuth2AuthorizationConsentService jdbcOAuth2AuthorizationConsentService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
-            return new JdbcOAuth2AuthorizationConsentService(jdbcTemplate, registeredClientRepository);
+        public OAuth2AuthorizationConsentService jdbcOAuth2AuthorizationConsentService(
+                StringRedisTemplate stringRedisTemplate,
+                RegisteredClientRepository registeredClientRepository,
+                EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties) {
+            EulerRedisOAuth2AuthorizationConsentService authorizationConsentService = new EulerRedisOAuth2AuthorizationConsentService(
+                    stringRedisTemplate,
+                    registeredClientRepository,
+                    eulerBootAuthorizationServerProperties.getAuthorizationLifetime());
+            authorizationConsentService.setKeyPrefix(eulerBootAuthorizationServerProperties.getRedisKeyPrefix());
+            return authorizationConsentService;
         }
     }
 
