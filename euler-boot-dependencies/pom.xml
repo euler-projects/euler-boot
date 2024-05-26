@@ -47,6 +47,11 @@
                 <artifactId>spring-boot-starter-euler-data-jpa</artifactId>
                 <version>${revision}</version>
             </dependency>
+            <dependency>
+                <groupId>org.eulerframework.boot</groupId>
+                <artifactId>spring-boot-starter-euler-data-file</artifactId>
+                <version>${revision}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.eulerframework</groupId>
