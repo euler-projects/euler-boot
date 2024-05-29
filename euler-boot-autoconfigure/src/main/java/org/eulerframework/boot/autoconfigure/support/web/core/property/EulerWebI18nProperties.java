@@ -21,17 +21,8 @@ import java.util.Locale;
 
 @ConfigurationProperties(prefix = "euler.web.i18n")
 public class EulerWebI18nProperties {
-    private String resourcePath = "classpath*:language/**/*";
     private Locale defaultLanguage = Locale.CHINA;
     private Locale[] supportLanguages = new Locale[]{Locale.CHINA, Locale.US};
-
-    public String getResourcePath() {
-        return resourcePath;
-    }
-
-    public void setResourcePath(String resourcePath) {
-        this.resourcePath = resourcePath;
-    }
 
     public Locale getDefaultLanguage() {
         return defaultLanguage;

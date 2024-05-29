@@ -28,7 +28,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.context.MessageSourceProperties;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
@@ -39,10 +42,14 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
 import java.beans.PropertyEditorSupport;
-import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Date;
 
-@AutoConfiguration
+@AutoConfiguration(
+        before = {
+                MessageSourceAutoConfiguration.class
+        }
+)
 @EnableConfigurationProperties({
         EulerCacheProperties.class,
         EulerWebSiteProperties.class,
@@ -51,6 +58,7 @@ import java.util.Date;
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class EulerWebSupportAutoConfiguration {
     private final Logger logger = LoggerFactory.getLogger(EulerWebSupportAutoConfiguration.class);
+
     @Bean
     public ObjectMapper objectMapper() {
         this.logger.debug("Create ObjectMapper use JacksonUtils");
@@ -58,12 +66,29 @@ public class EulerWebSupportAutoConfiguration {
     }
 
     @Bean
+    @ConfigurationProperties(prefix = "spring.messages")
+    public MessageSourceProperties messageSourceProperties() {
+        return new MessageSourceProperties();
+    }
+
+    @Bean
     @ConditionalOnClass(ClassPathReloadableResourceBundleMessageSource.class)
-    public MessageSource messageSource(EulerWebI18nProperties eulerWebI18nProperties) {
+    public MessageSource messageSource(MessageSourceProperties properties) {
         ClassPathReloadableResourceBundleMessageSource messageSource = new ClassPathReloadableResourceBundleMessageSource();
-        messageSource.setDefaultEncoding(StandardCharsets.UTF_8.name());
-        messageSource.setUseCodeAsDefaultMessage(true);
-        messageSource.setBasename(eulerWebI18nProperties.getResourcePath());
+        if (StringUtils.hasText(properties.getBasename())) {
+            messageSource.setBasenames(StringUtils
+                    .commaDelimitedListToStringArray(StringUtils.trimAllWhitespace(properties.getBasename())));
+        }
+        if (properties.getEncoding() != null) {
+            messageSource.setDefaultEncoding(properties.getEncoding().name());
+        }
+        messageSource.setFallbackToSystemLocale(properties.isFallbackToSystemLocale());
+        Duration cacheDuration = properties.getCacheDuration();
+        if (cacheDuration != null) {
+            messageSource.setCacheMillis(cacheDuration.toMillis());
+        }
+        messageSource.setAlwaysUseMessageFormat(properties.isAlwaysUseMessageFormat());
+        messageSource.setUseCodeAsDefaultMessage(properties.isUseCodeAsDefaultMessage());
         return messageSource;
     }
 
@@ -110,6 +135,7 @@ public class EulerWebSupportAutoConfiguration {
     @RestControllerAdvice
     public static class GlobalRestControllerAdvice {
         private final Logger logger = LoggerFactory.getLogger(GlobalRestControllerAdvice.class);
+
         /**
          * 用于在程序发生{@link Exception}异常时统一返回错误信息
          *
@@ -119,7 +145,7 @@ public class EulerWebSupportAutoConfiguration {
         @ExceptionHandler(Exception.class)
         public Object exception(Exception e) {
             this.logger.error(e.getMessage(), e);
-            if(e instanceof org.springframework.web.ErrorResponse) {
+            if (e instanceof org.springframework.web.ErrorResponse) {
                 return e;
             }
             return new ErrorResponse();
