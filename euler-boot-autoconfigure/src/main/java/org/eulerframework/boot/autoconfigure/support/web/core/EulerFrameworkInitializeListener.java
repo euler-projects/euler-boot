@@ -53,7 +53,7 @@ public class EulerFrameworkInitializeListener implements ApplicationListener<Ser
         public void onApplicationEvent(ServletWebServerInitializedEvent event) {
 
             synchronized (this) {
-                if(initialized) {
+                if (initialized) {
                     this.logger.warn("Euler Framework has initialized already");
                     return;
                 }
@@ -89,7 +89,8 @@ public class EulerFrameworkInitializeListener implements ApplicationListener<Ser
 //        container.setAttribute(EulerSysAttributes.PROJECT_BUILD_TIME.value(), EulerWebSupportConfig.getProjectBuildTime());
 
             container.setAttribute(EulerSysAttributes.SITE_NAME.value(), WebConfig.getSiteName());
-//        container.setAttribute(EulerSysAttributes.COPYRIGHT_HOLDER.value(), EulerWebSupportConfig.getCopyrightHolder());
+            container.setAttribute(EulerSysAttributes.COPYRIGHT_HOLDER.value(), WebConfig.getCopyrightHolderName());
+            container.setAttribute(EulerSysAttributes.COPYRIGHT_HOLDER_WEBSITE.value(), WebConfig.getCopyrightHolderWebsite());
             container.setAttribute(EulerSysAttributes.ADMIN_DASHBOARD_BRAND_ICON.value(), contextPath + WebConfig.getAdminDashboardBrandIcon());
             container.setAttribute(EulerSysAttributes.ADMIN_DASHBOARD_BRAND_TEXT.value(), WebConfig.getAdminDashboardBrandText());
 

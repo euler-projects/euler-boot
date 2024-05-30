@@ -18,6 +18,7 @@ package org.eulerframework.boot.autoconfigure.support.web.core;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eulerframework.boot.autoconfigure.property.EulerApplicationProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCacheProperties;
+import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCopyrightProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebI18nProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebSiteProperties;
 import org.eulerframework.common.util.json.JacksonUtils;
@@ -51,6 +52,7 @@ import java.util.Date;
         }
 )
 @EnableConfigurationProperties({
+        EulerCopyrightProperties.class,
         EulerCacheProperties.class,
         EulerWebSiteProperties.class,
         EulerWebI18nProperties.class
