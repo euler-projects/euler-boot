@@ -22,6 +22,10 @@ public class EulerBootSecurityWebProperties {
     private String[] urlPatterns;
     private String[] ignoredUrlPatterns;
     private boolean enabled = false;
+    private String loginPage = "/login";
+    private String logoutPage = "/logout";
+    private String loginProcessingUrl = "/login";
+    private String logoutProcessingUrl = "/logout";
 
     public String[] getUrlPatterns() {
         return urlPatterns;
@@ -45,5 +49,37 @@ public class EulerBootSecurityWebProperties {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public String getLoginPage() {
+        return loginPage;
+    }
+
+    public void setLoginPage(String loginPage) {
+        this.loginPage = loginPage;
+    }
+
+    public String getLogoutPage() {
+        return logoutPage;
+    }
+
+    public void setLogoutPage(String logoutPage) {
+        this.logoutPage = logoutPage;
+    }
+
+    public String getLoginProcessingUrl() {
+        return loginProcessingUrl;
+    }
+
+    public void setLoginProcessingUrl(String loginProcessingUrl) {
+        this.loginProcessingUrl = loginProcessingUrl;
+    }
+
+    public String getLogoutProcessingUrl() {
+        return logoutProcessingUrl;
+    }
+
+    public void setLogoutProcessingUrl(String logoutProcessingUrl) {
+        this.logoutProcessingUrl = logoutProcessingUrl;
     }
 }

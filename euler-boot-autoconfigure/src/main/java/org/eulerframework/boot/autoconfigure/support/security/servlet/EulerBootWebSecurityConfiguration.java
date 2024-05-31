@@ -15,9 +15,11 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilterUtils;
 import org.eulerframework.security.core.context.UserContext;
+import org.eulerframework.security.web.EulerSecurityController;
 import org.eulerframework.security.web.context.UsernamePasswordAuthenticationUserContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,9 +31,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.util.Assert;
 
-import static org.springframework.security.config.Customizer.withDefaults;
+import java.util.Collections;
+import java.util.Map;
 
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(prefix = "euler.security.web", name = "enabled", havingValue = "true")
@@ -48,16 +53,35 @@ public class EulerBootWebSecurityConfiguration {
         String[] urlPatterns = eulerBootSecurityWebProperties.getUrlPatterns();
         String[] ignoredUrlPatterns = eulerBootSecurityWebProperties.getIgnoredUrlPatterns();
         SecurityFilterUtils.configSecurityMatcher(http, urlPatterns, ignoredUrlPatterns);
-
+        DefaultLogoutPageGeneratingFilter defaultLogoutPageGeneratingFilter = new DefaultLogoutPageGeneratingFilter();
+        defaultLogoutPageGeneratingFilter.setResolveHiddenInputs(this::hiddenInputs);
         http
-                .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
-                .formLogin(withDefaults());
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(eulerBootSecurityWebProperties.getLoginPage()).permitAll()
+                        .anyRequest().authenticated())
+                .formLogin(formLogin -> formLogin
+                        .loginPage(eulerBootSecurityWebProperties.getLoginPage())
+                        .loginProcessingUrl(eulerBootSecurityWebProperties.getLoginProcessingUrl()))
+                .logout(logout -> logout
+                        .logoutUrl(eulerBootSecurityWebProperties.getLogoutProcessingUrl()));
         return http.build();
+    }
+
+    private Map<String, String> hiddenInputs(HttpServletRequest request) {
+        CsrfToken token = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+        return (token != null) ? Collections.singletonMap(token.getParameterName(), token.getToken())
+                : Collections.emptyMap();
     }
 
     @Bean
     @ConditionalOnMissingBean(UserContext.class)
     public UserContext userContext() {
         return new UsernamePasswordAuthenticationUserContext();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(EulerSecurityController.class)
+    public DefaultEulerSecurityController eulerSecurityController() {
+        return new DefaultEulerSecurityController();
     }
 }
