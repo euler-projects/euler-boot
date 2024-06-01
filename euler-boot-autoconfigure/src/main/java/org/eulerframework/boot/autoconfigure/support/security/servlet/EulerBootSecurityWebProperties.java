@@ -15,6 +15,7 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
+import org.eulerframework.security.web.endpoint.EulerSecurityEndpoints;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "euler.security.web")
@@ -22,10 +23,12 @@ public class EulerBootSecurityWebProperties {
     private String[] urlPatterns;
     private String[] ignoredUrlPatterns;
     private boolean enabled = false;
-    private String loginPage = "/login";
-    private String logoutPage = "/logout";
-    private String loginProcessingUrl = "/login";
-    private String logoutProcessingUrl = "/logout";
+    private Signup signup = new Signup();
+    private String signupPage = EulerSecurityEndpoints.SIGNUP_PAGE;
+    private String loginPage = EulerSecurityEndpoints.LOGIN_PAGE;
+    private String logoutPage = EulerSecurityEndpoints.LOGOUT_PAGE;
+    private String loginProcessingUrl = EulerSecurityEndpoints.LOGIN_PROCESSING_URL;
+    private String logoutProcessingUrl = EulerSecurityEndpoints.LOGOUT_PROCESSING_URL;
 
     public String[] getUrlPatterns() {
         return urlPatterns;
@@ -49,6 +52,22 @@ public class EulerBootSecurityWebProperties {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public Signup getSignup() {
+        return signup;
+    }
+
+    public void setSignup(Signup signup) {
+        this.signup = signup;
+    }
+
+    public String getSignupPage() {
+        return signupPage;
+    }
+
+    public void setSignupPage(String signupPage) {
+        this.signupPage = signupPage;
     }
 
     public String getLoginPage() {
@@ -81,5 +100,17 @@ public class EulerBootSecurityWebProperties {
 
     public void setLogoutProcessingUrl(String logoutProcessingUrl) {
         this.logoutProcessingUrl = logoutProcessingUrl;
+    }
+
+    public static class Signup {
+        private boolean enabled = false;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
     }
 }

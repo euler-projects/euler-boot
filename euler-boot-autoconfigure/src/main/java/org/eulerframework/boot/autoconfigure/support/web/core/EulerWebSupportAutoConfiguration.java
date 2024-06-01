@@ -22,7 +22,6 @@ import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCopy
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebI18nProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebSiteProperties;
 import org.eulerframework.common.util.json.JacksonUtils;
-import org.eulerframework.web.core.base.response.ErrorResponse;
 import org.eulerframework.web.core.i18n.ClassPathReloadableResourceBundleMessageSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +36,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
@@ -130,27 +128,6 @@ public class EulerWebSupportAutoConfiguration {
                     }
                 }
             });
-        }
-
-    }
-
-    @RestControllerAdvice
-    public static class GlobalRestControllerAdvice {
-        private final Logger logger = LoggerFactory.getLogger(GlobalRestControllerAdvice.class);
-
-        /**
-         * 用于在程序发生{@link Exception}异常时统一返回错误信息
-         *
-         * @return 包含错误信息的Ajax响应体
-         */
-        @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-        @ExceptionHandler(Exception.class)
-        public Object exception(Exception e) {
-            this.logger.error(e.getMessage(), e);
-            if (e instanceof org.springframework.web.ErrorResponse) {
-                return e;
-            }
-            return new ErrorResponse();
         }
     }
 }
