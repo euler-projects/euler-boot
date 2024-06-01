@@ -103,7 +103,7 @@ public class EulerBootSecurityWebProperties {
     }
 
     public static class Signup {
-        private boolean enabled = false;
+        private boolean enabled = true;
 
         public boolean isEnabled() {
             return enabled;
