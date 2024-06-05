@@ -19,9 +19,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilterUtils;
 import org.eulerframework.security.core.context.UserContext;
+import org.eulerframework.security.web.context.UsernamePasswordAuthenticationUserContext;
+import org.eulerframework.security.web.endpoint.DefaultEulerCaptchaController;
 import org.eulerframework.security.web.endpoint.DefaultEulerSecurityController;
 import org.eulerframework.security.web.endpoint.EulerSecurityController;
-import org.eulerframework.security.web.context.UsernamePasswordAuthenticationUserContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -58,7 +59,11 @@ public class EulerBootWebSecurityConfiguration {
         defaultLogoutPageGeneratingFilter.setResolveHiddenInputs(this::hiddenInputs);
         http
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(eulerBootSecurityWebProperties.getSignupPage()).permitAll()
                         .requestMatchers(eulerBootSecurityWebProperties.getLoginPage()).permitAll()
+                        .requestMatchers("/captcha/**").permitAll()
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers("/favicon.ico").permitAll()
                         .anyRequest().authenticated())
                 .formLogin(formLogin -> formLogin
                         .loginPage(eulerBootSecurityWebProperties.getLoginPage())
@@ -84,5 +89,11 @@ public class EulerBootWebSecurityConfiguration {
     @ConditionalOnMissingBean(EulerSecurityController.class)
     public DefaultEulerSecurityController eulerSecurityController() {
         return new DefaultEulerSecurityController();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(DefaultEulerCaptchaController.class)
+    public DefaultEulerCaptchaController eulerCaptchaController() {
+        return new DefaultEulerCaptchaController();
     }
 }
