@@ -16,9 +16,11 @@
 package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
 import org.eulerframework.security.core.context.UserContext;
+import org.eulerframework.security.core.userdetails.DelegatingEulerUserDetailsManager;
+import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.eulerframework.security.web.context.UsernamePasswordAuthenticationUserContext;
 import org.eulerframework.security.core.userdetails.EulerUserDetailsProvider;
-import org.eulerframework.security.core.userdetails.EulerUserDetailsService;
+import org.eulerframework.security.core.userdetails.DefaultEulerUserDetailsManager;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -32,18 +34,22 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Collections;
 import java.util.List;
 
 @Configuration(proxyBeanMethods = false)
-@ConditionalOnClass(EulerUserDetailsService.class)
+@ConditionalOnClass(EulerUserDetails.class)
 @ConditionalOnBean(EulerUserDetailsProvider.class)
 public class EulerUserDetailsServiceConfiguration {
 
     @Bean
-    public EulerUserDetailsService eulerUserDetailsService(
+    public DelegatingEulerUserDetailsManager eulerUserDetailsService(
             List<EulerUserDetailsProvider> eulerUserDetailsProviders
     ) {
-        return new EulerUserDetailsService(eulerUserDetailsProviders);
+        DefaultEulerUserDetailsManager defaultEulerUserDetailsManager = new DefaultEulerUserDetailsManager(eulerUserDetailsProviders);
+        DelegatingEulerUserDetailsManager delegatingEulerUserDetailsManager = new DelegatingEulerUserDetailsManager();
+        delegatingEulerUserDetailsManager.setEulerUserDetailsManagers(Collections.singletonList(defaultEulerUserDetailsManager));
+        return delegatingEulerUserDetailsManager;
     }
 
     @Bean
