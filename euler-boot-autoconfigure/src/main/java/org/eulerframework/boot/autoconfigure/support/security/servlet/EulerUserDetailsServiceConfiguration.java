@@ -15,41 +15,73 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
+import jakarta.annotation.Nonnull;
+import org.eulerframework.security.core.EulerUserService;
 import org.eulerframework.security.core.context.UserContext;
-import org.eulerframework.security.core.userdetails.DelegatingEulerUserDetailsManager;
-import org.eulerframework.security.core.userdetails.EulerUserDetails;
+import org.eulerframework.security.core.userdetails.*;
+import org.eulerframework.security.core.userdetails.provisioning.*;
 import org.eulerframework.security.web.context.UsernamePasswordAuthenticationUserContext;
-import org.eulerframework.security.core.userdetails.EulerUserDetailsProvider;
-import org.eulerframework.security.core.userdetails.DefaultEulerUserDetailsManager;
+import org.springframework.beans.factory.BeanInitializationException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.*;
+import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsPasswordService;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.util.Assert;
 
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(EulerUserDetails.class)
-@ConditionalOnBean(EulerUserDetailsProvider.class)
 public class EulerUserDetailsServiceConfiguration {
+    @Bean
+    @Conditional(DefaultEulerUserDetailsManagerCondition.class)
+    @ConditionalOnMissingBean(EulerUserDetailsManager.class)
+    public EulerUserDetailsManagerSupplier<DefaultEulerUserDetails, MultiProviderEulerUserDetailsManager>
+    multiProviderEulerUserDetailsManagerSupplier(
+            EulerUserService eulerUserService,
+            List<EulerUserDetailsProvider> eulerUserDetailsProviders) {
+        Assert.notNull(eulerUserService, "No eulerUserService bean was defined");
+        Assert.notEmpty(eulerUserDetailsProviders, "At least one EulerUserDetailsProvider bean is required");
+        return new EulerUserDetailsManagerSupplier<>(DefaultEulerUserDetails.class,
+                new MultiProviderEulerUserDetailsManager(eulerUserService, eulerUserDetailsProviders));
+    }
 
     @Bean
-    public DelegatingEulerUserDetailsManager eulerUserDetailsService(
-            List<EulerUserDetailsProvider> eulerUserDetailsProviders
+    @ConditionalOnBean(EulerUserDetailsManagerSupplier.class)
+    @ConditionalOnMissingBean(EulerUserDetailsManager.class)
+    public EulerUserDetailsManager eulerUserDetailsManager(
+            List<EulerUserDetailsManagerSupplier<? extends UserDetails, ? extends EulerUserDetailsManager>> eulerUserDetailsManagerSuppliers
     ) {
-        DefaultEulerUserDetailsManager defaultEulerUserDetailsManager = new DefaultEulerUserDetailsManager(eulerUserDetailsProviders);
-        DelegatingEulerUserDetailsManager delegatingEulerUserDetailsManager = new DelegatingEulerUserDetailsManager();
-        delegatingEulerUserDetailsManager.setEulerUserDetailsManagers(Collections.singletonList(defaultEulerUserDetailsManager));
-        return delegatingEulerUserDetailsManager;
+        if (eulerUserDetailsManagerSuppliers.size() == 1) {
+            return eulerUserDetailsManagerSuppliers.get(0).get();
+        } else {
+            LinkedHashMap<Class<? extends UserDetails>, EulerUserDetailsManager> eulerUserDetailsManagers = new LinkedHashMap<>();
+
+            for (EulerUserDetailsManagerSupplier<? extends UserDetails, ? extends EulerUserDetailsManager> managerSupplier : eulerUserDetailsManagerSuppliers) {
+                Class<? extends UserDetails> supportType = managerSupplier.getSupportType();
+                if (eulerUserDetailsManagers.containsKey(supportType)) {
+                    throw new BeanInitializationException("There are more than one EulerUserDetailsManager bean for user details type: " + supportType);
+                }
+                EulerUserDetailsManager eulerUserDetailsManager = managerSupplier.get();
+                eulerUserDetailsManagers.put(supportType, eulerUserDetailsManager);
+            }
+
+            return new DelegatingEulerUserDetailsManager(eulerUserDetailsManagers);
+        }
     }
 
     @Bean
@@ -60,9 +92,11 @@ public class EulerUserDetailsServiceConfiguration {
     @Bean
     public DaoAuthenticationProvider daoAuthenticationProvider(
             UserDetailsService userDetailsService,
+            @Autowired(required = false) UserDetailsPasswordService userDetailsPasswordService,
             PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider(passwordEncoder);
         daoAuthenticationProvider.setUserDetailsService(userDetailsService);
+        daoAuthenticationProvider.setUserDetailsPasswordService(userDetailsPasswordService);
         return daoAuthenticationProvider;
     }
 
@@ -76,5 +110,24 @@ public class EulerUserDetailsServiceConfiguration {
     @ConditionalOnMissingBean(UserContext.class)
     public UserContext userContext() {
         return new UsernamePasswordAuthenticationUserContext();
+    }
+
+    static class DefaultEulerUserDetailsManagerCondition implements Condition {
+        @Override
+        public boolean matches(@Nonnull ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
+            ConfigurableListableBeanFactory beanFactory = context.getBeanFactory();
+            String[] eulerUserDetailsManagerSupplierBeanNames = Objects.requireNonNull(beanFactory)
+                    .getBeanNamesForType(EulerUserDetailsManagerSupplier.class);
+
+            for (String beanName : eulerUserDetailsManagerSupplierBeanNames) {
+                EulerUserDetailsManagerSupplier<?, ?> eulerUserDetailsManagerSupplier =
+                        beanFactory.getBean(beanName, EulerUserDetailsManagerSupplier.class);
+                if (DefaultEulerUserDetails.class.isAssignableFrom(eulerUserDetailsManagerSupplier.getSupportType())) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 }
