@@ -29,10 +29,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.*;
 import org.springframework.core.type.AnnotatedTypeMetadata;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsPasswordService;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -47,32 +45,35 @@ import java.util.Objects;
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(EulerUserDetails.class)
 public class EulerUserDetailsServiceConfiguration {
+
     @Bean
     @Conditional(DefaultEulerUserDetailsManagerCondition.class)
     @ConditionalOnMissingBean(EulerUserDetailsManager.class)
-    public EulerUserDetailsManagerSupplier<DefaultEulerUserDetails, MultiProviderEulerUserDetailsManager>
+    public DelegateEulerUserDetailsManagerSupplier<DefaultEulerUserDetails, MultiProviderEulerUserDetailsManager>
     multiProviderEulerUserDetailsManagerSupplier(
+            AuthenticationConfiguration authenticationConfiguration,
             EulerUserService eulerUserService,
-            List<EulerUserDetailsProvider> eulerUserDetailsProviders) {
+            List<EulerUserDetailsProvider> eulerUserDetailsProviders) throws Exception {
         Assert.notNull(eulerUserService, "No eulerUserService bean was defined");
         Assert.notEmpty(eulerUserDetailsProviders, "At least one EulerUserDetailsProvider bean is required");
-        return new EulerUserDetailsManagerSupplier<>(DefaultEulerUserDetails.class,
-                new MultiProviderEulerUserDetailsManager(eulerUserService, eulerUserDetailsProviders));
+        MultiProviderEulerUserDetailsManager multiProviderEulerUserDetailsManager = new MultiProviderEulerUserDetailsManager(eulerUserService, eulerUserDetailsProviders);
+        multiProviderEulerUserDetailsManager.setAuthenticationManager(authenticationConfiguration.getAuthenticationManager());
+        return new DelegateEulerUserDetailsManagerSupplier<>(DefaultEulerUserDetails.class, multiProviderEulerUserDetailsManager);
     }
 
     @Bean
-    @ConditionalOnBean(EulerUserDetailsManagerSupplier.class)
+    @ConditionalOnBean(DelegateEulerUserDetailsManagerSupplier.class)
     @ConditionalOnMissingBean(EulerUserDetailsManager.class)
     public EulerUserDetailsManager eulerUserDetailsManager(
-            List<EulerUserDetailsManagerSupplier<? extends UserDetails, ? extends EulerUserDetailsManager>> eulerUserDetailsManagerSuppliers
+            List<DelegateEulerUserDetailsManagerSupplier<? extends UserDetails, ? extends EulerUserDetailsManager>> delegateEulerUserDetailsManagerSuppliers
     ) {
-        if (eulerUserDetailsManagerSuppliers.size() == 1) {
-            return eulerUserDetailsManagerSuppliers.get(0).get();
+        if (delegateEulerUserDetailsManagerSuppliers.size() == 1) {
+            return delegateEulerUserDetailsManagerSuppliers.get(0).get();
         } else {
             LinkedHashMap<Class<? extends UserDetails>, EulerUserDetailsManager> eulerUserDetailsManagers = new LinkedHashMap<>();
 
-            for (EulerUserDetailsManagerSupplier<? extends UserDetails, ? extends EulerUserDetailsManager> managerSupplier : eulerUserDetailsManagerSuppliers) {
-                Class<? extends UserDetails> supportType = managerSupplier.getSupportType();
+            for (DelegateEulerUserDetailsManagerSupplier<? extends UserDetails, ? extends EulerUserDetailsManager> managerSupplier : delegateEulerUserDetailsManagerSuppliers) {
+                Class<? extends UserDetails> supportType = managerSupplier.getUserDetailsType();
                 if (eulerUserDetailsManagers.containsKey(supportType)) {
                     throw new BeanInitializationException("There are more than one EulerUserDetailsManager bean for user details type: " + supportType);
                 }
@@ -85,8 +86,9 @@ public class EulerUserDetailsServiceConfiguration {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(List<AuthenticationProvider> providers) {
-        return new ProviderManager(providers);
+    @ConditionalOnMissingBean(PasswordEncoder.class)
+    public PasswordEncoder passwordEncoder() {
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
     @Bean
@@ -101,12 +103,6 @@ public class EulerUserDetailsServiceConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean(PasswordEncoder.class)
-    public PasswordEncoder passwordEncoder() {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    }
-
-    @Bean
     @ConditionalOnMissingBean(UserContext.class)
     public UserContext userContext() {
         return new UsernamePasswordAuthenticationUserContext();
@@ -117,12 +113,12 @@ public class EulerUserDetailsServiceConfiguration {
         public boolean matches(@Nonnull ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
             ConfigurableListableBeanFactory beanFactory = context.getBeanFactory();
             String[] eulerUserDetailsManagerSupplierBeanNames = Objects.requireNonNull(beanFactory)
-                    .getBeanNamesForType(EulerUserDetailsManagerSupplier.class);
+                    .getBeanNamesForType(DelegateEulerUserDetailsManagerSupplier.class);
 
             for (String beanName : eulerUserDetailsManagerSupplierBeanNames) {
-                EulerUserDetailsManagerSupplier<?, ?> eulerUserDetailsManagerSupplier =
-                        beanFactory.getBean(beanName, EulerUserDetailsManagerSupplier.class);
-                if (DefaultEulerUserDetails.class.isAssignableFrom(eulerUserDetailsManagerSupplier.getSupportType())) {
+                DelegateEulerUserDetailsManagerSupplier<?, ?> delegateEulerUserDetailsManagerSupplier =
+                        beanFactory.getBean(beanName, DelegateEulerUserDetailsManagerSupplier.class);
+                if (DefaultEulerUserDetails.class.isAssignableFrom(delegateEulerUserDetailsManagerSupplier.getUserDetailsType())) {
                     return false;
                 }
             }
