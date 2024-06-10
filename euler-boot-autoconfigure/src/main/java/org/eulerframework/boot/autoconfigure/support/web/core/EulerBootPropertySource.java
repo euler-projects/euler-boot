@@ -23,7 +23,9 @@ import org.eulerframework.common.util.property.PropertyNotFoundException;
 import org.eulerframework.common.util.property.PropertySource;
 import org.eulerframework.web.config.WebConfig.WebConfigKey;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
+import org.springframework.boot.context.properties.bind.DataObjectPropertyName;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.util.Assert;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -66,6 +68,7 @@ public class EulerBootPropertySource implements PropertySource {
 
     @Override
     public Object getProperty(String key) throws PropertyNotFoundException {
+        key = this.renderKey(key);
         if (CONFIG_VALUE_MAPPING.containsKey(key)) {
             return CONFIG_VALUE_MAPPING.get(key).get();
         }
@@ -80,6 +83,7 @@ public class EulerBootPropertySource implements PropertySource {
     @Override
     @SuppressWarnings("unchecked")
     public <T> T getProperty(String key, Class<T> requireType) throws PropertyNotFoundException {
+        key = this.renderKey(key);
         if (CONFIG_VALUE_MAPPING.containsKey(key)) {
             return (T) CONFIG_VALUE_MAPPING.get(key).get();
         }
@@ -89,6 +93,15 @@ public class EulerBootPropertySource implements PropertySource {
         }
 
         throw new PropertyNotFoundException();
+    }
+
+    private String renderKey(String key) {
+        Assert.hasText(key, "key must not be empty");
+        String dashedFormKey = DataObjectPropertyName.toDashedForm(key);
+        if(!dashedFormKey.startsWith("euler.")) {
+            dashedFormKey = "euler." + dashedFormKey;
+        }
+        return dashedFormKey;
     }
 
     @FunctionalInterface
