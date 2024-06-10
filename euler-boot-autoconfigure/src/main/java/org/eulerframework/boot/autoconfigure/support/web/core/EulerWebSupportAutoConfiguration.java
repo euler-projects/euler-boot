@@ -97,10 +97,8 @@ public class EulerWebSupportAutoConfiguration {
             ConfigurableEnvironment configurableEnvironment,
             MultipartProperties multipartProperties,
             EulerApplicationProperties eulerApplicationProperties,
-            EulerWebSiteProperties eulerWebSiteProperties,
-            EulerWebI18nProperties eulerWebI18nProperties,
             EulerCacheProperties eulerCacheProperties) {
-        return new EulerBootPropertySource(configurableEnvironment, multipartProperties, eulerApplicationProperties, eulerWebSiteProperties, eulerWebI18nProperties, eulerCacheProperties);
+        return new EulerBootPropertySource(configurableEnvironment, multipartProperties, eulerApplicationProperties, eulerCacheProperties);
     }
 
     @ControllerAdvice

@@ -17,8 +17,6 @@ package org.eulerframework.boot.autoconfigure.support.web.core;
 
 import org.eulerframework.boot.autoconfigure.property.EulerApplicationProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCacheProperties;
-import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebI18nProperties;
-import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebSiteProperties;
 import org.eulerframework.common.util.property.PropertyNotFoundException;
 import org.eulerframework.common.util.property.PropertySource;
 import org.eulerframework.web.config.WebConfig.WebConfigKey;
@@ -41,8 +39,6 @@ public class EulerBootPropertySource implements PropertySource {
             ConfigurableEnvironment environment,
             MultipartProperties multipartProperties,
             EulerApplicationProperties eulerApplicationProperties,
-            EulerWebSiteProperties eulerWebSiteProperties,
-            EulerWebI18nProperties eulerWebI18nProperties,
             EulerCacheProperties eulerCacheProperties) {
         this.environment = environment;
 
@@ -55,11 +51,7 @@ public class EulerBootPropertySource implements PropertySource {
         // [core.cache]
         CONFIG_VALUE_MAPPING.put(WebConfigKey.CORE_CACHE_RAM_CACHE_POOL_CLEAN_FREQ, eulerCacheProperties::getRamCachePoolCleanFreq);
 
-        // [web]
-        CONFIG_VALUE_MAPPING.put(WebConfigKey.WEB_SITE_URL, eulerWebSiteProperties::getUrl);
-        CONFIG_VALUE_MAPPING.put(WebConfigKey.WEB_LANGUAGE_DEFAULT, eulerWebI18nProperties::getDefaultLanguage);
-        CONFIG_VALUE_MAPPING.put(WebConfigKey.WEB_LANGUAGE_SUPPORT_LANGUAGES, eulerWebI18nProperties::getSupportLanguages);
-
+        // [web.multiPart]
         CONFIG_VALUE_MAPPING.put(WebConfigKey.WEB_MULTIPART_FILE_SIZE_THRESHOLD, multipartProperties::getFileSizeThreshold);
         CONFIG_VALUE_MAPPING.put(WebConfigKey.WEB_MULTIPART_LOCATION, multipartProperties::getLocation);
         CONFIG_VALUE_MAPPING.put(WebConfigKey.WEB_MULTIPART_MAX_FILE_SIZE, multipartProperties::getMaxFileSize);
