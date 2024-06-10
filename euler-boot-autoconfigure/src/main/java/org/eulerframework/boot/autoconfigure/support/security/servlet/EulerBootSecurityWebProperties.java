@@ -27,8 +27,10 @@ public class EulerBootSecurityWebProperties {
     private String signupPage = EulerSecurityEndpoints.SIGNUP_PAGE;
     private String loginPage = EulerSecurityEndpoints.LOGIN_PAGE;
     private String logoutPage = EulerSecurityEndpoints.LOGOUT_PAGE;
+    private String changePasswordPage = EulerSecurityEndpoints.CHANGE_PASSWORD_PAGE;
     private String loginProcessingUrl = EulerSecurityEndpoints.LOGIN_PROCESSING_URL;
     private String logoutProcessingUrl = EulerSecurityEndpoints.LOGOUT_PROCESSING_URL;
+    private String changePasswordProcessingUrl = EulerSecurityEndpoints.CHANGE_PASSWORD_PROCESSING_URL;
 
     public String[] getUrlPatterns() {
         return urlPatterns;
@@ -86,6 +88,14 @@ public class EulerBootSecurityWebProperties {
         this.logoutPage = logoutPage;
     }
 
+    public String getChangePasswordPage() {
+        return changePasswordPage;
+    }
+
+    public void setChangePasswordPage(String changePasswordPage) {
+        this.changePasswordPage = changePasswordPage;
+    }
+
     public String getLoginProcessingUrl() {
         return loginProcessingUrl;
     }
@@ -100,6 +110,14 @@ public class EulerBootSecurityWebProperties {
 
     public void setLogoutProcessingUrl(String logoutProcessingUrl) {
         this.logoutProcessingUrl = logoutProcessingUrl;
+    }
+
+    public String getChangePasswordProcessingUrl() {
+        return changePasswordProcessingUrl;
+    }
+
+    public void setChangePasswordProcessingUrl(String changePasswordProcessingUrl) {
+        this.changePasswordProcessingUrl = changePasswordProcessingUrl;
     }
 
     public static class Signup {
