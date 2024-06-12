@@ -92,17 +92,6 @@ public class EulerUserDetailsServiceConfiguration {
     }
 
     @Bean
-    public DaoAuthenticationProvider daoAuthenticationProvider(
-            UserDetailsService userDetailsService,
-            @Autowired(required = false) UserDetailsPasswordService userDetailsPasswordService,
-            PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider(passwordEncoder);
-        daoAuthenticationProvider.setUserDetailsService(userDetailsService);
-        daoAuthenticationProvider.setUserDetailsPasswordService(userDetailsPasswordService);
-        return daoAuthenticationProvider;
-    }
-
-    @Bean
     @ConditionalOnMissingBean(UserContext.class)
     public UserContext userContext() {
         return new UsernamePasswordAuthenticationUserContext();
