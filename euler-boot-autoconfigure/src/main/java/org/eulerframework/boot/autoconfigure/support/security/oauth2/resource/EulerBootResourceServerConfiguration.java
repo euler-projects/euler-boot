@@ -17,9 +17,7 @@ package org.eulerframework.boot.autoconfigure.support.security.oauth2.resource;
 
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilterUtils;
-import org.eulerframework.security.core.context.UserContext;
 import org.eulerframework.security.oauth2.resource.OAuth2NativeTokenAuthenticationManager;
-import org.eulerframework.security.oauth2.resource.context.BearerTokenAuthenticationUserContext;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
@@ -33,7 +31,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AnyRequestMatcher;
@@ -125,16 +122,6 @@ class EulerBootResourceServerConfiguration {
             http.oauth2ResourceServer(resourceServer -> resourceServer
                     .authenticationManagerResolver(request -> authenticationManager));
             return http.build();
-        }
-    }
-
-
-    @Configuration(proxyBeanMethods = false)
-    static class UserContextConfiguration {
-        @Bean
-        @ConditionalOnMissingBean(UserContext.class)
-        public UserContext userContext() {
-            return new BearerTokenAuthenticationUserContext();
         }
     }
 }

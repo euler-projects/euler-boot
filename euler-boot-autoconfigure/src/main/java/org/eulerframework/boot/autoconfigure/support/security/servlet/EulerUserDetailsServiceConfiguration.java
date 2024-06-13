@@ -15,11 +15,10 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.eulerframework.security.core.EulerUserService;
-import org.eulerframework.security.core.context.UserContext;
 import org.eulerframework.security.core.userdetails.*;
 import org.eulerframework.security.core.userdetails.provisioning.*;
-import org.eulerframework.security.web.context.UsernamePasswordAuthenticationUserContext;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.*;
@@ -33,17 +32,27 @@ import java.util.List;
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(EulerUserDetails.class)
 public class EulerUserDetailsServiceConfiguration {
-
     @Bean
+    @Lazy
     @ConditionalOnMissingBean(EulerUserDetailsManager.class)
     public ProviderEulerUserDetailsManager providerEulerUserDetailsManager(
             AuthenticationConfiguration authenticationConfiguration,
             EulerUserService eulerUserService,
-            List<EulerUserDetailsProvider> eulerUserDetailsProviders) throws Exception {
+            List<LocalEulerUserDetailsProvider> localEulerUserDetailsProviders) throws Exception {
         Assert.notNull(eulerUserService, "No eulerUserService bean was defined");
-        Assert.notEmpty(eulerUserDetailsProviders, "At least one EulerUserDetailsProvider bean is required");
-        ProviderEulerUserDetailsManager providerEulerUserDetailsManager = new ProviderEulerUserDetailsManager(eulerUserService, eulerUserDetailsProviders);
-        providerEulerUserDetailsManager.setAuthenticationManager(authenticationConfiguration.getAuthenticationManager());
+        Assert.notEmpty(localEulerUserDetailsProviders, "At least one LocalEulerUserDetailsProvider bean is required");
+        ProviderEulerUserDetailsManager providerEulerUserDetailsManager = new ProviderEulerUserDetailsManager(eulerUserService, localEulerUserDetailsProviders);
+
+        providerEulerUserDetailsManager.setAuthenticationManager(
+                new DelegatedAuthenticationManager(() -> {
+                    try {
+                        return authenticationConfiguration.getAuthenticationManager();
+                    } catch (Exception e) {
+                        throw ExceptionUtils.<RuntimeException>rethrow(e);
+                    }
+                })
+        );
+
         return providerEulerUserDetailsManager;
     }
 
@@ -51,11 +60,5 @@ public class EulerUserDetailsServiceConfiguration {
     @ConditionalOnMissingBean(PasswordEncoder.class)
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(UserContext.class)
-    public UserContext userContext() {
-        return new UsernamePasswordAuthenticationUserContext();
     }
 }

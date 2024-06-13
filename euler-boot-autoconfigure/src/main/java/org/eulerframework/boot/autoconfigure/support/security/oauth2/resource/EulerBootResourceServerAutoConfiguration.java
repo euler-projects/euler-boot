@@ -15,18 +15,29 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.resource;
 
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAutoConfiguration;
 import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootSecurityWebAutoConfiguration;
+import org.eulerframework.security.core.context.DelegatingUserContext;
+import org.eulerframework.security.core.context.UserContext;
+import org.eulerframework.security.core.context.UserDetailsPrincipalUserContext;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.oauth2.core.context.OAuth2AuthenticatedPrincipalUserContext;
+import org.springframework.security.oauth2.core.userdetails.provisioning.OAuth2TokenUserDetailsProvider;
 import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
+
+import java.util.List;
 
 @AutoConfiguration(
         before = {
                 EulerBootSecurityWebAutoConfiguration.class,
+                EulerBootSecurityAutoConfiguration.class,
                 OAuth2ResourceServerAutoConfiguration.class
         })
 @EnableConfigurationProperties(EulerBootResourceServerProperties.class)
@@ -36,9 +47,15 @@ import org.springframework.security.oauth2.server.resource.authentication.Bearer
         EulerBootResourceServerConfiguration.LocalAuthorizationServerResourceServerConfiguration.class,
         EulerBootResourceServerConfiguration.OpaqueTokenResourceServerConfiguration.class,
         EulerBootResourceServerConfiguration.JwkSetUriResourceServerConfiguration.class,
-        EulerBootResourceServerConfiguration.KeyValueJwtResourceServerConfiguration.class,
-        EulerBootResourceServerConfiguration.UserContextConfiguration.class
+        EulerBootResourceServerConfiguration.KeyValueJwtResourceServerConfiguration.class
 })
 public class EulerBootResourceServerAutoConfiguration {
-
+//        @Bean
+//        @ConditionalOnMissingBean(UserContext.class)
+//        public UserContext userContext(List<OAuth2TokenUserDetailsProvider> tokenUserDetailsProviders) {
+//                OAuth2AuthenticatedPrincipalUserContext oauth2AuthenticatedPrincipalUserContext =
+//                        new OAuth2AuthenticatedPrincipalUserContext(tokenUserDetailsProviders);
+//                UserDetailsPrincipalUserContext userDetailsPrincipalUserContext = new UserDetailsPrincipalUserContext();
+//                return new DelegatingUserContext(oauth2AuthenticatedPrincipalUserContext, userDetailsPrincipalUserContext);
+//        }
 }

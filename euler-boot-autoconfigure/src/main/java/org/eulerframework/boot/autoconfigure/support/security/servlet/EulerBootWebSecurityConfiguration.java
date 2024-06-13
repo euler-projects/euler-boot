@@ -18,8 +18,6 @@ package org.eulerframework.boot.autoconfigure.support.security.servlet;
 import jakarta.servlet.http.HttpServletRequest;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilterUtils;
-import org.eulerframework.security.core.context.UserContext;
-import org.eulerframework.security.web.context.UsernamePasswordAuthenticationUserContext;
 import org.eulerframework.security.web.endpoint.DefaultEulerCaptchaController;
 import org.eulerframework.security.web.endpoint.DefaultEulerSecurityController;
 import org.eulerframework.security.web.endpoint.EulerSecurityController;
@@ -77,12 +75,6 @@ public class EulerBootWebSecurityConfiguration {
         CsrfToken token = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
         return (token != null) ? Collections.singletonMap(token.getParameterName(), token.getToken())
                 : Collections.emptyMap();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(UserContext.class)
-    public UserContext userContext() {
-        return new UsernamePasswordAuthenticationUserContext();
     }
 
     @Bean

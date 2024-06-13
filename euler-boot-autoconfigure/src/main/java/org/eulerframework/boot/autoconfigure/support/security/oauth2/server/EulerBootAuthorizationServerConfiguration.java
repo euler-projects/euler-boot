@@ -16,11 +16,8 @@
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
-import org.eulerframework.security.core.context.DelegatingUserContext;
-import org.eulerframework.security.core.context.UserContext;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationConsentService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationService;
-import org.eulerframework.security.web.context.UsernamePasswordAuthenticationUserContext;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -33,7 +30,6 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.eulerframework.security.oauth2.resource.context.BearerTokenAuthenticationUserContext;
 import org.springframework.security.oauth2.server.authorization.*;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
@@ -44,7 +40,6 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
-import java.time.Duration;
 import java.util.Set;
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -118,14 +113,6 @@ public class EulerBootAuthorizationServerConfiguration {
             authorizationConsentService.setKeyPrefix(eulerBootAuthorizationServerProperties.getRedisKeyPrefix());
             return authorizationConsentService;
         }
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(UserContext.class)
-    public UserContext userContext() {
-        BearerTokenAuthenticationUserContext oauth2AuthenticatedPrincipalUserContext = new BearerTokenAuthenticationUserContext();
-        UsernamePasswordAuthenticationUserContext usernamePasswordAuthenticationUserContext = new UsernamePasswordAuthenticationUserContext();
-        return new DelegatingUserContext(oauth2AuthenticatedPrincipalUserContext, usernamePasswordAuthenticationUserContext);
     }
 
     private static RequestMatcher createRequestMatcher() {

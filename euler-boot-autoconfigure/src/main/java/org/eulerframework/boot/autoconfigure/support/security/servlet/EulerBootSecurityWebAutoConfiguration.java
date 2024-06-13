@@ -38,4 +38,5 @@ import org.springframework.context.annotation.Import;
         EulerUserDetailsServiceConfiguration.class
 })
 public class EulerBootSecurityWebAutoConfiguration {
+
 }
