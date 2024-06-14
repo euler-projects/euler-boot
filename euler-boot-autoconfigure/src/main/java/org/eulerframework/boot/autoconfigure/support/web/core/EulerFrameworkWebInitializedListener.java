@@ -29,7 +29,7 @@ import org.springframework.util.Assert;
 
 import jakarta.servlet.ServletContext;
 
-public class EulerFrameworkInitializeListener implements ApplicationListener<ServletWebServerInitializedEvent> {
+public class EulerFrameworkWebInitializedListener implements ApplicationListener<ServletWebServerInitializedEvent> {
 
     @Override
     public void onApplicationEvent(ServletWebServerInitializedEvent event) {
@@ -37,7 +37,7 @@ public class EulerFrameworkInitializeListener implements ApplicationListener<Ser
     }
 
     /**
-     * {@link EulerFrameworkInitializeListener} 对象在启用 Spring Cloud 时会被实例化多次并触发多次 {@link ServletWebServerInitializedEvent},
+     * {@link EulerFrameworkWebInitializedListener} 对象在启用 Spring Cloud 时会被实例化多次并触发多次 {@link ServletWebServerInitializedEvent},
      * 用单例和一个 {@link EulerFrameworkInitializer#initialized} 标记临时解决这个问题
      */
     private static class EulerFrameworkInitializerHolder {

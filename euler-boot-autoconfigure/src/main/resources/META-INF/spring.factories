@@ -1,2 +1,3 @@
 org.springframework.context.ApplicationListener=\
-  org.eulerframework.boot.autoconfigure.support.web.core.EulerFrameworkInitializeListener
+  org.eulerframework.boot.autoconfigure.ApplicationPreparedListener,\
+  org.eulerframework.boot.autoconfigure.support.web.core.EulerFrameworkWebInitializedListener

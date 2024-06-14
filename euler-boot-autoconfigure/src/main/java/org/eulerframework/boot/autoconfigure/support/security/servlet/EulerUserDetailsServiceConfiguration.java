@@ -16,6 +16,7 @@
 package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.eulerframework.security.authentication.DeferredAuthenticationManager;
 import org.eulerframework.security.core.EulerUserService;
 import org.eulerframework.security.core.userdetails.*;
 import org.eulerframework.security.core.userdetails.provisioning.*;
@@ -44,7 +45,7 @@ public class EulerUserDetailsServiceConfiguration {
         ProviderEulerUserDetailsManager providerEulerUserDetailsManager = new ProviderEulerUserDetailsManager(eulerUserService, localEulerUserDetailsProviders);
 
         providerEulerUserDetailsManager.setAuthenticationManager(
-                new DelegatedAuthenticationManager(() -> {
+                new DeferredAuthenticationManager(() -> {
                     try {
                         return authenticationConfiguration.getAuthenticationManager();
                     } catch (Exception e) {
