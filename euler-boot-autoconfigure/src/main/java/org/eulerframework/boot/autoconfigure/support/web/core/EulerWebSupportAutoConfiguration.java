@@ -22,7 +22,7 @@ import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCopy
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebI18nProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebSiteProperties;
 import org.eulerframework.common.util.json.JacksonUtils;
-import org.eulerframework.web.core.i18n.ClassPathReloadableResourceBundleMessageSource;
+import org.eulerframework.context.support.ClassPathReloadableResourceBundleMessageSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;

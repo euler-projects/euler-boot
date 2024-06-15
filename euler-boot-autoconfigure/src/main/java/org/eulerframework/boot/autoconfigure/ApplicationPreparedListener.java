@@ -15,7 +15,7 @@
  */
 package org.eulerframework.boot.autoconfigure;
 
-import org.eulerframework.core.context.ApplicationContextHolder;
+import org.eulerframework.context.ApplicationContextHolder;
 import org.springframework.boot.context.event.ApplicationPreparedEvent;
 import org.springframework.context.ApplicationListener;
 
