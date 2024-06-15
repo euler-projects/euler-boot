@@ -75,10 +75,6 @@
                         <groupId>org.springframework</groupId>
                         <artifactId>*</artifactId>
                     </exclusion>
-                    <exclusion>
-                        <groupId>org.springframework.data</groupId>
-                        <artifactId>*</artifactId>
-                    </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
