@@ -32,6 +32,11 @@
 
         <dependency>
             <groupId>org.eulerframework</groupId>
+            <artifactId>euler-core</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.eulerframework</groupId>
             <artifactId>euler-web-core</artifactId>
             <optional>true</optional>
         </dependency>

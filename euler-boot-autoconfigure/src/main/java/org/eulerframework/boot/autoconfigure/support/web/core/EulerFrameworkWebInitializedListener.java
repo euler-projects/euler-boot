@@ -17,7 +17,7 @@ package org.eulerframework.boot.autoconfigure.support.web.core;
 
 import org.eulerframework.common.util.property.PropertyReader;
 import org.eulerframework.constant.EulerSysAttributes;
-import org.eulerframework.web.config.SystemProperties;
+import org.eulerframework.util.SystemUtils;
 import org.eulerframework.web.config.WebConfig;
 import org.eulerframework.web.core.cookie.LocaleCookies;
 import org.eulerframework.web.util.ServletContextHolder;
@@ -94,7 +94,7 @@ public class EulerFrameworkWebInitializedListener implements ApplicationListener
             container.setAttribute(EulerSysAttributes.ADMIN_DASHBOARD_BRAND_ICON.value(), contextPath + WebConfig.getAdminDashboardBrandIcon());
             container.setAttribute(EulerSysAttributes.ADMIN_DASHBOARD_BRAND_TEXT.value(), WebConfig.getAdminDashboardBrandText());
 
-            container.setAttribute(EulerSysAttributes.FRAMEWORK_VERSION.value(), SystemProperties.frameworkVersion());
+            container.setAttribute(EulerSysAttributes.FRAMEWORK_VERSION.value(), SystemUtils.frameworkVersion());
 
             container.setAttribute(EulerSysAttributes.LOCALE_COOKIE_NAME.value(), LocaleCookies.LOCALE.getCookieName());
         }

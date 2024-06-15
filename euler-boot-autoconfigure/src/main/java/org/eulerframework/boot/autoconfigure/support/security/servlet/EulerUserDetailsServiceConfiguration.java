@@ -18,7 +18,7 @@ package org.eulerframework.boot.autoconfigure.support.security.servlet;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.eulerframework.security.authentication.DeferredAuthenticationManager;
 import org.eulerframework.security.core.EulerUserService;
-import org.eulerframework.security.core.userdetails.*;
+import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.eulerframework.security.provisioning.EulerUserDetailsManager;
 import org.eulerframework.security.core.userdetails.provider.LocalEulerUserDetailsProvider;
 import org.eulerframework.security.provisioning.ProviderEulerUserDetailsManager;
