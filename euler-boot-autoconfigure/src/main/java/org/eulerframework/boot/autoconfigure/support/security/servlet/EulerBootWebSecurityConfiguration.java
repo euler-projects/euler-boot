@@ -19,11 +19,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilterUtils;
 import org.eulerframework.security.web.endpoint.*;
-import org.eulerframework.security.web.endpoint.csrf.EulerCsrfTokenController;
-import org.eulerframework.security.web.endpoint.csrf.EulerJsonCsrfTokenController;
-import org.eulerframework.security.web.endpoint.csrf.EulerXmlCsrfTokenController;
-import org.eulerframework.security.web.endpoint.user.DefaultEulerUserSecurityController;
-import org.eulerframework.security.web.endpoint.user.EulerUserSecurityController;
+import org.eulerframework.security.web.endpoint.csrf.EulerSecurityCsrfTokenEndpoint;
+import org.eulerframework.security.web.endpoint.csrf.EulerSecurityJsonCsrfTokenController;
+import org.eulerframework.security.web.endpoint.csrf.EulerSecurityXmlCsrfTokenController;
+import org.eulerframework.security.web.endpoint.password.EulerSecurityPasswordAjaxController;
+import org.eulerframework.security.web.endpoint.password.EulerSecurityPasswordEndpoint;
+import org.eulerframework.security.web.endpoint.password.EulerSecurityPasswordPageController;
+import org.eulerframework.security.web.endpoint.signup.EulerSecuritySignupAjaxController;
+import org.eulerframework.security.web.endpoint.signup.EulerSecuritySignupEndpoint;
+import org.eulerframework.security.web.endpoint.signup.EulerSecuritySignupPageController;
+import org.eulerframework.security.web.endpoint.user.EulerSecurityUserPageController;
+import org.eulerframework.security.web.endpoint.user.EulerSecurityUserEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -85,24 +91,74 @@ public class EulerBootWebSecurityConfiguration {
     }
 
     @Configuration(proxyBeanMethods = false)
-    @ConditionalOnMissingBean(EulerCsrfTokenController.class)
-    static class EulerCsrfEndpointConfiguration {
+    @ConditionalOnMissingBean(EulerSecurityCsrfTokenEndpoint.class)
+    @ConditionalOnProperty(
+            prefix = EulerSecurityEndpoints.CSRF_ENDPOINT_PROP_PREFIX,
+            name = EulerSecurityEndpoints.ENABLED_PROP,
+            havingValue = "true",
+            matchIfMissing = EulerSecurityEndpoints.CSRF_ENABLED)
+    static class EulerSecurityCsrfTokenEndpointConfiguration {
         @Bean
-        public EulerXmlCsrfTokenController eulerCsrfViewController() {
-            return new EulerXmlCsrfTokenController();
+        public EulerSecurityXmlCsrfTokenController eulerSecurityXmlCsrfTokenController() {
+            return new EulerSecurityXmlCsrfTokenController();
         }
 
         @Bean
-        public EulerJsonCsrfTokenController eulerCsrfAjaxController() {
-            return new EulerJsonCsrfTokenController();
+        public EulerSecurityJsonCsrfTokenController eulerSecurityJsonCsrfTokenController() {
+            return new EulerSecurityJsonCsrfTokenController();
         }
     }
 
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnMissingBean(EulerSecurityUserEndpoint.class)
+    @ConditionalOnProperty(
+            prefix = EulerSecurityEndpoints.USER_ENDPOINT_PROP_PREFIX,
+            name = EulerSecurityEndpoints.ENABLED_PROP,
+            havingValue = "true",
+            matchIfMissing = EulerSecurityEndpoints.USER_ENABLED)
+    static class EulerSecurityUserEndpointConfiguration {
+        @Bean
+        public EulerSecurityUserPageController eulerSecurityUserPageController() {
+            return new EulerSecurityUserPageController();
+        }
+    }
 
-    @Bean
-    @ConditionalOnMissingBean(EulerUserSecurityController.class)
-    public DefaultEulerUserSecurityController eulerSecurityController() {
-        return new DefaultEulerUserSecurityController();
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnMissingBean(EulerSecuritySignupEndpoint.class)
+    @ConditionalOnProperty(
+            prefix = EulerSecurityEndpoints.SIGNUP_ENDPOINT_PROP_PREFIX,
+            name = EulerSecurityEndpoints.ENABLED_PROP,
+            havingValue = "true",
+            matchIfMissing = EulerSecurityEndpoints.SIGNUP_ENABLED)
+    static class EulerSecuritySignupEndpointConfiguration {
+        @Bean
+        public EulerSecuritySignupPageController eulerSecuritySignupPageController() {
+            return new EulerSecuritySignupPageController();
+        }
+
+        @Bean
+        public EulerSecuritySignupAjaxController eulerSecuritySignupAjaxController() {
+            return new EulerSecuritySignupAjaxController();
+        }
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnMissingBean(EulerSecurityPasswordEndpoint.class)
+    @ConditionalOnProperty(
+            prefix = EulerSecurityEndpoints.PASSWORD_ENDPOINT_PROP_PREFIX,
+            name = EulerSecurityEndpoints.ENABLED_PROP,
+            havingValue = "true",
+            matchIfMissing = EulerSecurityEndpoints.PASSWORD_ENABLED)
+    static class EulerSecurityPasswordEndpointConfiguration {
+        @Bean
+        public EulerSecurityPasswordPageController eulerSecurityPasswordPageController() {
+            return new EulerSecurityPasswordPageController();
+        }
+
+        @Bean
+        public EulerSecurityPasswordAjaxController eulerSecurityPasswordAjaxController() {
+            return new EulerSecurityPasswordAjaxController();
+        }
     }
 
     @Bean

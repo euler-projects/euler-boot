@@ -18,10 +18,11 @@ package org.eulerframework.boot.autoconfigure.support.security.servlet;
 import org.eulerframework.security.web.endpoint.EulerSecurityEndpoints;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "euler.security.web.endpoint")
+@ConfigurationProperties(prefix = EulerSecurityEndpoints.PROPERTY_NAME_PREFIX)
 public class EulerBootSecurityWebEndpointProperties {
     private Csrf csrf = new Csrf();
     private User user = new User();
+    private Password password = new Password();
     private Signup signup = new Signup();
 
     public Csrf getCsrf() {
@@ -38,6 +39,14 @@ public class EulerBootSecurityWebEndpointProperties {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Password getPassword() {
+        return password;
+    }
+
+    public void setPassword(Password password) {
+        this.password = password;
     }
 
     public Signup getSignup() {
@@ -70,12 +79,19 @@ public class EulerBootSecurityWebEndpointProperties {
     }
 
     public static class User {
+        private boolean enabled = EulerSecurityEndpoints.USER_ENABLED;
         private String loginPage = EulerSecurityEndpoints.USER_LOGIN_PAGE;
         private String logoutPage = EulerSecurityEndpoints.USER_LOGOUT_PAGE;
-        private String changePasswordPage = EulerSecurityEndpoints.USER_CHANGE_PASSWORD_PAGE;
         private String loginProcessingUrl = EulerSecurityEndpoints.USER_LOGIN_PROCESSING_URL;
         private String logoutProcessingUrl = EulerSecurityEndpoints.USER_LOGOUT_PROCESSING_URL;
-        private String changePasswordProcessingUrl = EulerSecurityEndpoints.USER_CHANGE_PASSWORD_PROCESSING_URL;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
 
         public String getLoginPage() {
             return loginPage;
@@ -93,14 +109,6 @@ public class EulerBootSecurityWebEndpointProperties {
             this.logoutPage = logoutPage;
         }
 
-        public String getChangePasswordPage() {
-            return changePasswordPage;
-        }
-
-        public void setChangePasswordPage(String changePasswordPage) {
-            this.changePasswordPage = changePasswordPage;
-        }
-
         public String getLoginProcessingUrl() {
             return loginProcessingUrl;
         }
@@ -116,6 +124,28 @@ public class EulerBootSecurityWebEndpointProperties {
         public void setLogoutProcessingUrl(String logoutProcessingUrl) {
             this.logoutProcessingUrl = logoutProcessingUrl;
         }
+    }
+
+    public static class Password {
+        private boolean enabled = EulerSecurityEndpoints.PASSWORD_ENABLED;
+        private String changePasswordPage = EulerSecurityEndpoints.PASSWORD_CHANGE_PASSWORD_PAGE;
+        private String changePasswordProcessingUrl = EulerSecurityEndpoints.PASSWORD_CHANGE_PASSWORD_PROCESSING_URL;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getChangePasswordPage() {
+            return changePasswordPage;
+        }
+
+        public void setChangePasswordPage(String changePasswordPage) {
+            this.changePasswordPage = changePasswordPage;
+        }
 
         public String getChangePasswordProcessingUrl() {
             return changePasswordProcessingUrl;
@@ -124,20 +154,7 @@ public class EulerBootSecurityWebEndpointProperties {
         public void setChangePasswordProcessingUrl(String changePasswordProcessingUrl) {
             this.changePasswordProcessingUrl = changePasswordProcessingUrl;
         }
-
-        public static class Signup {
-            private boolean enabled = true;
-
-            public boolean isEnabled() {
-                return enabled;
-            }
-
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
-        }
     }
-
 
 
     public static class Signup {
