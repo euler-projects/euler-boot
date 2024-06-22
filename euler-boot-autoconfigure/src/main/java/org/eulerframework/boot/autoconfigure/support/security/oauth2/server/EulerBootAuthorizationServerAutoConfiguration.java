@@ -22,7 +22,7 @@ import org.eulerframework.security.core.context.DelegatingUserContext;
 import org.eulerframework.security.core.context.UserContext;
 import org.eulerframework.security.core.context.UserDetailsPrincipalUserContext;
 import org.eulerframework.security.core.userdetails.EulerUserDetailsService;
-import org.eulerframework.security.oauth2.server.authorization.userdetails.provisioning.AuthorizationServerUserDetailsProvider;
+import org.eulerframework.security.oauth2.server.authorization.userdetails.provider.AuthorizationServerUserDetailsProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -32,8 +32,8 @@ import org.springframework.boot.autoconfigure.security.oauth2.server.servlet.OAu
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.oauth2.core.context.OAuth2AuthenticatedPrincipalUserContext;
-import org.springframework.security.oauth2.core.userdetails.provisioning.OAuth2TokenUserDetailsProvider;
+import org.eulerframework.security.oauth2.core.context.OAuth2AuthenticatedPrincipalUserContext;
+import org.eulerframework.security.oauth2.core.userdetails.provider.OAuth2TokenUserDetailsProvider;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 
 import java.util.List;
