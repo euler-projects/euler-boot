@@ -79,6 +79,7 @@ public class EulerBootWebSecurityConfiguration {
                         .requestMatchers(eulerBootSecurityWebEndpointProperties.getSignup().getSignupProcessingUrl()).permitAll()
                         .requestMatchers(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage()).permitAll()
                         .requestMatchers("/captcha").permitAll()
+                        .requestMatchers("/captcha/validCaptcha").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
                         .anyRequest().authenticated())
