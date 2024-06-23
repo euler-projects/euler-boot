@@ -18,6 +18,8 @@ package org.eulerframework.boot.autoconfigure.support.security.servlet;
 import jakarta.servlet.http.HttpServletRequest;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilterUtils;
+import org.eulerframework.security.core.captcha.view.DefaultSmsCaptchaView;
+import org.eulerframework.security.core.captcha.view.SmsCaptchaView;
 import org.eulerframework.security.web.endpoint.*;
 import org.eulerframework.security.web.endpoint.csrf.EulerSecurityCsrfTokenEndpoint;
 import org.eulerframework.security.web.endpoint.csrf.EulerSecurityJsonCsrfTokenController;
@@ -30,8 +32,13 @@ import org.eulerframework.security.web.endpoint.signup.EulerSecuritySignupEndpoi
 import org.eulerframework.security.web.endpoint.signup.EulerSecuritySignupPageController;
 import org.eulerframework.security.web.endpoint.user.EulerSecurityUserPageController;
 import org.eulerframework.security.web.endpoint.user.EulerSecurityUserEndpoint;
+import org.eulerframework.sms.ConsoleSmsSenderFactory;
+import org.eulerframework.sms.SmsSenderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
@@ -71,7 +78,7 @@ public class EulerBootWebSecurityConfiguration {
                         .requestMatchers(eulerBootSecurityWebEndpointProperties.getSignup().getSignupPage()).permitAll()
                         .requestMatchers(eulerBootSecurityWebEndpointProperties.getSignup().getSignupProcessingUrl()).permitAll()
                         .requestMatchers(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage()).permitAll()
-                        .requestMatchers("/captcha/**").permitAll()
+                        .requestMatchers("/captcha").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
                         .anyRequest().authenticated())
@@ -161,9 +168,31 @@ public class EulerBootWebSecurityConfiguration {
         }
     }
 
-    @Bean
-    @ConditionalOnMissingBean(DefaultEulerCaptchaController.class)
-    public DefaultEulerCaptchaController eulerCaptchaController() {
-        return new DefaultEulerCaptchaController();
+    @Configuration(proxyBeanMethods = false)
+    static class EulerSecurityCaptchaEndpointConfiguration {
+        @Bean
+        @ConditionalOnClass(ConsoleSmsSenderFactory.class)
+        @ConditionalOnMissingBean(SmsSenderFactory.class)
+        public SmsSenderFactory smsSenderFactory() {
+            return new ConsoleSmsSenderFactory();
+        }
+
+        @Bean
+        @ConditionalOnBean(SmsSenderFactory.class)
+        public SmsCaptchaView smsCaptchaView(SmsSenderFactory smsSenderFactory) {
+            return new DefaultSmsCaptchaView(smsSenderFactory);
+        }
+
+        @Bean
+        @ConditionalOnMissingBean(DefaultEulerCaptchaController.class)
+        public DefaultEulerCaptchaController eulerCaptchaController(@Autowired(required = false) SmsCaptchaView smsCaptchaView) {
+            DefaultEulerCaptchaController defaultEulerCaptchaController = new DefaultEulerCaptchaController();
+
+            if (smsCaptchaView != null) {
+                defaultEulerCaptchaController.setSmsCaptchaView(smsCaptchaView);
+            }
+
+            return defaultEulerCaptchaController;
+        }
     }
 }
