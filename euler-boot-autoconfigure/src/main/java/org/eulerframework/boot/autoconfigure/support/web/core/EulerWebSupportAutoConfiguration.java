@@ -36,6 +36,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
@@ -75,9 +76,8 @@ public class EulerWebSupportAutoConfiguration {
     @ConditionalOnClass(ClassPathReloadableResourceBundleMessageSource.class)
     public MessageSource messageSource(MessageSourceProperties properties) {
         ClassPathReloadableResourceBundleMessageSource messageSource = new ClassPathReloadableResourceBundleMessageSource();
-        if (StringUtils.hasText(properties.getBasename())) {
-            messageSource.setBasenames(StringUtils
-                    .commaDelimitedListToStringArray(StringUtils.trimAllWhitespace(properties.getBasename())));
+        if (!CollectionUtils.isEmpty(properties.getBasename())) {
+            messageSource.setBasenames(properties.getBasename().toArray(new String[0]));
         }
         if (properties.getEncoding() != null) {
             messageSource.setDefaultEncoding(properties.getEncoding().name());
