@@ -20,6 +20,7 @@ import org.eulerframework.security.core.context.UserContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -33,6 +34,7 @@ public class EulerBootDataJpaAuditingAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnBean(UserContext.class)
+    @ConditionalOnClass(AuditorAware.class)
     static class AuditorAwareConfiguration {
         @Component
         static class EulerAuditorAware implements AuditorAware<String> {

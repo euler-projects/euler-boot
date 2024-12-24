@@ -31,6 +31,7 @@
         <module>spring-boot-starter-euler-oauth2-resource-server</module>
         <module>spring-boot-starter-euler-data-jpa</module>
         <module>spring-boot-starter-euler-data-file</module>
+        <module>spring-boot-starter-euler-socket</module>
     </modules>
 
     <scm>

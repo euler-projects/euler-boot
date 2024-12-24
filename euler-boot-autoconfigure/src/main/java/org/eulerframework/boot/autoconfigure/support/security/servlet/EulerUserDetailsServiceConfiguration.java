@@ -22,6 +22,7 @@ import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.eulerframework.security.provisioning.EulerUserDetailsManager;
 import org.eulerframework.security.core.userdetails.provider.LocalEulerUserDetailsProvider;
 import org.eulerframework.security.provisioning.ProviderEulerUserDetailsManager;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.*;
@@ -34,6 +35,7 @@ import java.util.List;
 
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(EulerUserDetails.class)
+@ConditionalOnBean(EulerUserService.class)
 public class EulerUserDetailsServiceConfiguration {
     @Bean
     @Lazy

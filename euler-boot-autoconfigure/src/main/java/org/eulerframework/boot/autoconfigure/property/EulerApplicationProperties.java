@@ -19,7 +19,7 @@ import jakarta.annotation.Resource;
 import org.eulerframework.boot.autoconfigure.support.web.core.EulerBootPropertySource;
 import org.eulerframework.common.util.CommonUtils;
 import org.eulerframework.common.util.StringUtils;
-import org.eulerframework.web.config.ConfigUtils;
+import org.eulerframework.util.ConfigUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
