@@ -16,7 +16,7 @@
 
 package org.eulerframework.boot.socket.annotation;
 
-import org.eulerframework.boot.autoconfigure.support.socket.EulerSocketServerAutoConfiguration;
+import org.eulerframework.boot.autoconfigure.support.socket.EulerSocketNettyServerAutoConfiguration;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.*;
@@ -24,6 +24,6 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Import({EulerSocketServerAutoConfiguration.NettyServerImporter.class})
+@Import({EulerSocketNettyServerAutoConfiguration.NettyServerImporter.class})
 public @interface EnableNettyServer {
 }

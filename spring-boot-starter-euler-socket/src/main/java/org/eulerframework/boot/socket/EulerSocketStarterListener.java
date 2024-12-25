@@ -15,21 +15,15 @@
  */
 package org.eulerframework.boot.socket;
 
-import org.eulerframework.socket.configurers.EulerSocketServerConfiguration;
-import org.eulerframework.socket.dispatcher.MessageDispatcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationPreparedEvent;
+import org.eulerframework.socket.netty.NettyServer;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 
-public class EulerSocketServerInitializingListener implements ApplicationListener<ApplicationPreparedEvent> {
-    private final Logger logger = LoggerFactory.getLogger(EulerSocketServerInitializingListener.class);
-
+public class EulerSocketStarterListener implements ApplicationListener<ApplicationReadyEvent> {
     @Override
-    public void onApplicationEvent(ApplicationPreparedEvent event) {
+    public void onApplicationEvent(ApplicationReadyEvent event) {
         ApplicationContext applicationContext = event.getApplicationContext();
-        MessageDispatcher<?> messageDispatcher = applicationContext.getBean(MessageDispatcher.class);
-        EulerSocketServerConfiguration.setupMessageDispatcher(messageDispatcher, applicationContext);
+        applicationContext.getBeanProvider(NettyServer.class).ifAvailable(NettyServer::run);
     }
 }

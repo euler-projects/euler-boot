@@ -1,2 +1,2 @@
 org.springframework.context.ApplicationListener=\
-  org.eulerframework.boot.socket.EulerSocketServerInitializingListener
+  org.eulerframework.boot.socket.EulerSocketStarterListener
