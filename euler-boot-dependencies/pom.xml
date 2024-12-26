@@ -101,6 +101,10 @@
                         <artifactId>*</artifactId>
                     </exclusion>
                     <exclusion>
+                        <groupId>org.hibernate.orm</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                    <exclusion>
                         <groupId>com.querydsl</groupId>
                         <artifactId>*</artifactId>
                     </exclusion>
