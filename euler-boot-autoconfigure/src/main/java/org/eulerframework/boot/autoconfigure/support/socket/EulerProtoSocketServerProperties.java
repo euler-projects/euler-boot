@@ -21,6 +21,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "euler.socket.server")
 public class EulerProtoSocketServerProperties {
     private int port = 18080;
+    private boolean enableSession = true;
 
     public int getPort() {
         return port;
@@ -28,5 +29,13 @@ public class EulerProtoSocketServerProperties {
 
     public void setPort(int port) {
         this.port = port;
+    }
+
+    public boolean isEnableSession() {
+        return enableSession;
+    }
+
+    public void setEnableSession(boolean enableSession) {
+        this.enableSession = enableSession;
     }
 }

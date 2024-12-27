@@ -43,7 +43,11 @@ public class EulerSocketNettyServerAutoConfiguration {
             EulerProtoSocketServerProperties socketServerProperties,
             MessageDispatcher<?> messageDispatcher) {
         EulerSocketServerConfiguration.setupMessageDispatcher(messageDispatcher, applicationContext);
-        return NettyServer.builder()
+        NettyServer.Builder builder = NettyServer.builder();
+        if (socketServerProperties.isEnableSession()) {
+            builder.enableSession();
+        }
+        return builder
                 .port(socketServerProperties.getPort())
                 .messageDispatcher(messageDispatcher)
                 .addChannelHandlersAtLast(() -> applicationContext.getBeansWithAnnotation(NettyHandler.class)
