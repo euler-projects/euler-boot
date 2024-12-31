@@ -41,7 +41,7 @@ public class EulerSocketNettyServerAutoConfiguration {
     public NettyServer nettyServer(
             ApplicationContext applicationContext,
             EulerProtoSocketServerProperties socketServerProperties,
-            MessageDispatcher<?> messageDispatcher) {
+            MessageDispatcher<?, ?> messageDispatcher) {
         EulerSocketServerConfiguration.setupMessageDispatcher(messageDispatcher, applicationContext);
         NettyServer.Builder builder = NettyServer.builder();
         if (socketServerProperties.isEnableSession()) {
