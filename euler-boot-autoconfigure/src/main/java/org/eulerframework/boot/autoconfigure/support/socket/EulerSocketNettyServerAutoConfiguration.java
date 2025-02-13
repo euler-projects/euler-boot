@@ -47,6 +47,10 @@ public class EulerSocketNettyServerAutoConfiguration {
         if (socketServerProperties.isEnableSession()) {
             builder.enableSession();
         }
+        if (socketServerProperties.isEnableHaproxy()) {
+            builder.enableHAProxy();
+        }
+
         return builder
                 .port(socketServerProperties.getPort())
                 .messageDispatcher(messageDispatcher)

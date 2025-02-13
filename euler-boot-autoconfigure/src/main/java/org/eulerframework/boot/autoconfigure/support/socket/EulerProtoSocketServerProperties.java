@@ -22,6 +22,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class EulerProtoSocketServerProperties {
     private int port = 18080;
     private boolean enableSession = true;
+    private boolean enableHaproxy = false;
 
     public int getPort() {
         return port;
@@ -37,5 +38,13 @@ public class EulerProtoSocketServerProperties {
 
     public void setEnableSession(boolean enableSession) {
         this.enableSession = enableSession;
+    }
+
+    public boolean isEnableHaproxy() {
+        return enableHaproxy;
+    }
+
+    public void setEnableHaproxy(boolean enableHaproxy) {
+        this.enableHaproxy = enableHaproxy;
     }
 }
