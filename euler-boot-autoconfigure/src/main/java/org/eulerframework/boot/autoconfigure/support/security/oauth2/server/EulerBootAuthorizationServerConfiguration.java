@@ -16,6 +16,7 @@
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
+import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootSecurityWebEndpointProperties;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationConsentService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -51,7 +52,10 @@ public class EulerBootAuthorizationServerConfiguration {
     @Bean(SecurityFilterChainBeanNames.AUTHORIZATION_SERVER_SECURITY_FILTER_CHAIN)
     @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.AUTHORIZATION_SERVER_SECURITY_FILTER_CHAIN)
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http, AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public SecurityFilterChain authorizationServerSecurityFilterChain(
+            HttpSecurity http,
+            AuthenticationConfiguration authenticationConfiguration,
+            EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties) throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
 
         // enable resource owner password credentials grant
@@ -62,7 +66,9 @@ public class EulerBootAuthorizationServerConfiguration {
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(withDefaults());
         http.oauth2ResourceServer((resourceServer) -> resourceServer.jwt(withDefaults()));
         http.exceptionHandling((exceptions) -> exceptions.defaultAuthenticationEntryPointFor(
-                new LoginUrlAuthenticationEntryPoint("/login"), createRequestMatcher()));
+                new LoginUrlAuthenticationEntryPoint(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage()),
+                createRequestMatcher()
+        ));
         return http.build();
     }
 
