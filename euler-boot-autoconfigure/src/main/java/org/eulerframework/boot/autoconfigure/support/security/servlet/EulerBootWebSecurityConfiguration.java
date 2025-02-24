@@ -20,6 +20,7 @@ import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChai
 import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilterUtils;
 import org.eulerframework.security.core.captcha.view.DefaultSmsCaptchaView;
 import org.eulerframework.security.core.captcha.view.SmsCaptchaView;
+import org.eulerframework.security.web.access.EulerAccessDeniedHandler;
 import org.eulerframework.security.web.endpoint.*;
 import org.eulerframework.security.web.endpoint.csrf.EulerSecurityCsrfTokenEndpoint;
 import org.eulerframework.security.web.endpoint.csrf.EulerSecurityJsonCsrfTokenController;
@@ -45,12 +46,21 @@ import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.access.AccessDeniedHandlerImpl;
+import org.springframework.security.web.access.DelegatingAccessDeniedHandler;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.InvalidCsrfTokenException;
 import org.springframework.util.Assert;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Configuration(proxyBeanMethods = false)
@@ -83,13 +93,27 @@ public class EulerBootWebSecurityConfiguration {
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
                         .anyRequest().authenticated())
-                //.csrf(csrf -> csrf.csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
+                .csrf(csrf -> csrf.csrfTokenRepository(new CookieCsrfTokenRepository()))
                 .formLogin(formLogin -> formLogin
                         .loginPage(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage())
                         .loginProcessingUrl(eulerBootSecurityWebEndpointProperties.getUser().getLoginProcessingUrl()))
                 .logout(logout -> logout
                         .logoutUrl(eulerBootSecurityWebEndpointProperties.getUser().getLogoutProcessingUrl()));
+
+        this.configAccessDeniedHandler(http);
         return http.build();
+    }
+
+    private <H extends HttpSecurityBuilder<H>> void configAccessDeniedHandler(H http) {
+//        LinkedHashMap<Class<? extends AccessDeniedException>, AccessDeniedHandler> handlers = new LinkedHashMap<>();
+//        handlers.put(InvalidCsrfTokenException.class, new EulerAccessDeniedHandler());
+        AccessDeniedHandlerImpl defaultAccessDeniedHandler = new EulerAccessDeniedHandler();
+        // custom accessDeniedPage: defaultAccessDeniedHandler.setErrorPage("accessDeniedPage");
+//        DelegatingAccessDeniedHandler delegatingAccessDeniedHandler = new DelegatingAccessDeniedHandler(handlers, defaultAccessDeniedHandler);
+
+        @SuppressWarnings("unchecked")
+        ExceptionHandlingConfigurer<H> exceptionConfig = http.getConfigurer(ExceptionHandlingConfigurer.class);
+        exceptionConfig.accessDeniedHandler(defaultAccessDeniedHandler);
     }
 
     private Map<String, String> hiddenInputs(HttpServletRequest request) {
