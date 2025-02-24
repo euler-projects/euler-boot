@@ -25,6 +25,8 @@ public class EulerBootAuthorizationServerProperties {
     private Duration authorizationLifetime = Duration.ofDays(7);
     private String redisKeyPrefix = "euler:oauth2:auth";
 
+    private String consentPage;
+
     public TokenStoreType getAuthorizationStoreType() {
         return authorizationStoreType;
     }
@@ -47,6 +49,14 @@ public class EulerBootAuthorizationServerProperties {
 
     public void setRedisKeyPrefix(String redisKeyPrefix) {
         this.redisKeyPrefix = redisKeyPrefix;
+    }
+
+    public String getConsentPage() {
+        return consentPage;
+    }
+
+    public void setConsentPage(String consentPage) {
+        this.consentPage = consentPage;
     }
 
     public enum TokenStoreType {

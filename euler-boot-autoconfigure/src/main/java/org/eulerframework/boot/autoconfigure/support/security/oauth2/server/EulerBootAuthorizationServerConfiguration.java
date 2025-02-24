@@ -40,6 +40,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.util.StringUtils;
 
 import java.util.Set;
 
@@ -55,6 +56,7 @@ public class EulerBootAuthorizationServerConfiguration {
     public SecurityFilterChain authorizationServerSecurityFilterChain(
             HttpSecurity http,
             AuthenticationConfiguration authenticationConfiguration,
+            EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties,
             EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties) throws Exception {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
                 OAuth2AuthorizationServerConfigurer.authorizationServer();
@@ -69,6 +71,11 @@ public class EulerBootAuthorizationServerConfiguration {
         EulerAuthorizationServerConfiguration.configPasswordAuthentication(http, authenticationConfiguration);
         // return original user principal if client support
         // EulerAuthorizationServerConfiguration.configPrincipalSupportTokenIntrospectionAuthentication(http);
+
+        if (StringUtils.hasText(eulerBootAuthorizationServerProperties.getConsentPage())) {
+            http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).authorizationEndpoint(configurer ->
+                    configurer.consentPage(eulerBootAuthorizationServerProperties.getConsentPage()));
+        }
 
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(withDefaults());
         http.oauth2ResourceServer((resourceServer) -> resourceServer.jwt(withDefaults()));
