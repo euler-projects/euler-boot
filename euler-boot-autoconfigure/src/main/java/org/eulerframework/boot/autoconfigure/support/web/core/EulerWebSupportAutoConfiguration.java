@@ -23,10 +23,13 @@ import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebI
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebSiteProperties;
 import org.eulerframework.common.util.json.JacksonUtils;
 import org.eulerframework.context.support.ClassPathReloadableResourceBundleMessageSource;
+import org.eulerframework.web.core.base.controller.PageRender;
+import org.eulerframework.web.core.base.controller.ThymeleafPageRender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.context.MessageSourceProperties;
@@ -40,6 +43,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
+import org.thymeleaf.templatemode.TemplateMode;
 
 import java.beans.PropertyEditorSupport;
 import java.time.Duration;
@@ -61,9 +65,17 @@ public class EulerWebSupportAutoConfiguration {
     private final Logger logger = LoggerFactory.getLogger(EulerWebSupportAutoConfiguration.class);
 
     @Bean
+    @ConditionalOnMissingBean(ObjectMapper.class)
     public ObjectMapper objectMapper() {
         this.logger.debug("Create ObjectMapper use JacksonUtils");
         return JacksonUtils.getDefaultObjectMapper();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(PageRender.class)
+    @ConditionalOnClass(TemplateMode.class)
+    public PageRender pageRender() {
+        return new ThymeleafPageRender();
     }
 
     @Bean

@@ -35,6 +35,7 @@ import org.eulerframework.security.web.endpoint.user.EulerSecurityUserPageContro
 import org.eulerframework.security.web.endpoint.user.EulerSecurityUserEndpoint;
 import org.eulerframework.sms.ConsoleSmsSenderFactory;
 import org.eulerframework.sms.SmsSenderFactory;
+import org.eulerframework.web.core.base.controller.PageRender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,8 +132,8 @@ public class EulerBootWebSecurityConfiguration {
             matchIfMissing = EulerSecurityEndpoints.CSRF_ENABLED)
     static class EulerSecurityCsrfTokenEndpointConfiguration {
         @Bean
-        public EulerSecurityXmlCsrfTokenController eulerSecurityXmlCsrfTokenController() {
-            return new EulerSecurityXmlCsrfTokenController();
+        public EulerSecurityXmlCsrfTokenController eulerSecurityXmlCsrfTokenController(PageRender pageRender) {
+            return new EulerSecurityXmlCsrfTokenController(pageRender);
         }
 
         @Bean
@@ -150,8 +151,8 @@ public class EulerBootWebSecurityConfiguration {
             matchIfMissing = EulerSecurityEndpoints.USER_ENABLED)
     static class EulerSecurityUserEndpointConfiguration {
         @Bean
-        public EulerSecurityUserPageController eulerSecurityUserPageController() {
-            return new EulerSecurityUserPageController();
+        public EulerSecurityUserPageController eulerSecurityUserPageController(PageRender pageRender) {
+            return new EulerSecurityUserPageController(pageRender);
         }
     }
 
@@ -164,8 +165,8 @@ public class EulerBootWebSecurityConfiguration {
             matchIfMissing = EulerSecurityEndpoints.SIGNUP_ENABLED)
     static class EulerSecuritySignupEndpointConfiguration {
         @Bean
-        public EulerSecuritySignupPageController eulerSecuritySignupPageController() {
-            return new EulerSecuritySignupPageController();
+        public EulerSecuritySignupPageController eulerSecuritySignupPageController(PageRender pageRender) {
+            return new EulerSecuritySignupPageController(pageRender);
         }
 
         @Bean
@@ -183,8 +184,8 @@ public class EulerBootWebSecurityConfiguration {
             matchIfMissing = EulerSecurityEndpoints.PASSWORD_ENABLED)
     static class EulerSecurityPasswordEndpointConfiguration {
         @Bean
-        public EulerSecurityPasswordPageController eulerSecurityPasswordPageController() {
-            return new EulerSecurityPasswordPageController();
+        public EulerSecurityPasswordPageController eulerSecurityPasswordPageController(PageRender pageRender) {
+            return new EulerSecurityPasswordPageController(pageRender);
         }
 
         @Bean
