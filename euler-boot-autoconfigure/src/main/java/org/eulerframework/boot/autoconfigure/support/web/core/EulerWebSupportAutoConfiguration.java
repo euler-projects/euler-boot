@@ -28,12 +28,15 @@ import org.eulerframework.web.core.base.controller.ThymeleafPageRender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.context.MessageSourceProperties;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
+import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.servlet.error.ErrorViewResolver;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.MessageSource;
@@ -51,7 +54,8 @@ import java.util.Date;
 
 @AutoConfiguration(
         before = {
-                MessageSourceAutoConfiguration.class
+                MessageSourceAutoConfiguration.class,
+                ErrorMvcAutoConfiguration.class
         }
 )
 @EnableConfigurationProperties({
@@ -75,6 +79,7 @@ public class EulerWebSupportAutoConfiguration {
     @ConditionalOnMissingBean(PageRender.class)
     @ConditionalOnClass(TemplateMode.class)
     public PageRender pageRender() {
+        this.logger.debug("Create default PageRender");
         return new ThymeleafPageRender();
     }
 
@@ -111,6 +116,14 @@ public class EulerWebSupportAutoConfiguration {
             EulerApplicationProperties eulerApplicationProperties,
             EulerCacheProperties eulerCacheProperties) {
         return new EulerBootPropertySource(configurableEnvironment, multipartProperties, eulerApplicationProperties, eulerCacheProperties);
+    }
+
+    @Bean
+    @ConditionalOnBean(PageRender.class)
+    @ConditionalOnMissingBean(ErrorViewResolver.class)
+    public ErrorViewResolver errorViewResolver(PageRender pageRender) {
+        this.logger.debug("Create default ErrorViewResolver");
+        return new DefaultErrorViewResolver(pageRender);
     }
 
     @ControllerAdvice
