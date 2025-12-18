@@ -24,6 +24,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 
@@ -44,4 +45,8 @@ public class EulerBootSecurityAutoConfiguration {
         return new UserDetailsPrincipalUserContext();
     }
 
+    @Bean
+    public InitializeWechatLoginBeanManagerConfigurer initializeWechatLoginBeanManagerConfigurer(ApplicationContext context) {
+        return new InitializeWechatLoginBeanManagerConfigurer(context);
+    }
 }
