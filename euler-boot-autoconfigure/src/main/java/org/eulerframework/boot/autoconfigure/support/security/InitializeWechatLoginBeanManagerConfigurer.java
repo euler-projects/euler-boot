@@ -10,7 +10,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 
 @Order(InitializeWechatLoginBeanManagerConfigurer.DEFAULT_ORDER)
 public class InitializeWechatLoginBeanManagerConfigurer extends GlobalAuthenticationConfigurerAdapter {
-    static final int DEFAULT_ORDER = Ordered.LOWEST_PRECEDENCE - 5000;
+    static final int DEFAULT_ORDER = Ordered.LOWEST_PRECEDENCE - 4000;
 
     private final ApplicationContext context;
 

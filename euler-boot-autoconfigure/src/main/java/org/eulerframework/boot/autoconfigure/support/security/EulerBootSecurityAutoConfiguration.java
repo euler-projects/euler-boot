@@ -46,7 +46,7 @@ public class EulerBootSecurityAutoConfiguration {
     }
 
     @Bean
-    public InitializeWechatLoginBeanManagerConfigurer initializeWechatLoginBeanManagerConfigurer(ApplicationContext context) {
+    static public InitializeWechatLoginBeanManagerConfigurer initializeWechatLoginBeanManagerConfigurer(ApplicationContext context) {
         return new InitializeWechatLoginBeanManagerConfigurer(context);
     }
 }
