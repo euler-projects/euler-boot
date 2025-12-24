@@ -15,6 +15,7 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
+import org.eulerframework.boot.autoconfigure.support.security.oauth2.resource.EulerBootResourceServerProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
@@ -26,6 +27,8 @@ public class EulerBootAuthorizationServerProperties {
     private String redisKeyPrefix = "euler:oauth2:auth";
 
     private String consentPage;
+
+    private WechatLogin wechatLogin;
 
     public TokenStoreType getAuthorizationStoreType() {
         return authorizationStoreType;
@@ -61,5 +64,34 @@ public class EulerBootAuthorizationServerProperties {
 
     public enum TokenStoreType {
         JDBC, REDIS, IN_MEMORY
+    }
+
+    public WechatLogin getWechatLogin() {
+        return wechatLogin;
+    }
+
+    public void setWechatLogin(WechatLogin wechatLogin) {
+        this.wechatLogin = wechatLogin;
+    }
+
+    public static class WechatLogin {
+        private boolean enabled;
+        private boolean autoCreateUserIfNotExists;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public boolean isAutoCreateUserIfNotExists() {
+            return autoCreateUserIfNotExists;
+        }
+
+        public void setAutoCreateUserIfNotExists(boolean autoCreateUserIfNotExists) {
+            this.autoCreateUserIfNotExists = autoCreateUserIfNotExists;
+        }
     }
 }

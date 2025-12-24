@@ -21,7 +21,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class EulerBootResourceServerProperties {
     private String[] urlPatterns;
     private String[] ignoredUrlPatterns;
-    private WechatLogin wechatLogin;
 
     public String[] getUrlPatterns() {
         return urlPatterns;
@@ -37,34 +36,5 @@ public class EulerBootResourceServerProperties {
 
     public void setIgnoredUrlPatterns(String[] ignoredUrlPatterns) {
         this.ignoredUrlPatterns = ignoredUrlPatterns;
-    }
-
-    public WechatLogin getWechatLogin() {
-        return wechatLogin;
-    }
-
-    public void setWechatLogin(WechatLogin wechatLogin) {
-        this.wechatLogin = wechatLogin;
-    }
-
-    public static class WechatLogin {
-        private boolean enabled;
-        private boolean autoCreateUserIfNotExists;
-
-        public boolean isEnabled() {
-            return enabled;
-        }
-
-        public void setEnabled(boolean enabled) {
-            this.enabled = enabled;
-        }
-
-        public boolean isAutoCreateUserIfNotExists() {
-            return autoCreateUserIfNotExists;
-        }
-
-        public void setAutoCreateUserIfNotExists(boolean autoCreateUserIfNotExists) {
-            this.autoCreateUserIfNotExists = autoCreateUserIfNotExists;
-        }
     }
 }
