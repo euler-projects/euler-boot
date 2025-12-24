@@ -35,6 +35,7 @@ public class InitializeWechatLoginBeanManagerConfigurer extends GlobalAuthentica
                     .getBean(beanNames[0], EulerWechatUserDetailsService.class);
             WechatLoginCodeAuthenticationProvider provider = new WechatLoginCodeAuthenticationProvider();
             provider.setWechatUserDetailsService(wechatUserDetailsService);
+            provider.setAutoCreateUserIfNotExists(true);
             auth.authenticationProvider(provider);
         }
     }
