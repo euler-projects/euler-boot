@@ -1,8 +1,7 @@
 package org.eulerframework.boot.autoconfigure.support.security;
 
-import org.eulerframework.boot.autoconfigure.support.security.oauth2.resource.EulerBootResourceServerProperties;
 import org.eulerframework.boot.autoconfigure.support.security.oauth2.server.EulerBootAuthorizationServerProperties;
-import org.eulerframework.security.authentication.WechatLoginCodeAuthenticationProvider;
+import org.eulerframework.security.authentication.WechatAuthorizationCodeAuthenticationProvider;
 import org.eulerframework.security.core.userdetails.EulerWechatUserDetailsService;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.Ordered;
@@ -43,7 +42,7 @@ public class InitializeWechatLoginBeanManagerConfigurer extends GlobalAuthentica
 
             EulerWechatUserDetailsService wechatUserDetailsService = InitializeWechatLoginBeanManagerConfigurer.this.context
                     .getBean(beanNames[0], EulerWechatUserDetailsService.class);
-            WechatLoginCodeAuthenticationProvider provider = new WechatLoginCodeAuthenticationProvider();
+            WechatAuthorizationCodeAuthenticationProvider provider = new WechatAuthorizationCodeAuthenticationProvider();
             provider.setWechatUserDetailsService(wechatUserDetailsService);
             provider.setAutoCreateUserIfNotExists(properties.getWechatLogin().isAutoCreateUserIfNotExists());
             auth.authenticationProvider(provider);
