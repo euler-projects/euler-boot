@@ -77,6 +77,9 @@ public class EulerBootAuthorizationServerProperties {
     public static class WechatLogin {
         private boolean enabled;
         private boolean autoCreateUserIfNotExists;
+        private String code2SessionEndpoint = "https://api.weixin.qq.com/sns/jscode2session";
+        private String appid;
+        private String secret;
 
         public boolean isEnabled() {
             return enabled;
@@ -92,6 +95,30 @@ public class EulerBootAuthorizationServerProperties {
 
         public void setAutoCreateUserIfNotExists(boolean autoCreateUserIfNotExists) {
             this.autoCreateUserIfNotExists = autoCreateUserIfNotExists;
+        }
+
+        public String getCode2SessionEndpoint() {
+            return code2SessionEndpoint;
+        }
+
+        public void setCode2SessionEndpoint(String code2SessionEndpoint) {
+            this.code2SessionEndpoint = code2SessionEndpoint;
+        }
+
+        public String getAppid() {
+            return appid;
+        }
+
+        public void setAppid(String appid) {
+            this.appid = appid;
+        }
+
+        public String getSecret() {
+            return secret;
+        }
+
+        public void setSecret(String secret) {
+            this.secret = secret;
         }
     }
 }
