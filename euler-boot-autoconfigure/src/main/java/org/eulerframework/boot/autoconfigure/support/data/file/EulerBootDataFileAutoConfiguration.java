@@ -18,9 +18,14 @@ package org.eulerframework.boot.autoconfigure.support.data.file;
 import org.eulerframework.data.file.FileStorage;
 import org.eulerframework.data.file.JdbcFileStorage;
 import org.eulerframework.data.file.LocalFileStorage;
-import org.eulerframework.data.file.servlet.JdbcStorageFileDownloader;
+import org.eulerframework.data.file.registry.FileIndexRegistry;
+import org.eulerframework.data.file.registry.JdbcFileIndexRegistry;
+import org.eulerframework.data.file.servlet.LocalStorageFileDownloader;
+import org.eulerframework.data.file.servlet.StorageFileDownloaderChain;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -31,20 +36,35 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @ConditionalOnClass(FileStorage.class)
 @EnableConfigurationProperties(EulerBootDataFileProperties.class)
 public class EulerBootDataFileAutoConfiguration {
+
+    @Bean
+    @ConditionalOnMissingBean(FileIndexRegistry.class)
+    public FileIndexRegistry fileIndexRegistry(JdbcTemplate jdbcTemplate) {
+        return new JdbcFileIndexRegistry(jdbcTemplate);
+    }
+
+    @Bean
+    public StorageFileDownloaderChain storageFileDownloaderChain() {
+        return new StorageFileDownloaderChain();
+    }
+
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnProperty(prefix = "euler.data.file.jdbc-storage", name = "enabled", havingValue = "true")
     public static class EulerBootDataJdbcFileStorageConfiguration {
         @Bean
-        public JdbcFileStorage jdbcFileStorage(JdbcTemplate jdbcTemplate, EulerBootDataFileProperties properties) {
+        public JdbcFileStorage jdbcFileStorage(JdbcTemplate jdbcTemplate, FileIndexRegistry fileIndexRegistry, EulerBootDataFileProperties properties) {
             JdbcFileStorage jdbcFileStorage = new JdbcFileStorage(jdbcTemplate,
-                    properties.getLocalStorage().getFileDownloadUrlTemplate());
+                    properties.getLocalStorage().getFileDownloadUrlTemplate(),
+                    fileIndexRegistry);
             jdbcFileStorage.setMaxFileSize(properties.getJdbcStorage().getMaxFileSize());
             return jdbcFileStorage;
         }
 
-        @Bean
-        public JdbcStorageFileDownloader jdbcStorageFileDownloader(JdbcFileStorage jdbcFileStorage) {
-            return new JdbcStorageFileDownloader(jdbcFileStorage);
+        @Bean(name = "jdbcStorageFileDownloader")
+        public LocalStorageFileDownloader jdbcStorageFileDownloader(JdbcFileStorage jdbcFileStorage, StorageFileDownloaderChain storageFileDownloaderChain) {
+            LocalStorageFileDownloader jdbcStorageFileDownloader = new LocalStorageFileDownloader(jdbcFileStorage);
+            storageFileDownloaderChain.add(jdbcStorageFileDownloader);
+            return jdbcStorageFileDownloader;
         }
     }
 
@@ -52,10 +72,18 @@ public class EulerBootDataFileAutoConfiguration {
     @ConditionalOnProperty(prefix = "euler.data.file.local-storage", name = "enabled", havingValue = "true")
     public static class EulerBootDataLocalFileStorageConfiguration {
         @Bean
-        public LocalFileStorage localFileStorage(JdbcTemplate jdbcTemplate, EulerBootDataFileProperties properties) {
+        public LocalFileStorage localFileStorage(JdbcTemplate jdbcTemplate, FileIndexRegistry fileIndexRegistry, EulerBootDataFileProperties properties) {
             return new LocalFileStorage(jdbcTemplate,
                     properties.getLocalStorage().getFileDownloadUrlTemplate(),
-                    properties.getLocalStorage().getBaseDir());
+                    properties.getLocalStorage().getBaseDir(),
+                    fileIndexRegistry);
+        }
+
+        @Bean(name = "localStorageFileDownloader")
+        public LocalStorageFileDownloader localStorageFileDownloader(LocalFileStorage localFileStorage, StorageFileDownloaderChain storageFileDownloaderChain) {
+            LocalStorageFileDownloader localStorageFileDownloader = new LocalStorageFileDownloader(localFileStorage);
+            storageFileDownloaderChain.add(localStorageFileDownloader);
+            return localStorageFileDownloader;
         }
     }
 }
