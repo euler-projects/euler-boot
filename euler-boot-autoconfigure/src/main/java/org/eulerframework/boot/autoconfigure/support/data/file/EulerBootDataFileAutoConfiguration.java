@@ -44,8 +44,8 @@ public class EulerBootDataFileAutoConfiguration {
     }
 
     @Bean
-    public StorageFileDownloaderChain storageFileDownloaderChain() {
-        return new StorageFileDownloaderChain();
+    public StorageFileDownloaderChain storageFileDownloaderChain(FileIndexRegistry fileIndexRegistry) {
+        return new StorageFileDownloaderChain(fileIndexRegistry);
     }
 
     @Configuration(proxyBeanMethods = false)
