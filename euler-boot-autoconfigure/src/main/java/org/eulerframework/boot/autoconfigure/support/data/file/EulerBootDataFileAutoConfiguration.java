@@ -20,9 +20,9 @@ import org.eulerframework.data.file.JdbcFileStorage;
 import org.eulerframework.data.file.LocalFileStorage;
 import org.eulerframework.data.file.registry.FileIndexRegistry;
 import org.eulerframework.data.file.registry.JdbcFileIndexRegistry;
-import org.eulerframework.data.file.servlet.LocalRandomAccessStorageFileDownloader;
+import org.eulerframework.data.file.servlet.LocalRangeStorageFileDownloader;
 import org.eulerframework.data.file.servlet.LocalStorageFileDownloader;
-import org.eulerframework.data.file.servlet.RandomStorageFileDownloaderChain;
+import org.eulerframework.data.file.servlet.RangeStorageFileDownloaderChain;
 import org.eulerframework.data.file.servlet.StorageFileDownloaderChain;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -50,8 +50,8 @@ public class EulerBootDataFileAutoConfiguration {
     }
 
     @Bean
-    public RandomStorageFileDownloaderChain randomStorageFileDownloaderChain(FileIndexRegistry fileIndexRegistry) {
-        return new RandomStorageFileDownloaderChain(fileIndexRegistry);
+    public RangeStorageFileDownloaderChain rangeStorageFileDownloaderChain(FileIndexRegistry fileIndexRegistry) {
+        return new RangeStorageFileDownloaderChain(fileIndexRegistry);
     }
 
     @Configuration(proxyBeanMethods = false)
@@ -73,11 +73,11 @@ public class EulerBootDataFileAutoConfiguration {
             return jdbcStorageFileDownloader;
         }
 
-        @Bean(name = "jdbcRandomAccessStorageFileDownloader")
-        public LocalRandomAccessStorageFileDownloader jdbcRandomAccessStorageFileDownloader(JdbcFileStorage jdbcFileStorage, RandomStorageFileDownloaderChain randomStorageFileDownloaderChain) {
-            LocalRandomAccessStorageFileDownloader jdbcRandomAccessStorageFileDownloader = new LocalRandomAccessStorageFileDownloader(jdbcFileStorage);
-            randomStorageFileDownloaderChain.add(jdbcRandomAccessStorageFileDownloader);
-            return jdbcRandomAccessStorageFileDownloader;
+        @Bean(name = "jdbcRangeStorageFileDownloader")
+        public LocalRangeStorageFileDownloader jdbcRangeStorageFileDownloader(JdbcFileStorage jdbcFileStorage, RangeStorageFileDownloaderChain rangeStorageFileDownloaderChain) {
+            LocalRangeStorageFileDownloader localRangeStorageFileDownloader = new LocalRangeStorageFileDownloader(jdbcFileStorage);
+            rangeStorageFileDownloaderChain.add(localRangeStorageFileDownloader);
+            return localRangeStorageFileDownloader;
         }
     }
 
@@ -99,11 +99,11 @@ public class EulerBootDataFileAutoConfiguration {
             return localStorageFileDownloader;
         }
 
-        @Bean(name = "localRandomAccessStorageFileDownloader")
-        public LocalRandomAccessStorageFileDownloader localRandomAccessStorageFileDownloader(LocalFileStorage localFileStorage, RandomStorageFileDownloaderChain randomStorageFileDownloaderChain) {
-            LocalRandomAccessStorageFileDownloader localRandomAccessStorageFileDownloader = new LocalRandomAccessStorageFileDownloader(localFileStorage);
-            randomStorageFileDownloaderChain.add(localRandomAccessStorageFileDownloader);
-            return localRandomAccessStorageFileDownloader;
+        @Bean(name = "localRangeStorageFileDownloader")
+        public LocalRangeStorageFileDownloader localRangeStorageFileDownloader(LocalFileStorage localFileStorage, RangeStorageFileDownloaderChain rangeStorageFileDownloaderChain) {
+            LocalRangeStorageFileDownloader localRangeStorageFileDownloader = new LocalRangeStorageFileDownloader(localFileStorage);
+            rangeStorageFileDownloaderChain.add(localRangeStorageFileDownloader);
+            return localRangeStorageFileDownloader;
         }
     }
 }
