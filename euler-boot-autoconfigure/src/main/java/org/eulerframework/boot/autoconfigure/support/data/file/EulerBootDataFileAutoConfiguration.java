@@ -21,6 +21,8 @@ import org.eulerframework.data.file.LocalFileStorage;
 import org.eulerframework.data.file.registry.FileIndexRegistry;
 import org.eulerframework.data.file.registry.JdbcFileIndexRegistry;
 import org.eulerframework.data.file.web.LocalRangeStorageFileDownloader;
+import org.eulerframework.data.file.web.security.FileTokenRegistry;
+import org.eulerframework.data.file.web.security.JwtFileTokenRegistry;
 import org.eulerframework.data.file.web.servlet.LocalStorageFileDownloader;
 import org.eulerframework.data.file.web.RangeStorageFileDownloaderChain;
 import org.eulerframework.data.file.web.servlet.StorageFileDownloaderChain;
@@ -45,6 +47,12 @@ public class EulerBootDataFileAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean(FileTokenRegistry.class)
+    public FileTokenRegistry fileTokenRegistry() {
+        return new JwtFileTokenRegistry();
+    }
+
+    @Bean
     public StorageFileDownloaderChain storageFileDownloaderChain(FileIndexRegistry fileIndexRegistry) {
         return new StorageFileDownloaderChain(fileIndexRegistry);
     }
@@ -58,10 +66,14 @@ public class EulerBootDataFileAutoConfiguration {
     @ConditionalOnProperty(prefix = "euler.data.file.jdbc-storage", name = "enabled", havingValue = "true")
     public static class EulerBootDataJdbcFileStorageConfiguration {
         @Bean
-        public JdbcFileStorage jdbcFileStorage(JdbcTemplate jdbcTemplate, FileIndexRegistry fileIndexRegistry, EulerBootDataFileProperties properties) {
+        public JdbcFileStorage jdbcFileStorage(
+                JdbcTemplate jdbcTemplate,
+                FileIndexRegistry fileIndexRegistry,
+                FileTokenRegistry fileTokenRegistry,
+                EulerBootDataFileProperties properties) {
             JdbcFileStorage jdbcFileStorage = new JdbcFileStorage(jdbcTemplate,
                     properties.getLocalStorage().getFileDownloadUrlTemplate(),
-                    fileIndexRegistry);
+                    fileIndexRegistry, fileTokenRegistry);
             jdbcFileStorage.setMaxFileSize(properties.getJdbcStorage().getMaxFileSize());
             return jdbcFileStorage;
         }
@@ -74,8 +86,11 @@ public class EulerBootDataFileAutoConfiguration {
         }
 
         @Bean(name = "jdbcRangeStorageFileDownloader")
-        public LocalRangeStorageFileDownloader jdbcRangeStorageFileDownloader(JdbcFileStorage jdbcFileStorage, RangeStorageFileDownloaderChain rangeStorageFileDownloaderChain) {
-            LocalRangeStorageFileDownloader localRangeStorageFileDownloader = new LocalRangeStorageFileDownloader(jdbcFileStorage);
+        public LocalRangeStorageFileDownloader jdbcRangeStorageFileDownloader(
+                JdbcFileStorage jdbcFileStorage,
+                FileTokenRegistry fileTokenRegistry,
+                RangeStorageFileDownloaderChain rangeStorageFileDownloaderChain) {
+            LocalRangeStorageFileDownloader localRangeStorageFileDownloader = new LocalRangeStorageFileDownloader(jdbcFileStorage, fileTokenRegistry);
             rangeStorageFileDownloaderChain.add(localRangeStorageFileDownloader);
             return localRangeStorageFileDownloader;
         }
@@ -85,11 +100,16 @@ public class EulerBootDataFileAutoConfiguration {
     @ConditionalOnProperty(prefix = "euler.data.file.local-storage", name = "enabled", havingValue = "true")
     public static class EulerBootDataLocalFileStorageConfiguration {
         @Bean
-        public LocalFileStorage localFileStorage(JdbcTemplate jdbcTemplate, FileIndexRegistry fileIndexRegistry, EulerBootDataFileProperties properties) {
+        public LocalFileStorage localFileStorage(
+                JdbcTemplate jdbcTemplate,
+                FileIndexRegistry fileIndexRegistry,
+                FileTokenRegistry fileTokenRegistry,
+                EulerBootDataFileProperties properties) {
             return new LocalFileStorage(jdbcTemplate,
                     properties.getLocalStorage().getFileDownloadUrlTemplate(),
                     properties.getLocalStorage().getBaseDir(),
-                    fileIndexRegistry);
+                    fileIndexRegistry,
+                    fileTokenRegistry);
         }
 
         @Bean(name = "localStorageFileDownloader")
@@ -100,8 +120,11 @@ public class EulerBootDataFileAutoConfiguration {
         }
 
         @Bean(name = "localRangeStorageFileDownloader")
-        public LocalRangeStorageFileDownloader localRangeStorageFileDownloader(LocalFileStorage localFileStorage, RangeStorageFileDownloaderChain rangeStorageFileDownloaderChain) {
-            LocalRangeStorageFileDownloader localRangeStorageFileDownloader = new LocalRangeStorageFileDownloader(localFileStorage);
+        public LocalRangeStorageFileDownloader localRangeStorageFileDownloader(
+                LocalFileStorage localFileStorage,
+                FileTokenRegistry fileTokenRegistry,
+                RangeStorageFileDownloaderChain rangeStorageFileDownloaderChain) {
+            LocalRangeStorageFileDownloader localRangeStorageFileDownloader = new LocalRangeStorageFileDownloader(localFileStorage, fileTokenRegistry);
             rangeStorageFileDownloaderChain.add(localRangeStorageFileDownloader);
             return localRangeStorageFileDownloader;
         }
