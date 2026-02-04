@@ -52,6 +52,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.util.Assert;
@@ -79,6 +80,10 @@ public class EulerBootWebSecurityConfiguration {
         SecurityFilterUtils.configSecurityMatcher(http, urlPatterns, ignoredUrlPatterns);
 //        DefaultLogoutPageGeneratingFilter defaultLogoutPageGeneratingFilter = new DefaultLogoutPageGeneratingFilter();
 //        defaultLogoutPageGeneratingFilter.setResolveHiddenInputs(this::hiddenInputs);
+
+        SimpleUrlAuthenticationSuccessHandler successHandler = new SimpleUrlAuthenticationSuccessHandler();
+        successHandler.setTargetUrlParameter("continue");
+
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(eulerBootSecurityWebEndpointProperties.getSignup().getSignupPage()).permitAll()
@@ -92,7 +97,8 @@ public class EulerBootWebSecurityConfiguration {
                 .csrf(csrf -> csrf.csrfTokenRepository(new CookieCsrfTokenRepository()))
                 .formLogin(formLogin -> formLogin
                         .loginPage(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage())
-                        .loginProcessingUrl(eulerBootSecurityWebEndpointProperties.getUser().getLoginProcessingUrl()))
+                        .loginProcessingUrl(eulerBootSecurityWebEndpointProperties.getUser().getLoginProcessingUrl())
+                        .successHandler(successHandler))
                 .logout(logout -> logout
                         .logoutUrl(eulerBootSecurityWebEndpointProperties.getUser().getLogoutProcessingUrl()));
 
