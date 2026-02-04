@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2024 the original author or authors.
+ * Copyright 2013-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootS
 import org.eulerframework.security.oauth2.server.authorization.EulerJdbcOAuth2AuthorizationService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationConsentService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationService;
+import org.eulerframework.security.web.authentication.UrlRedirectLoginUrlAuthenticationEntryPoint;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -33,12 +34,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
 import org.springframework.security.oauth2.server.authorization.*;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.eulerframework.security.oauth2.server.authorization.config.annotation.web.configurers.EulerAuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StringUtils;
@@ -67,6 +68,7 @@ public class EulerBootAuthorizationServerConfiguration {
                 .authorizeHttpRequests((authorize) ->
                         authorize.anyRequest().authenticated()
                 );
+        http.requestCache(RequestCacheConfigurer::disable);
 
         // enable resource owner password credentials grant
         EulerAuthorizationServerConfiguration.configPasswordAuthentication(http, authenticationConfiguration);
@@ -82,8 +84,10 @@ public class EulerBootAuthorizationServerConfiguration {
 
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(withDefaults());
         http.oauth2ResourceServer((resourceServer) -> resourceServer.jwt(withDefaults()));
+        UrlRedirectLoginUrlAuthenticationEntryPoint loginPageEntryPoint = new UrlRedirectLoginUrlAuthenticationEntryPoint(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage());
+        loginPageEntryPoint.setRedirectParameter(eulerBootSecurityWebEndpointProperties.getUser().getLoginSuccessRedirectParameter());
         http.exceptionHandling((exceptions) -> exceptions.defaultAuthenticationEntryPointFor(
-                new LoginUrlAuthenticationEntryPoint(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage()),
+                loginPageEntryPoint,
                 createRequestMatcher()
         ));
         return http.build();

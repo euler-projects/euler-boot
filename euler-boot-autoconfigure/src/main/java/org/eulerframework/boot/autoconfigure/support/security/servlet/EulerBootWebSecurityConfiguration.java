@@ -50,6 +50,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
+import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -82,7 +83,7 @@ public class EulerBootWebSecurityConfiguration {
 //        defaultLogoutPageGeneratingFilter.setResolveHiddenInputs(this::hiddenInputs);
 
         SimpleUrlAuthenticationSuccessHandler successHandler = new SimpleUrlAuthenticationSuccessHandler();
-        successHandler.setTargetUrlParameter("continue");
+        successHandler.setTargetUrlParameter(eulerBootSecurityWebEndpointProperties.getUser().getLoginSuccessRedirectParameter());
 
         http
                 .authorizeHttpRequests(authorize -> authorize
@@ -94,6 +95,7 @@ public class EulerBootWebSecurityConfiguration {
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
                         .anyRequest().authenticated())
+                .requestCache(RequestCacheConfigurer::disable)
                 .csrf(csrf -> csrf.csrfTokenRepository(new CookieCsrfTokenRepository()))
                 .formLogin(formLogin -> formLogin
                         .loginPage(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage())
