@@ -40,6 +40,7 @@ import org.eulerframework.web.core.base.controller.PageRender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -48,12 +49,15 @@ import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.config.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -72,6 +76,8 @@ public class EulerBootWebSecurityConfiguration {
     @Order(SecurityProperties.BASIC_AUTH_ORDER)
     SecurityFilterChain defaultSecurityFilterChain(
             HttpSecurity http,
+            @Qualifier(SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
+            LoginPageAuthenticationEntryPoint loginPageEntryPoint,
             EulerBootSecurityWebProperties eulerBootSecurityWebProperties,
             EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties) throws Exception {
         Assert.isTrue(eulerBootSecurityWebProperties.isEnabled(), "euler web properties disabled, can not init defaultSecurityFilterChain");
@@ -101,7 +107,20 @@ public class EulerBootWebSecurityConfiguration {
                 .formLogin(formLogin -> formLogin
                         .loginPage(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage())
                         .loginProcessingUrl(eulerBootSecurityWebEndpointProperties.getUser().getLoginProcessingUrl())
-                        .successHandler(successHandler))
+                        .successHandler(successHandler)
+                        .addObjectPostProcessor(new ObjectPostProcessor<AuthenticationEntryPoint>() {
+                            @Override
+                            @SuppressWarnings("unchecked")
+                            public AuthenticationEntryPoint postProcess(AuthenticationEntryPoint object) {
+                                if (LoginUrlAuthenticationEntryPoint.class.isAssignableFrom(object.getClass())) {
+                                    logger.info("Default LoginUrlAuthenticationEntryPoint was replaced with {} bean.",
+                                            SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT);
+                                    return loginPageEntryPoint;
+                                } else {
+                                    return object;
+                                }
+                            }
+                        }))
                 .logout(logout -> logout
                         .logoutUrl(eulerBootSecurityWebEndpointProperties.getUser().getLogoutProcessingUrl()));
 
