@@ -21,6 +21,7 @@ import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilte
 import org.eulerframework.security.core.captcha.view.DefaultSmsCaptchaView;
 import org.eulerframework.security.core.captcha.view.SmsCaptchaView;
 import org.eulerframework.security.web.access.EulerAccessDeniedHandler;
+import org.eulerframework.security.web.authentication.LoginPageAuthenticationEntryPoint;
 import org.eulerframework.security.web.endpoint.*;
 import org.eulerframework.security.web.endpoint.csrf.EulerSecurityCsrfTokenEndpoint;
 import org.eulerframework.security.web.endpoint.csrf.EulerSecurityJsonCsrfTokenController;
@@ -124,6 +125,16 @@ public class EulerBootWebSecurityConfiguration {
         CsrfToken token = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
         return (token != null) ? Collections.singletonMap(token.getParameterName(), token.getToken())
                 : Collections.emptyMap();
+    }
+
+    @Bean(SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
+    @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
+    public LoginPageAuthenticationEntryPoint loginPageAuthenticationEntryPoint(
+            EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties) {
+        LoginPageAuthenticationEntryPoint loginUrlAuthenticationEntryPoint = new LoginPageAuthenticationEntryPoint();
+        loginUrlAuthenticationEntryPoint.setLoginPage(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage());
+        loginUrlAuthenticationEntryPoint.setRedirectParameter(eulerBootSecurityWebEndpointProperties.getUser().getLoginSuccessRedirectParameter());
+        return loginUrlAuthenticationEntryPoint;
     }
 
     @Configuration(proxyBeanMethods = false)

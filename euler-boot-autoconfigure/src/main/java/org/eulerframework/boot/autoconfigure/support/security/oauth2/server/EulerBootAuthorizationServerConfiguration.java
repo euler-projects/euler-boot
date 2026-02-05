@@ -16,11 +16,11 @@
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
-import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootSecurityWebEndpointProperties;
 import org.eulerframework.security.oauth2.server.authorization.EulerJdbcOAuth2AuthorizationService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationConsentService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationService;
-import org.eulerframework.security.web.authentication.UrlRedirectLoginUrlAuthenticationEntryPoint;
+import org.eulerframework.security.web.authentication.LoginPageAuthenticationEntryPoint;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -58,8 +58,9 @@ public class EulerBootAuthorizationServerConfiguration {
     public SecurityFilterChain authorizationServerSecurityFilterChain(
             HttpSecurity http,
             AuthenticationConfiguration authenticationConfiguration,
-            EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties,
-            EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties) throws Exception {
+            @Qualifier(SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
+            LoginPageAuthenticationEntryPoint loginPageEntryPoint,
+            EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties) throws Exception {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
                 OAuth2AuthorizationServerConfigurer.authorizationServer();
         http
@@ -84,8 +85,6 @@ public class EulerBootAuthorizationServerConfiguration {
 
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(withDefaults());
         http.oauth2ResourceServer((resourceServer) -> resourceServer.jwt(withDefaults()));
-        UrlRedirectLoginUrlAuthenticationEntryPoint loginPageEntryPoint = new UrlRedirectLoginUrlAuthenticationEntryPoint(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage());
-        loginPageEntryPoint.setRedirectParameter(eulerBootSecurityWebEndpointProperties.getUser().getLoginSuccessRedirectParameter());
         http.exceptionHandling((exceptions) -> exceptions.defaultAuthenticationEntryPointFor(
                 loginPageEntryPoint,
                 createRequestMatcher()

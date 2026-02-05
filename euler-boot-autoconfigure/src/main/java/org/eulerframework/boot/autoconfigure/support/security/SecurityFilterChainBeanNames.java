@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2024 the original author or authors.
+ * Copyright 2013-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,4 +19,6 @@ public abstract class SecurityFilterChainBeanNames {
     public static final String DEFAULT_SECURITY_FILTER_CHAIN = "defaultSecurityFilterChain";
     public static final String RESOURCE_SERVER_SECURITY_FILTER_CHAIN = "resourceServerSecurityFilterChain";
     public static final String AUTHORIZATION_SERVER_SECURITY_FILTER_CHAIN = "authorizationServerSecurityFilterChain";
+
+    public static final String LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT = "loginPageAuthenticationEntryPoint";
 }
