@@ -33,7 +33,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.context.MessageSourceProperties;
-import org.springframework.boot.autoconfigure.web.ErrorProperties;
+import org.springframework.boot.autoconfigure.web.WebProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.servlet.autoconfigure.MultipartProperties;
@@ -137,14 +137,14 @@ public class EulerWebSupportAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(value = ErrorController.class, search = SearchStrategy.CURRENT)
     public EulerErrorController eulerErrorController(
-            ErrorProperties errorProperties,
+            WebProperties webProperties,
             ErrorAttributes errorAttributes,
             ObjectProvider<ErrorViewResolver> errorViewResolvers,
             ErrorResponseResolver errorResponseResolver) {
         this.logger.debug("Create default ErrorController");
         return new EulerErrorController(
                 errorAttributes,
-                errorProperties,
+                webProperties.getError(),
                 errorViewResolvers.orderedStream().toList(),
                 errorResponseResolver);
     }
