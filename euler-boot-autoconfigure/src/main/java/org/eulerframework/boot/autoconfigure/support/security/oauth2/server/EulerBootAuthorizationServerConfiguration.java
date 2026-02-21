@@ -73,10 +73,13 @@ public class EulerBootAuthorizationServerConfiguration {
 
         // enable resource owner password credentials grant
         EulerAuthorizationServerConfiguration.configPasswordAuthentication(http, authenticationConfiguration);
-        EulerAuthorizationServerConfiguration.configWechatAuthentication(http, authenticationConfiguration);
+
+        if(eulerBootAuthorizationServerProperties.getWechatLogin().isEnabled()) {
+            EulerAuthorizationServerConfiguration.configWechatAuthentication(http, authenticationConfiguration);
+        }
 
         // return original user principal if client support
-        // EulerAuthorizationServerConfiguration.configPrincipalSupportTokenIntrospectionAuthentication(http);
+        EulerAuthorizationServerConfiguration.configPrincipalSupportTokenIntrospectionAuthentication(http);
 
         if (StringUtils.hasText(eulerBootAuthorizationServerProperties.getConsentPage())) {
             http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).authorizationEndpoint(configurer ->

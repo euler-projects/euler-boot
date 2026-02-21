@@ -36,7 +36,7 @@ public class InitializeWechatUserDetailsBeanManagerConfigurer extends GlobalAuth
             EulerBootAuthorizationServerProperties properties = InitializeWechatUserDetailsBeanManagerConfigurer.this.context
                     .getBean(EulerBootAuthorizationServerProperties.class);
 
-            if(!properties.getWechatLogin().isEnabled()) {
+            if (!properties.getWechatLogin().isEnabled()) {
                 return;
             }
 
