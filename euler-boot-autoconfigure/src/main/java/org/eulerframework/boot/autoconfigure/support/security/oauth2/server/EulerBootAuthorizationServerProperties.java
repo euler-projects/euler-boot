@@ -28,7 +28,7 @@ public class EulerBootAuthorizationServerProperties {
 
     private String consentPage;
 
-    private WechatLogin wechatLogin;
+    private WechatLogin wechatLogin = new WechatLogin();
 
     public TokenStoreType getAuthorizationStoreType() {
         return authorizationStoreType;
