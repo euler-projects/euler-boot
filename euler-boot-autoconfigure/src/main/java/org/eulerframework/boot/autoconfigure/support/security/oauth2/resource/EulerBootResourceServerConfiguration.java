@@ -18,22 +18,22 @@ package org.eulerframework.boot.autoconfigure.support.security.oauth2.resource;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilterUtils;
 import org.eulerframework.security.oauth2.resource.OAuth2NativeTokenAuthenticationManager;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
-import org.springframework.boot.autoconfigure.security.oauth2.resource.KeyValueCondition;
+import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.env.Environment;
+import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AnyRequestMatcher;
+import org.springframework.util.StringUtils;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -59,10 +59,9 @@ class EulerBootResourceServerConfiguration {
     @ConditionalOnMissingClass("org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService")
     @Conditional(KeyValueCondition.class)
     static class KeyValueJwtResourceServerConfiguration {
-
         @Bean(SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
         @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
-        @Order(SecurityProperties.BASIC_AUTH_ORDER - 1)
+        @Order(SecurityFilterProperties.BASIC_AUTH_ORDER - 1)
         SecurityFilterChain resourceServerSecurityFilterChain(
                 HttpSecurity http,
                 EulerBootResourceServerProperties eulerBootResourceServerProperties) throws Exception {
@@ -79,7 +78,7 @@ class EulerBootResourceServerConfiguration {
 
         @Bean(SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
         @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
-        @Order(SecurityProperties.BASIC_AUTH_ORDER - 1)
+        @Order(SecurityFilterProperties.BASIC_AUTH_ORDER - 1)
         SecurityFilterChain resourceServerSecurityFilterChain(
                 HttpSecurity http,
                 EulerBootResourceServerProperties eulerBootResourceServerProperties) throws Exception {
@@ -96,7 +95,7 @@ class EulerBootResourceServerConfiguration {
 
         @Bean(SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
         @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
-        @Order(SecurityProperties.BASIC_AUTH_ORDER - 1)
+        @Order(SecurityFilterProperties.BASIC_AUTH_ORDER - 1)
         SecurityFilterChain resourceServerSecurityFilterChain(
                 HttpSecurity http,
                 EulerBootResourceServerProperties eulerBootResourceServerProperties) throws Exception {
@@ -112,7 +111,7 @@ class EulerBootResourceServerConfiguration {
 
         @Bean(SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
         @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
-        @Order(SecurityProperties.BASIC_AUTH_ORDER - 1)
+        @Order(SecurityFilterProperties.BASIC_AUTH_ORDER - 1)
         SecurityFilterChain resourceServerSecurityFilterChain(
                 HttpSecurity http,
                 OAuth2AuthorizationService authorizationService,
@@ -123,5 +122,29 @@ class EulerBootResourceServerConfiguration {
                     .authenticationManagerResolver(request -> authenticationManager));
             return http.build();
         }
+    }
+
+    static class KeyValueCondition extends SpringBootCondition {
+
+        @Override
+        public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata metadata) {
+            ConditionMessage.Builder message = ConditionMessage.forCondition("Public Key Value Condition");
+            Environment environment = context.getEnvironment();
+            String publicKeyLocation = environment
+                    .getProperty("spring.security.oauth2.resourceserver.jwt.public-key-location");
+            if (!StringUtils.hasText(publicKeyLocation)) {
+                return ConditionOutcome.noMatch(message.didNotFind("public-key-location property").atAll());
+            }
+            String jwkSetUri = environment.getProperty("spring.security.oauth2.resourceserver.jwt.jwk-set-uri");
+            if (StringUtils.hasText(jwkSetUri)) {
+                return ConditionOutcome.noMatch(message.found("jwk-set-uri property").items(jwkSetUri));
+            }
+            String issuerUri = environment.getProperty("spring.security.oauth2.resourceserver.jwt.issuer-uri");
+            if (StringUtils.hasText(issuerUri)) {
+                return ConditionOutcome.noMatch(message.found("issuer-uri property").items(issuerUri));
+            }
+            return ConditionOutcome.match(message.foundExactly("public key location property"));
+        }
+
     }
 }

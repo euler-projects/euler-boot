@@ -20,13 +20,13 @@ public class InitializeWechatUserDetailsBeanManagerConfigurer extends GlobalAuth
     }
 
     @Override
-    public void init(AuthenticationManagerBuilder auth) throws Exception {
+    public void init(AuthenticationManagerBuilder auth) {
         auth.apply(new InitializeWechatUserDetailsManagerConfigurer());
     }
 
     class InitializeWechatUserDetailsManagerConfigurer extends GlobalAuthenticationConfigurerAdapter {
         @Override
-        public void configure(AuthenticationManagerBuilder auth) throws Exception {
+        public void configure(AuthenticationManagerBuilder auth) {
             String[] beanNames = InitializeWechatUserDetailsBeanManagerConfigurer.this.context
                     .getBeanNamesForType(EulerWechatUserDetailsService.class);
             if (beanNames.length == 0) {

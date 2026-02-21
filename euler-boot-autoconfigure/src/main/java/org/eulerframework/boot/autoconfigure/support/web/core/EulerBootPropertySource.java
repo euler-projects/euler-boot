@@ -20,8 +20,8 @@ import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCach
 import org.eulerframework.common.util.property.PropertyNotFoundException;
 import org.eulerframework.common.util.property.PropertySource;
 import org.eulerframework.web.config.WebConfig.WebConfigKey;
-import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.boot.context.properties.bind.DataObjectPropertyName;
+import org.springframework.boot.servlet.autoconfigure.MultipartProperties;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.util.Assert;
 

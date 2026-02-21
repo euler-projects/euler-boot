@@ -33,14 +33,14 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.context.MessageSourceProperties;
-import org.springframework.boot.autoconfigure.web.ServerProperties;
-import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
-import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
-import org.springframework.boot.autoconfigure.web.servlet.error.ErrorViewResolver;
+import org.springframework.boot.autoconfigure.web.ErrorProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.web.servlet.error.ErrorAttributes;
-import org.springframework.boot.web.servlet.error.ErrorController;
+import org.springframework.boot.servlet.autoconfigure.MultipartProperties;
+import org.springframework.boot.webmvc.autoconfigure.error.ErrorMvcAutoConfiguration;
+import org.springframework.boot.webmvc.autoconfigure.error.ErrorViewResolver;
+import org.springframework.boot.webmvc.error.ErrorAttributes;
+import org.springframework.boot.webmvc.error.ErrorController;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.ConfigurableEnvironment;
@@ -137,14 +137,14 @@ public class EulerWebSupportAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(value = ErrorController.class, search = SearchStrategy.CURRENT)
     public EulerErrorController eulerErrorController(
-            ServerProperties serverProperties,
+            ErrorProperties errorProperties,
             ErrorAttributes errorAttributes,
             ObjectProvider<ErrorViewResolver> errorViewResolvers,
             ErrorResponseResolver errorResponseResolver) {
         this.logger.debug("Create default ErrorController");
         return new EulerErrorController(
                 errorAttributes,
-                serverProperties.getError(),
+                errorProperties,
                 errorViewResolvers.orderedStream().toList(),
                 errorResponseResolver);
     }
