@@ -33,7 +33,10 @@ import org.springframework.context.annotation.Import;
 @EnableConfigurationProperties({
         EulerBootSecurityWebProperties.class,
         EulerBootSecurityWebEndpointProperties.class})
-@ConditionalOnClass(EulerUserDetails.class)
+@ConditionalOnClass({
+        EulerUserDetails.class,
+        SecurityAutoConfiguration.class,
+        UserDetailsServiceAutoConfiguration.class})
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @Import({
         EulerBootWebSecurityConfiguration.class,
