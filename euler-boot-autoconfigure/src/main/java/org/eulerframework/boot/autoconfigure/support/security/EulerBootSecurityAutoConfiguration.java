@@ -29,11 +29,14 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 
-@AutoConfiguration(before = {
-        EulerBootDataJpaAuditingAutoConfiguration.class,
-        SecurityAutoConfiguration.class,
-        UserDetailsServiceAutoConfiguration.class
-})
+@AutoConfiguration(
+        before = {
+                EulerBootDataJpaAuditingAutoConfiguration.class
+        },
+        beforeName = {
+                "org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration",
+                "org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration"
+        })
 @EnableConfigurationProperties({
         EulerBootSecurityProperties.class
 })
