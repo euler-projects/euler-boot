@@ -21,22 +21,21 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
-import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration;
 import org.springframework.context.annotation.Import;
 
-@AutoConfiguration(before = {
-        EulerBootSecurityAutoConfiguration.class,
-        SecurityAutoConfiguration.class,
-        UserDetailsServiceAutoConfiguration.class
-})
+@AutoConfiguration(
+        before = {
+                EulerBootSecurityAutoConfiguration.class
+        },
+        beforeName = {
+                "org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration",
+                "org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration"
+        }
+)
 @EnableConfigurationProperties({
         EulerBootSecurityWebProperties.class,
         EulerBootSecurityWebEndpointProperties.class})
-@ConditionalOnClass({
-        EulerUserDetails.class,
-        SecurityAutoConfiguration.class,
-        UserDetailsServiceAutoConfiguration.class})
+@ConditionalOnClass(EulerUserDetails.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @Import({
         EulerBootWebSecurityConfiguration.class,
