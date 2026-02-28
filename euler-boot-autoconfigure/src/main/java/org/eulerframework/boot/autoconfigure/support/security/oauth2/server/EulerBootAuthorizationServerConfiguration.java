@@ -16,9 +16,9 @@
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
-import org.eulerframework.security.oauth2.server.authorization.EulerJdbcOAuth2AuthorizationService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationConsentService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationService;
+import org.eulerframework.security.oauth2.server.authorization.jackson.EulerOAuth2JsonMapper;
 import org.eulerframework.security.web.authentication.LoginPageAuthenticationEntryPoint;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -73,7 +73,7 @@ public class EulerBootAuthorizationServerConfiguration {
         // enable resource owner password credentials grant
         EulerAuthorizationServerConfiguration.configPasswordAuthentication(http, authenticationConfiguration);
 
-        if(eulerBootAuthorizationServerProperties.getWechatLogin().isEnabled()) {
+        if (eulerBootAuthorizationServerProperties.getWechatLogin().isEnabled()) {
             EulerAuthorizationServerConfiguration.configWechatAuthentication(http, authenticationConfiguration);
         }
 
@@ -100,7 +100,13 @@ public class EulerBootAuthorizationServerConfiguration {
         @Bean
         @ConditionalOnMissingBean(OAuth2AuthorizationService.class)
         public OAuth2AuthorizationService jdbcOAuth2AuthorizationService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
-            return new EulerJdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository);
+            JdbcOAuth2AuthorizationService jdbcOAuth2AuthorizationService = new JdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository);
+            jdbcOAuth2AuthorizationService.setAuthorizationRowMapper(new JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationRowMapper(
+                    registeredClientRepository, EulerOAuth2JsonMapper.getInstance()
+            ));
+            jdbcOAuth2AuthorizationService.setAuthorizationParametersMapper(new JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationParametersMapper(
+                    EulerOAuth2JsonMapper.getInstance()));
+            return jdbcOAuth2AuthorizationService;
         }
 
         @Bean
