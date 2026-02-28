@@ -21,7 +21,7 @@ import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCach
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCopyrightProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebI18nProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebSiteProperties;
-import org.eulerframework.common.util.json.JacksonUtils;
+import org.eulerframework.common.util.json.jackson3.JacksonUtils;
 import org.eulerframework.context.support.ClassPathReloadableResourceBundleMessageSource;
 import org.eulerframework.web.core.base.controller.PageRender;
 import org.eulerframework.web.core.base.controller.ThymeleafPageRender;
@@ -33,22 +33,24 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.context.MessageSourceProperties;
-import org.springframework.boot.autoconfigure.web.ServerProperties;
-import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
-import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
-import org.springframework.boot.autoconfigure.web.servlet.error.ErrorViewResolver;
+import org.springframework.boot.autoconfigure.web.WebProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.web.servlet.error.ErrorAttributes;
-import org.springframework.boot.web.servlet.error.ErrorController;
+import org.springframework.boot.servlet.autoconfigure.MultipartProperties;
+import org.springframework.boot.webmvc.autoconfigure.error.ErrorMvcAutoConfiguration;
+import org.springframework.boot.webmvc.autoconfigure.error.ErrorViewResolver;
+import org.springframework.boot.webmvc.error.ErrorAttributes;
+import org.springframework.boot.webmvc.error.ErrorController;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.thymeleaf.templatemode.TemplateMode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.beans.PropertyEditorSupport;
 import java.time.Duration;
@@ -71,9 +73,9 @@ public class EulerWebSupportAutoConfiguration {
     private final Logger logger = LoggerFactory.getLogger(EulerWebSupportAutoConfiguration.class);
 
     @Bean
-    @ConditionalOnMissingBean(ObjectMapper.class)
-    public ObjectMapper objectMapper() {
-        this.logger.debug("Create ObjectMapper use JacksonUtils");
+    @ConditionalOnMissingBean(JsonMapper.class)
+    JsonMapper jacksonJsonMapper() {
+        this.logger.debug("Create JsonMapper use JacksonUtils");
         return JacksonUtils.getDefaultObjectMapper();
     }
 
@@ -137,14 +139,14 @@ public class EulerWebSupportAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(value = ErrorController.class, search = SearchStrategy.CURRENT)
     public EulerErrorController eulerErrorController(
-            ServerProperties serverProperties,
+            WebProperties webProperties,
             ErrorAttributes errorAttributes,
             ObjectProvider<ErrorViewResolver> errorViewResolvers,
             ErrorResponseResolver errorResponseResolver) {
         this.logger.debug("Create default ErrorController");
         return new EulerErrorController(
                 errorAttributes,
-                serverProperties.getError(),
+                webProperties.getError(),
                 errorViewResolvers.orderedStream().toList(),
                 errorResponseResolver);
     }

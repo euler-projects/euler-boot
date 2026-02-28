@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2024 the original author or authors.
+ * Copyright 2013-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilte
 import org.eulerframework.security.core.captcha.view.DefaultSmsCaptchaView;
 import org.eulerframework.security.core.captcha.view.SmsCaptchaView;
 import org.eulerframework.security.web.access.EulerAccessDeniedHandler;
+import org.eulerframework.security.web.authentication.LoginPageAuthenticationEntryPoint;
 import org.eulerframework.security.web.endpoint.*;
 import org.eulerframework.security.web.endpoint.csrf.EulerSecurityCsrfTokenEndpoint;
 import org.eulerframework.security.web.endpoint.csrf.EulerSecurityJsonCsrfTokenController;
@@ -39,29 +40,30 @@ import org.eulerframework.web.core.base.controller.PageRender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
+import org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.config.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
+import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
-import org.springframework.security.web.access.DelegatingAccessDeniedHandler;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.InvalidCsrfTokenException;
 import org.springframework.util.Assert;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Configuration(proxyBeanMethods = false)
@@ -71,9 +73,11 @@ public class EulerBootWebSecurityConfiguration {
 
     @Bean(SecurityFilterChainBeanNames.DEFAULT_SECURITY_FILTER_CHAIN)
     @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.DEFAULT_SECURITY_FILTER_CHAIN)
-    @Order(SecurityProperties.BASIC_AUTH_ORDER)
+    @Order(SecurityFilterProperties.BASIC_AUTH_ORDER)
     SecurityFilterChain defaultSecurityFilterChain(
             HttpSecurity http,
+            @Qualifier(SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
+            LoginPageAuthenticationEntryPoint loginPageEntryPoint,
             EulerBootSecurityWebProperties eulerBootSecurityWebProperties,
             EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties) throws Exception {
         Assert.isTrue(eulerBootSecurityWebProperties.isEnabled(), "euler web properties disabled, can not init defaultSecurityFilterChain");
@@ -84,6 +88,10 @@ public class EulerBootWebSecurityConfiguration {
         SecurityFilterUtils.configSecurityMatcher(http, urlPatterns, ignoredUrlPatterns);
 //        DefaultLogoutPageGeneratingFilter defaultLogoutPageGeneratingFilter = new DefaultLogoutPageGeneratingFilter();
 //        defaultLogoutPageGeneratingFilter.setResolveHiddenInputs(this::hiddenInputs);
+
+        SimpleUrlAuthenticationSuccessHandler successHandler = new SimpleUrlAuthenticationSuccessHandler();
+        successHandler.setTargetUrlParameter(eulerBootSecurityWebEndpointProperties.getUser().getLoginSuccessRedirectParameter());
+
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(eulerBootSecurityWebEndpointProperties.getSignup().getSignupPage()).permitAll()
@@ -94,10 +102,25 @@ public class EulerBootWebSecurityConfiguration {
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
                         .anyRequest().authenticated())
+                .requestCache(RequestCacheConfigurer::disable)
                 .csrf(csrf -> csrf.csrfTokenRepository(new CookieCsrfTokenRepository()))
                 .formLogin(formLogin -> formLogin
                         .loginPage(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage())
-                        .loginProcessingUrl(eulerBootSecurityWebEndpointProperties.getUser().getLoginProcessingUrl()))
+                        .loginProcessingUrl(eulerBootSecurityWebEndpointProperties.getUser().getLoginProcessingUrl())
+                        .successHandler(successHandler)
+                        .addObjectPostProcessor(new ObjectPostProcessor<AuthenticationEntryPoint>() {
+                            @Override
+                            @SuppressWarnings("unchecked")
+                            public AuthenticationEntryPoint postProcess(AuthenticationEntryPoint object) {
+                                if (LoginUrlAuthenticationEntryPoint.class.isAssignableFrom(object.getClass())) {
+                                    logger.info("Default LoginUrlAuthenticationEntryPoint was replaced with {} bean.",
+                                            SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT);
+                                    return loginPageEntryPoint;
+                                } else {
+                                    return object;
+                                }
+                            }
+                        }))
                 .logout(logout -> logout
                         .logoutUrl(eulerBootSecurityWebEndpointProperties.getUser().getLogoutProcessingUrl()));
 
@@ -121,6 +144,16 @@ public class EulerBootWebSecurityConfiguration {
         CsrfToken token = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
         return (token != null) ? Collections.singletonMap(token.getParameterName(), token.getToken())
                 : Collections.emptyMap();
+    }
+
+    @Bean(SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
+    @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
+    public LoginPageAuthenticationEntryPoint loginPageAuthenticationEntryPoint(
+            EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties) {
+        LoginPageAuthenticationEntryPoint loginUrlAuthenticationEntryPoint = new LoginPageAuthenticationEntryPoint();
+        loginUrlAuthenticationEntryPoint.setLoginPage(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage());
+        loginUrlAuthenticationEntryPoint.setRedirectParameter(eulerBootSecurityWebEndpointProperties.getUser().getLoginSuccessRedirectParameter());
+        return loginUrlAuthenticationEntryPoint;
     }
 
     @Configuration(proxyBeanMethods = false)

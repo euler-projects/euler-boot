@@ -21,17 +21,20 @@ import org.eulerframework.security.core.context.UserDetailsPrincipalUserContext;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 
-@AutoConfiguration(before = {
-        EulerBootDataJpaAuditingAutoConfiguration.class,
-        SecurityAutoConfiguration.class,
-        UserDetailsServiceAutoConfiguration.class
-})
+@AutoConfiguration(
+        before = {
+                EulerBootDataJpaAuditingAutoConfiguration.class
+        },
+        beforeName = {
+                "org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration",
+                "org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration"
+        })
 @EnableConfigurationProperties({
         EulerBootSecurityProperties.class
 })
@@ -44,4 +47,9 @@ public class EulerBootSecurityAutoConfiguration {
         return new UserDetailsPrincipalUserContext();
     }
 
+    @Bean
+    @ConditionalOnProperty(prefix = "euler.security.oauth2.authorizationserver.wechat-login", name = "enabled")
+    static public InitializeWechatUserDetailsBeanManagerConfigurer initializeWechatLoginBeanManagerConfigurer(ApplicationContext context) {
+        return new InitializeWechatUserDetailsBeanManagerConfigurer(context);
+    }
 }

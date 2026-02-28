@@ -13,7 +13,7 @@
 
     <properties>
         <main.basedir>${basedir}/..</main.basedir>
-        <eulerframework.version>1.0.0.M7.JDK17-SNAPSHOT</eulerframework.version>
+        <euler-framework.version>2.0.0-SNAPSHOT</euler-framework.version>
 
         <build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>
         <flatten-maven-plugin.version>1.1.0</flatten-maven-plugin.version>
@@ -61,7 +61,7 @@
             <dependency>
                 <groupId>org.eulerframework</groupId>
                 <artifactId>euler-core</artifactId>
-                <version>${eulerframework.version}</version>
+                <version>${euler-framework.version}</version>
                 <exclusions>
                     <!-- Spring Boot will manage all Spring Framework dependencies -->
                     <exclusion>
@@ -73,7 +73,7 @@
             <dependency>
                 <groupId>org.eulerframework</groupId>
                 <artifactId>euler-web-core</artifactId>
-                <version>${eulerframework.version}</version>
+                <version>${euler-framework.version}</version>
                 <exclusions>
                     <!-- Spring Boot will manage all Spring Framework dependencies -->
                     <exclusion>
@@ -85,7 +85,7 @@
             <dependency>
                 <groupId>org.eulerframework</groupId>
                 <artifactId>euler-data-jpa</artifactId>
-                <version>${eulerframework.version}</version>
+                <version>${euler-framework.version}</version>
                 <exclusions>
                     <!-- Spring Boot will manage all Spring Framework dependencies -->
                     <exclusion>
@@ -113,7 +113,7 @@
             <dependency>
                 <groupId>org.eulerframework</groupId>
                 <artifactId>euler-data-file</artifactId>
-                <version>${eulerframework.version}</version>
+                <version>${euler-framework.version}</version>
                 <exclusions>
                     <!-- Spring Boot will manage all Spring Framework dependencies -->
                     <exclusion>
@@ -129,7 +129,7 @@
             <dependency>
                 <groupId>org.eulerframework</groupId>
                 <artifactId>euler-security-core</artifactId>
-                <version>${eulerframework.version}</version>
+                <version>${euler-framework.version}</version>
                 <exclusions>
                     <!-- Spring Boot will manage all Spring Framework dependencies -->
                     <exclusion>
@@ -149,7 +149,7 @@
             <dependency>
                 <groupId>org.eulerframework</groupId>
                 <artifactId>euler-security-web</artifactId>
-                <version>${eulerframework.version}</version>
+                <version>${euler-framework.version}</version>
                 <exclusions>
                     <!-- Spring Boot will manage all Spring Framework dependencies -->
                     <exclusion>
@@ -169,7 +169,7 @@
             <dependency>
                 <groupId>org.eulerframework</groupId>
                 <artifactId>euler-security-oauth2-authorization-server</artifactId>
-                <version>${eulerframework.version}</version>
+                <version>${euler-framework.version}</version>
                 <exclusions>
                     <!-- Spring Boot will manage all Spring Framework dependencies -->
                     <exclusion>
@@ -189,7 +189,7 @@
             <dependency>
                 <groupId>org.eulerframework</groupId>
                 <artifactId>euler-security-oauth2-resource-server</artifactId>
-                <version>${eulerframework.version}</version>
+                <version>${euler-framework.version}</version>
                 <exclusions>
                     <!-- Spring Boot will manage all Spring Framework dependencies -->
                     <exclusion>
@@ -209,7 +209,7 @@
             <dependency>
                 <groupId>org.eulerframework</groupId>
                 <artifactId>euler-security-oauth2-core</artifactId>
-                <version>${eulerframework.version}</version>
+                <version>${euler-framework.version}</version>
                 <exclusions>
                     <!-- Spring Boot will manage all Spring Framework dependencies -->
                     <exclusion>
@@ -230,7 +230,7 @@
             <dependency>
                 <groupId>org.eulerframework</groupId>
                 <artifactId>euler-socket</artifactId>
-                <version>${eulerframework.version}</version>
+                <version>${euler-framework.version}</version>
                 <exclusions>
                     <!-- Spring Boot will manage all Spring Framework dependencies -->
                     <exclusion>

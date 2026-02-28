@@ -15,6 +15,7 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
+import org.eulerframework.boot.autoconfigure.support.security.oauth2.resource.EulerBootResourceServerProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
@@ -26,6 +27,8 @@ public class EulerBootAuthorizationServerProperties {
     private String redisKeyPrefix = "euler:oauth2:auth";
 
     private String consentPage;
+
+    private WechatLogin wechatLogin = new WechatLogin();
 
     public TokenStoreType getAuthorizationStoreType() {
         return authorizationStoreType;
@@ -61,5 +64,61 @@ public class EulerBootAuthorizationServerProperties {
 
     public enum TokenStoreType {
         JDBC, REDIS, IN_MEMORY
+    }
+
+    public WechatLogin getWechatLogin() {
+        return wechatLogin;
+    }
+
+    public void setWechatLogin(WechatLogin wechatLogin) {
+        this.wechatLogin = wechatLogin;
+    }
+
+    public static class WechatLogin {
+        private boolean enabled;
+        private boolean autoCreateUserIfNotExists;
+        private String code2SessionEndpoint = "https://api.weixin.qq.com/sns/jscode2session";
+        private String appid;
+        private String secret;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public boolean isAutoCreateUserIfNotExists() {
+            return autoCreateUserIfNotExists;
+        }
+
+        public void setAutoCreateUserIfNotExists(boolean autoCreateUserIfNotExists) {
+            this.autoCreateUserIfNotExists = autoCreateUserIfNotExists;
+        }
+
+        public String getCode2SessionEndpoint() {
+            return code2SessionEndpoint;
+        }
+
+        public void setCode2SessionEndpoint(String code2SessionEndpoint) {
+            this.code2SessionEndpoint = code2SessionEndpoint;
+        }
+
+        public String getAppid() {
+            return appid;
+        }
+
+        public void setAppid(String appid) {
+            this.appid = appid;
+        }
+
+        public String getSecret() {
+            return secret;
+        }
+
+        public void setSecret(String secret) {
+            this.secret = secret;
+        }
     }
 }

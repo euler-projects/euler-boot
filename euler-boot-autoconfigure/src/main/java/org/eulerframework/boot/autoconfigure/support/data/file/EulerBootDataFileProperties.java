@@ -21,6 +21,7 @@ import org.springframework.util.unit.DataSize;
 @ConfigurationProperties(prefix = "euler.data.file")
 public class EulerBootDataFileProperties {
     private JdbcStorage jdbcStorage = new JdbcStorage();
+    private LocalStorage localStorage = new LocalStorage();
 
     public JdbcStorage getJdbcStorage() {
         return jdbcStorage;
@@ -30,8 +31,17 @@ public class EulerBootDataFileProperties {
         this.jdbcStorage = jdbcStorage;
     }
 
+    public LocalStorage getLocalStorage() {
+        return localStorage;
+    }
+
+    public void setLocalStorage(LocalStorage localStorage) {
+        this.localStorage = localStorage;
+    }
+
     public static class JdbcStorage {
         private boolean enabled = false;
+        private String fileDownloadUrlTemplate;
         private DataSize maxFileSize = DataSize.ofKilobytes(256);
 
         public boolean isEnabled() {
@@ -42,12 +52,50 @@ public class EulerBootDataFileProperties {
             this.enabled = enabled;
         }
 
+        public String getFileDownloadUrlTemplate() {
+            return fileDownloadUrlTemplate;
+        }
+
+        public void setFileDownloadUrlTemplate(String fileDownloadUrlTemplate) {
+            this.fileDownloadUrlTemplate = fileDownloadUrlTemplate;
+        }
+
         public DataSize getMaxFileSize() {
             return maxFileSize;
         }
 
         public void setMaxFileSize(DataSize maxFileSize) {
             this.maxFileSize = maxFileSize;
+        }
+    }
+
+    public static class LocalStorage {
+        private boolean enabled = false;
+        private String baseDir;
+        private String fileDownloadUrlTemplate;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getFileDownloadUrlTemplate() {
+            return fileDownloadUrlTemplate;
+        }
+
+        public void setFileDownloadUrlTemplate(String fileDownloadUrlTemplate) {
+            this.fileDownloadUrlTemplate = fileDownloadUrlTemplate;
+        }
+
+        public String getBaseDir() {
+            return baseDir;
+        }
+
+        public void setBaseDir(String baseDir) {
+            this.baseDir = baseDir;
         }
     }
 }

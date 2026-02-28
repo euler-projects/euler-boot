@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2024 the original author or authors.
+ * Copyright 2013-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,6 +84,7 @@ public class EulerBootSecurityWebEndpointProperties {
         private String logoutPage = EulerSecurityEndpoints.USER_LOGOUT_PAGE;
         private String loginProcessingUrl = EulerSecurityEndpoints.USER_LOGIN_PROCESSING_URL;
         private String logoutProcessingUrl = EulerSecurityEndpoints.USER_LOGOUT_PROCESSING_URL;
+        private String loginSuccessRedirectParameter = EulerSecurityEndpoints.USER_LOGIN_SUCCESS_REDIRECT_PARAMETER;
 
         public boolean isEnabled() {
             return enabled;
@@ -115,6 +116,14 @@ public class EulerBootSecurityWebEndpointProperties {
 
         public void setLoginProcessingUrl(String loginProcessingUrl) {
             this.loginProcessingUrl = loginProcessingUrl;
+        }
+
+        public String getLoginSuccessRedirectParameter() {
+            return loginSuccessRedirectParameter;
+        }
+
+        public void setLoginSuccessRedirectParameter(String loginSuccessRedirectParameter) {
+            this.loginSuccessRedirectParameter = loginSuccessRedirectParameter;
         }
 
         public String getLogoutProcessingUrl() {

@@ -5,7 +5,7 @@ import org.eulerframework.web.core.base.controller.PageRender;
 import org.eulerframework.web.core.base.controller.PageSupportWebController;
 import org.eulerframework.web.core.base.response.ErrorResponse;
 import org.eulerframework.web.servlet.error.ErrorResponseResolver;
-import org.springframework.boot.autoconfigure.web.servlet.error.ErrorViewResolver;
+import org.springframework.boot.webmvc.autoconfigure.error.ErrorViewResolver;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.ModelAndView;
 

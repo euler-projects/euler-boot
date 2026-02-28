@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2024 the original author or authors.
+ * Copyright 2013-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
-import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootSecurityWebEndpointProperties;
+import org.eulerframework.security.oauth2.server.authorization.EulerJdbcOAuth2AuthorizationService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationConsentService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationService;
+import org.eulerframework.security.web.authentication.LoginPageAuthenticationEntryPoint;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -32,12 +34,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.*;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.EulerAuthorizationServerConfiguration;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.eulerframework.security.oauth2.server.authorization.config.annotation.web.configurers.EulerAuthorizationServerConfiguration;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StringUtils;
@@ -56,21 +58,27 @@ public class EulerBootAuthorizationServerConfiguration {
     public SecurityFilterChain authorizationServerSecurityFilterChain(
             HttpSecurity http,
             AuthenticationConfiguration authenticationConfiguration,
-            EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties,
-            EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties) throws Exception {
-        OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-                OAuth2AuthorizationServerConfigurer.authorizationServer();
+            @Qualifier(SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
+            LoginPageAuthenticationEntryPoint loginPageEntryPoint,
+            EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties) throws Exception {
+        OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
         http
                 .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
                 .with(authorizationServerConfigurer, Customizer.withDefaults())
                 .authorizeHttpRequests((authorize) ->
                         authorize.anyRequest().authenticated()
                 );
+        http.requestCache(RequestCacheConfigurer::disable);
 
         // enable resource owner password credentials grant
         EulerAuthorizationServerConfiguration.configPasswordAuthentication(http, authenticationConfiguration);
+
+        if(eulerBootAuthorizationServerProperties.getWechatLogin().isEnabled()) {
+            EulerAuthorizationServerConfiguration.configWechatAuthentication(http, authenticationConfiguration);
+        }
+
         // return original user principal if client support
-        // EulerAuthorizationServerConfiguration.configPrincipalSupportTokenIntrospectionAuthentication(http);
+        EulerAuthorizationServerConfiguration.configPrincipalSupportTokenIntrospectionAuthentication(http);
 
         if (StringUtils.hasText(eulerBootAuthorizationServerProperties.getConsentPage())) {
             http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).authorizationEndpoint(configurer ->
@@ -80,7 +88,7 @@ public class EulerBootAuthorizationServerConfiguration {
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(withDefaults());
         http.oauth2ResourceServer((resourceServer) -> resourceServer.jwt(withDefaults()));
         http.exceptionHandling((exceptions) -> exceptions.defaultAuthenticationEntryPointFor(
-                new LoginUrlAuthenticationEntryPoint(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage()),
+                loginPageEntryPoint,
                 createRequestMatcher()
         ));
         return http.build();
