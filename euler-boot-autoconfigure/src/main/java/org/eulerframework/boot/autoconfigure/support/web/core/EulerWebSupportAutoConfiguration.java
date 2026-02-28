@@ -21,7 +21,7 @@ import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCach
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCopyrightProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebI18nProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebSiteProperties;
-import org.eulerframework.common.util.json.JacksonUtils;
+import org.eulerframework.common.util.json.Jackson2Utils;
 import org.eulerframework.context.support.ClassPathReloadableResourceBundleMessageSource;
 import org.eulerframework.web.core.base.controller.PageRender;
 import org.eulerframework.web.core.base.controller.ThymeleafPageRender;
@@ -73,8 +73,8 @@ public class EulerWebSupportAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(ObjectMapper.class)
     public ObjectMapper objectMapper() {
-        this.logger.debug("Create ObjectMapper use JacksonUtils");
-        return JacksonUtils.getDefaultObjectMapper();
+        this.logger.debug("Create ObjectMapper use Jackson2Utils");
+        return Jackson2Utils.getDefaultObjectMapper();
     }
 
     @Bean
