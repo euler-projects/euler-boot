@@ -21,7 +21,7 @@ import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCach
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCopyrightProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebI18nProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebSiteProperties;
-import org.eulerframework.common.util.json.jackson3.JacksonUtils;
+import org.eulerframework.common.util.json.JacksonUtils;
 import org.eulerframework.context.support.ClassPathReloadableResourceBundleMessageSource;
 import org.eulerframework.web.core.base.controller.PageRender;
 import org.eulerframework.web.core.base.controller.ThymeleafPageRender;
