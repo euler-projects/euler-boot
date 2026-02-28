@@ -15,13 +15,12 @@
  */
 package org.eulerframework.boot.autoconfigure.support.web.core;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eulerframework.boot.autoconfigure.property.EulerApplicationProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCacheProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCopyrightProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebI18nProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebSiteProperties;
-import org.eulerframework.common.util.json.JacksonUtils;
+import org.eulerframework.common.util.jackson.JacksonUtils;
 import org.eulerframework.context.support.ClassPathReloadableResourceBundleMessageSource;
 import org.eulerframework.web.core.base.controller.PageRender;
 import org.eulerframework.web.core.base.controller.ThymeleafPageRender;
@@ -43,7 +42,6 @@ import org.springframework.boot.webmvc.error.ErrorAttributes;
 import org.springframework.boot.webmvc.error.ErrorController;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
