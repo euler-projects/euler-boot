@@ -21,7 +21,7 @@ import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCach
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerCopyrightProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebI18nProperties;
 import org.eulerframework.boot.autoconfigure.support.web.core.property.EulerWebSiteProperties;
-import org.eulerframework.common.util.json.JacksonUtils;
+import org.eulerframework.common.util.json.jackson3.JacksonUtils;
 import org.eulerframework.context.support.ClassPathReloadableResourceBundleMessageSource;
 import org.eulerframework.web.core.base.controller.PageRender;
 import org.eulerframework.web.core.base.controller.ThymeleafPageRender;
@@ -43,6 +43,7 @@ import org.springframework.boot.webmvc.error.ErrorAttributes;
 import org.springframework.boot.webmvc.error.ErrorController;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -73,8 +74,8 @@ public class EulerWebSupportAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(JsonMapper.class)
-    public ObjectMapper jsonMapper() {
-        this.logger.debug("Create ObjectMapper use JacksonUtils");
+    JsonMapper jacksonJsonMapper() {
+        this.logger.debug("Create JsonMapper use JacksonUtils");
         return JacksonUtils.getDefaultObjectMapper();
     }
 
