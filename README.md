@@ -6,3 +6,10 @@
 [![GitHub license](https://img.shields.io/github/license/euler-projects/euler-boot.svg)](https://raw.githubusercontent.com/euler-projects/euler-boot/master/LICENSE)
 
 Provide spring boot support for euler framework
+
+## Requirements
+
+- Java 25 or later
+- Spring Boot 4.x
+- Spring Framework 7.x
+- Spring Security 7.x
