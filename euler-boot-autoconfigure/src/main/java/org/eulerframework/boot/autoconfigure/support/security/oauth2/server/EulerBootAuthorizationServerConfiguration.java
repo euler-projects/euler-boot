@@ -16,9 +16,9 @@
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
+import org.eulerframework.security.jackson.EulerSecurityJsonMapperFactory;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationConsentService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationService;
-import org.eulerframework.security.oauth2.server.authorization.jackson.EulerOAuth2JsonMapper;
 import org.eulerframework.security.web.authentication.LoginPageAuthenticationEntryPoint;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -99,19 +99,19 @@ public class EulerBootAuthorizationServerConfiguration {
     static class JdbcAuthorizationServerConfiguration {
         @Bean
         @ConditionalOnMissingBean(OAuth2AuthorizationService.class)
-        public OAuth2AuthorizationService jdbcOAuth2AuthorizationService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
+        public OAuth2AuthorizationService oauth2AuthorizationService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
             JdbcOAuth2AuthorizationService jdbcOAuth2AuthorizationService = new JdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository);
             jdbcOAuth2AuthorizationService.setAuthorizationRowMapper(new JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationRowMapper(
-                    registeredClientRepository, EulerOAuth2JsonMapper.getInstance()
+                    registeredClientRepository, EulerSecurityJsonMapperFactory.getInstance()
             ));
             jdbcOAuth2AuthorizationService.setAuthorizationParametersMapper(new JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationParametersMapper(
-                    EulerOAuth2JsonMapper.getInstance()));
+                    EulerSecurityJsonMapperFactory.getInstance()));
             return jdbcOAuth2AuthorizationService;
         }
 
         @Bean
         @ConditionalOnMissingBean(OAuth2AuthorizationConsentService.class)
-        public OAuth2AuthorizationConsentService jdbcOAuth2AuthorizationConsentService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
+        public OAuth2AuthorizationConsentService oauth2AuthorizationConsentService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
             return new JdbcOAuth2AuthorizationConsentService(jdbcTemplate, registeredClientRepository);
         }
     }
@@ -122,7 +122,7 @@ public class EulerBootAuthorizationServerConfiguration {
 
         @Bean
         @ConditionalOnMissingBean(OAuth2AuthorizationService.class)
-        public OAuth2AuthorizationService redisOAuth2AuthorizationService(
+        public OAuth2AuthorizationService oauth2AuthorizationService(
                 StringRedisTemplate stringRedisTemplate,
                 RegisteredClientRepository registeredClientRepository,
                 EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties) {
@@ -136,7 +136,7 @@ public class EulerBootAuthorizationServerConfiguration {
 
         @Bean
         @ConditionalOnMissingBean(OAuth2AuthorizationConsentService.class)
-        public OAuth2AuthorizationConsentService jdbcOAuth2AuthorizationConsentService(
+        public OAuth2AuthorizationConsentService oauth2AuthorizationConsentService(
                 StringRedisTemplate stringRedisTemplate,
                 RegisteredClientRepository registeredClientRepository,
                 EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties) {
