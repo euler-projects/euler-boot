@@ -19,6 +19,7 @@ import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChai
 import org.eulerframework.security.jackson.EulerSecurityJsonMapperFactory;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationConsentService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationService;
+import org.eulerframework.security.oauth2.server.authorization.oidc.authentication.UserDetailsOidcUserInfoMapper;
 import org.eulerframework.security.web.authentication.LoginPageAuthenticationEntryPoint;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -77,15 +78,16 @@ public class EulerBootAuthorizationServerConfiguration {
             EulerAuthorizationServerConfiguration.configWechatAuthentication(http, authenticationConfiguration);
         }
 
-        // return original user principal if client support
-        EulerAuthorizationServerConfiguration.configPrincipalSupportTokenIntrospectionAuthentication(http);
+        http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(configurer -> configurer
+                .userInfoEndpoint(userInfoEndpoint-> userInfoEndpoint
+                        .userInfoMapper(new UserDetailsOidcUserInfoMapper())
+                ));
 
         if (StringUtils.hasText(eulerBootAuthorizationServerProperties.getConsentPage())) {
             http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).authorizationEndpoint(configurer ->
                     configurer.consentPage(eulerBootAuthorizationServerProperties.getConsentPage()));
         }
 
-        http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(withDefaults());
         http.oauth2ResourceServer((resourceServer) -> resourceServer.jwt(withDefaults()));
         http.exceptionHandling((exceptions) -> exceptions.defaultAuthenticationEntryPointFor(
                 loginPageEntryPoint,
