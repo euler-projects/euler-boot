@@ -78,7 +78,7 @@ public class EulerBootAuthorizationServerConfiguration {
             EulerAuthorizationServerConfiguration.configWechatAuthentication(http, authenticationConfiguration);
         }
 
-        // Enable extended claims support for the Token Introspection and UserInfo endpoints
+        // Enable extended claims support for the UserInfo endpoints
         EulerAuthorizationServerConfiguration.enableExtendedClaims(http);
 
         if (StringUtils.hasText(eulerBootAuthorizationServerProperties.getConsentPage())) {
