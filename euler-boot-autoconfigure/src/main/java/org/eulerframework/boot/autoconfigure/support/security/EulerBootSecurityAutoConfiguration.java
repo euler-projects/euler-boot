@@ -52,4 +52,10 @@ public class EulerBootSecurityAutoConfiguration {
     static public InitializeWechatUserDetailsBeanManagerConfigurer initializeWechatLoginBeanManagerConfigurer(ApplicationContext context) {
         return new InitializeWechatUserDetailsBeanManagerConfigurer(context);
     }
+
+    @Bean
+    @ConditionalOnProperty(prefix = "euler.security.oauth2.authorizationserver.apple-app-attest", name = "enabled")
+    static public InitializeAppleAppAttestBeanManagerConfigurer initializeAppleAppAttestBeanManagerConfigurer(ApplicationContext context) {
+        return new InitializeAppleAppAttestBeanManagerConfigurer(context);
+    }
 }

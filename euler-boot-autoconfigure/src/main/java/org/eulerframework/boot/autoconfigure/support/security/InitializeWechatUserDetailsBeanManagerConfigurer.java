@@ -1,7 +1,7 @@
 package org.eulerframework.boot.autoconfigure.support.security;
 
 import org.eulerframework.boot.autoconfigure.support.security.oauth2.server.EulerBootAuthorizationServerProperties;
-import org.eulerframework.security.authentication.WechatAuthorizationCodeAuthenticationProvider;
+import org.eulerframework.security.authentication.wechat.WechatAuthorizationCodeAuthenticationProvider;
 import org.eulerframework.security.core.userdetails.EulerWechatUserDetailsService;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.Ordered;

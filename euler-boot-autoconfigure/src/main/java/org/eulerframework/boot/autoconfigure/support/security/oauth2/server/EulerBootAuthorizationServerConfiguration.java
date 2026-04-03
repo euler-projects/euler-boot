@@ -19,7 +19,8 @@ import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChai
 import org.eulerframework.security.jackson.EulerSecurityJsonMapperFactory;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationConsentService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationService;
-import org.eulerframework.security.oauth2.server.authorization.oidc.authentication.UserDetailsOidcUserInfoMapper;
+import org.eulerframework.security.oauth2.server.authorization.config.annotation.web.configurers.EulerAuthorizationServerConfiguration;
+import org.eulerframework.security.oauth2.server.authorization.config.annotation.web.configurers.EulerOAuth2AuthorizationServerConfigurer;
 import org.eulerframework.security.web.authentication.LoginPageAuthenticationEntryPoint;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -37,11 +38,14 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
-import org.springframework.security.oauth2.server.authorization.*;
+import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.eulerframework.security.oauth2.server.authorization.config.annotation.web.configurers.EulerAuthorizationServerConfiguration;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StringUtils;
 
@@ -61,15 +65,27 @@ public class EulerBootAuthorizationServerConfiguration {
             AuthenticationConfiguration authenticationConfiguration,
             @Qualifier(SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
             LoginPageAuthenticationEntryPoint loginPageEntryPoint,
-            EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties) throws Exception {
+            EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties) {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
+        EulerOAuth2AuthorizationServerConfigurer eulerOAuth2AuthorizationServerConfigurer = new EulerOAuth2AuthorizationServerConfigurer();
+
+        RequestMatcher endpointsMatcher = new OrRequestMatcher(
+                authorizationServerConfigurer.getEndpointsMatcher(),
+                eulerOAuth2AuthorizationServerConfigurer.getEndpointsMatcher());
+
         http
-                .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+                .securityMatcher(endpointsMatcher)
                 .with(authorizationServerConfigurer, Customizer.withDefaults())
+                .with(eulerOAuth2AuthorizationServerConfigurer, Customizer.withDefaults())
+                .requestCache(RequestCacheConfigurer::disable)
                 .authorizeHttpRequests((authorize) ->
                         authorize.anyRequest().authenticated()
                 );
-        http.requestCache(RequestCacheConfigurer::disable);
+
+        // Enable App Attest token endpoint authentication (attestation + assertion)
+        // These methods auto-resolve ChallengeService and auto-register grant types with the challenge endpoint
+        EulerAuthorizationServerConfiguration.configAppleAppAttestAuthentication(http, authenticationConfiguration);
+        EulerAuthorizationServerConfiguration.configAppleAppAttestAssertionAuthentication(http, authenticationConfiguration);
 
         // enable resource owner password credentials grant
         EulerAuthorizationServerConfiguration.configPasswordAuthentication(http, authenticationConfiguration);
