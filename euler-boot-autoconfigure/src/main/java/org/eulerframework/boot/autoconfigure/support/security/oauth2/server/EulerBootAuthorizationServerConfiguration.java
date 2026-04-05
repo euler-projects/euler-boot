@@ -83,9 +83,8 @@ public class EulerBootAuthorizationServerConfiguration {
                 );
 
         // Enable App Attest token endpoint authentication (attestation + assertion)
-        // These methods auto-resolve ChallengeService and auto-register grant types with the challenge endpoint
+        // This method auto-resolves ChallengeService and auto-registers grant types with the challenge endpoint
         EulerAuthorizationServerConfiguration.configAppleAppAttestAuthentication(http, authenticationConfiguration);
-        EulerAuthorizationServerConfiguration.configAppleAppAttestAssertionAuthentication(http, authenticationConfiguration);
 
         // enable resource owner password credentials grant
         EulerAuthorizationServerConfiguration.configPasswordAuthentication(http, authenticationConfiguration);

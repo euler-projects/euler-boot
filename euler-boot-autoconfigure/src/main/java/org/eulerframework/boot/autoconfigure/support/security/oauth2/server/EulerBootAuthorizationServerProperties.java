@@ -15,15 +15,13 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
-import org.eulerframework.security.authentication.apple.AppleAppAttestAssertionAuthenticationProvider;
-import org.eulerframework.security.authentication.apple.AppleAppAttestAttestationAuthenticationProvider;
-import org.eulerframework.security.authentication.apple.AppleAppAttestKeyCredentialService;
-import org.eulerframework.security.authentication.apple.AppleAppAttestValidationService;
-import org.eulerframework.security.authentication.apple.DefaultAppleAppAttestValidationService;
+import org.eulerframework.security.authentication.apple.*;
 import org.eulerframework.security.core.userdetails.EulerAppleAppAttestUserDetailsService;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @ConfigurationProperties(prefix = "euler.security.oauth2.authorizationserver")
 public class EulerBootAuthorizationServerProperties {
@@ -104,7 +102,8 @@ public class EulerBootAuthorizationServerProperties {
      * If no {@link AppleAppAttestValidationService
      * AppleAppAttestValidationService} bean is found, a
      * {@link DefaultAppleAppAttestValidationService
-     * DefaultAppleAppAttestValidationService} will be created using {@link #teamId} and {@link #bundleId}.
+     * DefaultAppleAppAttestValidationService} will be created using the registered apps
+     * from {@link #apps}.
      */
     public static class AppleAppAttest {
         /**
@@ -118,22 +117,6 @@ public class EulerBootAuthorizationServerProperties {
          */
         private boolean autoCreateUserIfNotExists;
         /**
-         * The Apple Developer Team ID (10-character string), used together with
-         * {@link #bundleId} to compute the App ID ({@code teamId.bundleId}) for
-         * RP ID hash verification. Required when no custom
-         * {@link AppleAppAttestValidationService
-         * AppleAppAttestValidationService} bean is provided.
-         */
-        private String teamId;
-        /**
-         * The iOS app's Bundle ID (e.g. {@code com.example.myapp}), used together with
-         * {@link #teamId} to compute the App ID for RP ID hash verification. Required
-         * when no custom
-         * {@link AppleAppAttestValidationService
-         * AppleAppAttestValidationService} bean is provided.
-         */
-        private String bundleId;
-        /**
          * Whether to accept attestations from the development environment.
          * When {@code true}, both production and development AAGUIDs are accepted.
          * When {@code false} (default), only the production AAGUID is accepted.
@@ -141,6 +124,15 @@ public class EulerBootAuthorizationServerProperties {
          * Should only be set to {@code true} during development and testing.
          */
         private boolean allowDevelopmentEnvironment;
+        /**
+         * Map of registered Apple Apps, keyed by an arbitrary registration name.
+         * Each entry defines a {@link AppRegistration} with a {@code teamId} and {@code bundleId}
+         * that together form the App ID ({@code teamId.bundleId}) for RP ID hash verification.
+         * <p>
+         * Required when no custom {@link AppleAppRepository AppleAppRepository} or
+         * {@link AppleAppAttestValidationService AppleAppAttestValidationService} bean is provided.
+         */
+        private Map<String, AppRegistration> apps = new LinkedHashMap<>();
 
         public boolean isEnabled() {
             return enabled;
@@ -158,28 +150,53 @@ public class EulerBootAuthorizationServerProperties {
             this.autoCreateUserIfNotExists = autoCreateUserIfNotExists;
         }
 
-        public String getTeamId() {
-            return teamId;
-        }
-
-        public void setTeamId(String teamId) {
-            this.teamId = teamId;
-        }
-
-        public String getBundleId() {
-            return bundleId;
-        }
-
-        public void setBundleId(String bundleId) {
-            this.bundleId = bundleId;
-        }
-
         public boolean isAllowDevelopmentEnvironment() {
             return allowDevelopmentEnvironment;
         }
 
         public void setAllowDevelopmentEnvironment(boolean allowDevelopmentEnvironment) {
             this.allowDevelopmentEnvironment = allowDevelopmentEnvironment;
+        }
+
+        public Map<String, AppRegistration> getApps() {
+            return apps;
+        }
+
+        public void setApps(Map<String, AppRegistration> apps) {
+            this.apps = apps;
+        }
+
+        /**
+         * Registration properties for a single Apple App.
+         */
+        public static class AppRegistration {
+            /**
+             * The Apple Developer Team ID (10-character string), used together with
+             * {@link #bundleId} to compute the App ID ({@code teamId.bundleId}) for
+             * RP ID hash verification.
+             */
+            private String teamId;
+            /**
+             * The iOS app's Bundle ID (e.g. {@code com.example.myapp}), used together with
+             * {@link #teamId} to compute the App ID for RP ID hash verification.
+             */
+            private String bundleId;
+
+            public String getTeamId() {
+                return teamId;
+            }
+
+            public void setTeamId(String teamId) {
+                this.teamId = teamId;
+            }
+
+            public String getBundleId() {
+                return bundleId;
+            }
+
+            public void setBundleId(String bundleId) {
+                this.bundleId = bundleId;
+            }
         }
     }
 

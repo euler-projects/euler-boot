@@ -5,13 +5,20 @@ import org.eulerframework.security.authentication.apple.AppleAppAttestAssertionA
 import org.eulerframework.security.authentication.apple.AppleAppAttestAttestationAuthenticationProvider;
 import org.eulerframework.security.authentication.apple.AppleAppAttestKeyCredentialService;
 import org.eulerframework.security.authentication.apple.AppleAppAttestValidationService;
+import org.eulerframework.security.authentication.apple.AppleAppRepository;
 import org.eulerframework.security.authentication.apple.DefaultAppleAppAttestValidationService;
+import org.eulerframework.security.authentication.apple.InMemoryAppleAppRepository;
+import org.eulerframework.security.authentication.apple.RegisteredAppleApp;
 import org.eulerframework.security.core.userdetails.EulerAppleAppAttestUserDetailsService;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.GlobalAuthenticationConfigurerAdapter;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Order(InitializeAppleAppAttestBeanManagerConfigurer.DEFAULT_ORDER)
 public class InitializeAppleAppAttestBeanManagerConfigurer extends GlobalAuthenticationConfigurerAdapter {
@@ -75,12 +82,28 @@ public class InitializeAppleAppAttestBeanManagerConfigurer extends GlobalAuthent
             }
 
             EulerBootAuthorizationServerProperties.AppleAppAttest appleAppAttestProperties = properties.getAppleAppAttest();
+            AppleAppRepository appRepository = getOrCreateAppleAppRepository(appleAppAttestProperties);
             DefaultAppleAppAttestValidationService validationService = new DefaultAppleAppAttestValidationService(
-                    appleAppAttestProperties.getTeamId(),
-                    appleAppAttestProperties.getBundleId(),
-                    keyCredentialService);
+                    appRepository, keyCredentialService);
             validationService.setAllowDevelopmentEnvironment(appleAppAttestProperties.isAllowDevelopmentEnvironment());
             return validationService;
+        }
+
+        private AppleAppRepository getOrCreateAppleAppRepository(
+                EulerBootAuthorizationServerProperties.AppleAppAttest appleAppAttestProperties) {
+            String[] appRepositoryBeanNames = InitializeAppleAppAttestBeanManagerConfigurer.this.context
+                    .getBeanNamesForType(AppleAppRepository.class);
+            if (appRepositoryBeanNames.length > 0) {
+                return InitializeAppleAppAttestBeanManagerConfigurer.this.context
+                        .getBean(appRepositoryBeanNames[0], AppleAppRepository.class);
+            }
+
+            Map<String, EulerBootAuthorizationServerProperties.AppleAppAttest.AppRegistration> appMap =
+                    appleAppAttestProperties.getApps();
+            List<RegisteredAppleApp> registeredApps = new ArrayList<>();
+            appMap.forEach((name, appProps) ->
+                    registeredApps.add(new RegisteredAppleApp(appProps.getTeamId(), appProps.getBundleId())));
+            return new InMemoryAppleAppRepository(registeredApps);
         }
     }
 }
