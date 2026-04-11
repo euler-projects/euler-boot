@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2026 the original author or authors.
+ * Copyright 2013-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,19 +19,24 @@ import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChai
 import org.eulerframework.security.jackson.EulerSecurityJsonMapperFactory;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationConsentService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationService;
+import org.eulerframework.security.oauth2.server.authorization.client.EulerOAuth2ClientService;
+import org.eulerframework.security.oauth2.server.authorization.client.EulerRegisteredClientRepository;
 import org.eulerframework.security.oauth2.server.authorization.config.annotation.web.configurers.EulerAuthorizationServerConfiguration;
 import org.eulerframework.security.oauth2.server.authorization.config.annotation.web.configurers.EulerOAuth2AuthorizationServerConfigurer;
 import org.eulerframework.security.web.authentication.LoginPageAuthenticationEntryPoint;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.security.oauth2.server.authorization.autoconfigure.servlet.OAuth2AuthorizationServerProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -42,6 +47,8 @@ import org.springframework.security.oauth2.server.authorization.JdbcOAuth2Author
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
@@ -49,6 +56,7 @@ import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -77,17 +85,20 @@ public class EulerBootAuthorizationServerConfiguration {
                 .securityMatcher(endpointsMatcher)
                 .with(authorizationServerConfigurer, Customizer.withDefaults())
                 .with(eulerOAuth2AuthorizationServerConfigurer, Customizer.withDefaults())
-                .requestCache(RequestCacheConfigurer::disable)
-                .authorizeHttpRequests((authorize) ->
-                        authorize.anyRequest().authenticated()
-                );
+                .requestCache(RequestCacheConfigurer::disable);
 
         // Enable App Attest token endpoint authentication (attestation + assertion)
         // This method auto-resolves ChallengeService and auto-registers grant types with the challenge endpoint
-        EulerAuthorizationServerConfiguration.configAppleAppAttestAuthentication(http, authenticationConfiguration);
+        if (eulerBootAuthorizationServerProperties.getAppleAppAttest().isEnabled()) {
+            EulerAuthorizationServerConfiguration.configAppleAppAttestAuthentication(http, authenticationConfiguration);
+        }
 
         // enable resource owner password credentials grant
         EulerAuthorizationServerConfiguration.configPasswordAuthentication(http, authenticationConfiguration);
+
+        if (eulerBootAuthorizationServerProperties.getDynamicClientRegistration().isEnabled()) {
+            EulerAuthorizationServerConfiguration.configClientRegistrationEndpoint(http, authenticationConfiguration);
+        }
 
         if (eulerBootAuthorizationServerProperties.getWechatLogin().isEnabled()) {
             EulerAuthorizationServerConfiguration.configWechatAuthentication(http, authenticationConfiguration);
@@ -101,12 +112,40 @@ public class EulerBootAuthorizationServerConfiguration {
                     configurer.consentPage(eulerBootAuthorizationServerProperties.getConsentPage()));
         }
 
-        http.oauth2ResourceServer((resourceServer) -> resourceServer.jwt(withDefaults()));
-        http.exceptionHandling((exceptions) -> exceptions.defaultAuthenticationEntryPointFor(
-                loginPageEntryPoint,
-                createRequestMatcher()
-        ));
+        http
+                .oauth2ResourceServer((resourceServer) -> resourceServer.jwt(withDefaults()))
+                .exceptionHandling((exceptions) -> exceptions.defaultAuthenticationEntryPointFor(
+                        loginPageEntryPoint,
+                        createRequestMatcher()
+                ))
+                .authorizeHttpRequests((authorize) ->
+                        authorize.anyRequest().authenticated()
+                );
         return http.build();
+    }
+
+//    @Bean
+//    @ConditionalOnMissingBean(EulerOAuth2ClientService.class)
+//    public RegisteredClientRepository registeredClientRepository(JdbcOperations jdbcOperations, OAuth2AuthorizationServerProperties properties) {
+//        OAuth2AuthorizationServerPropertiesMapper mapper = new OAuth2AuthorizationServerPropertiesMapper(properties);
+//        List<RegisteredClient> clients = mapper.asRegisteredClients();
+//        JdbcRegisteredClientRepository jdbcRegisteredClientRepository = new JdbcRegisteredClientRepository(jdbcOperations);
+//        for (RegisteredClient registeredClient : clients) {
+//            jdbcRegisteredClientRepository.save(registeredClient);
+//        }
+//        return jdbcRegisteredClientRepository;
+//    }
+
+    @Bean
+    @ConditionalOnBean(EulerOAuth2ClientService.class)
+    public RegisteredClientRepository registeredClientRepository(EulerOAuth2ClientService eulerOAuth2ClientService, OAuth2AuthorizationServerProperties properties) {
+        OAuth2AuthorizationServerPropertiesMapper mapper = new OAuth2AuthorizationServerPropertiesMapper(properties);
+        List<RegisteredClient> clients = mapper.asRegisteredClients();
+        EulerRegisteredClientRepository eulerRegisteredClientRepository = new EulerRegisteredClientRepository(eulerOAuth2ClientService);
+        for (RegisteredClient registeredClient : clients) {
+            eulerRegisteredClientRepository.save(registeredClient);
+        }
+        return eulerRegisteredClientRepository;
     }
 
     @Configuration(proxyBeanMethods = false)

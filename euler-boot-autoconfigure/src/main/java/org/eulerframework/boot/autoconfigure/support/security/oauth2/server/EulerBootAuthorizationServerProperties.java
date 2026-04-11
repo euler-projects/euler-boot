@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2024 the original author or authors.
+ * Copyright 2013-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ public class EulerBootAuthorizationServerProperties {
     private String redisKeyPrefix = "euler:oauth2:auth";
 
     private String consentPage;
+
+    private DynamicClientRegistration dynamicClientRegistration =  new DynamicClientRegistration();
 
     private WechatLogin wechatLogin = new WechatLogin();
 
@@ -69,6 +71,10 @@ public class EulerBootAuthorizationServerProperties {
 
     public enum TokenStoreType {
         JDBC, REDIS, IN_MEMORY
+    }
+
+    public DynamicClientRegistration getDynamicClientRegistration() {
+        return dynamicClientRegistration;
     }
 
     public WechatLogin getWechatLogin() {
@@ -245,6 +251,18 @@ public class EulerBootAuthorizationServerProperties {
 
         public void setSecret(String secret) {
             this.secret = secret;
+        }
+    }
+
+    public static class DynamicClientRegistration {
+        private boolean enabled;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
         }
     }
 }
