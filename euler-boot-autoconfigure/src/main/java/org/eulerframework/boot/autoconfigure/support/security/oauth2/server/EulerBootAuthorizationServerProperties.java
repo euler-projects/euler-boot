@@ -15,7 +15,9 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
-import org.eulerframework.security.authentication.apple.*;
+import org.eulerframework.security.authentication.apple.AppleAppAttestAssertionAuthenticationProvider;
+import org.eulerframework.security.authentication.apple.AppleAppAttestValidationService;
+import org.eulerframework.security.authentication.apple.AppleAppRepository;
 import org.eulerframework.security.core.userdetails.EulerAppleAppAttestUserDetailsService;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -96,32 +98,21 @@ public class EulerBootAuthorizationServerProperties {
     /**
      * Apple App Attest validation configuration.
      * <p>
-     * When enabled, registers {@link AppleAppAttestAttestationAuthenticationProvider
-     * AppleAppAttestAttestationAuthenticationProvider} and {@link AppleAppAttestAssertionAuthenticationProvider
+     * When enabled, registers {@link AppleAppAttestAssertionAuthenticationProvider
      * AppleAppAttestAssertionAuthenticationProvider} into the {@code AuthenticationManager}
-     * to support Apple App Attest attestation and assertion grant types.
+     * to support Apple App Attest assertion grant type.
      * <p>
      * Requires an {@link EulerAppleAppAttestUserDetailsService
-     * EulerAppleAppAttestUserDetailsService} bean and an
-     * {@link AppleAppAttestKeyCredentialService
-     * AppleAppAttestKeyCredentialService} bean to be present in the application context.
+     * EulerAppleAppAttestUserDetailsService} bean to be present in the application context.
      * If no {@link AppleAppAttestValidationService
-     * AppleAppAttestValidationService} bean is found, a
-     * {@link DefaultAppleAppAttestValidationService
-     * DefaultAppleAppAttestValidationService} will be created using the registered apps
-     * from {@link #apps}.
+     * AppleAppAttestValidationService} bean is found, a default implementation will be
+     * created using the registered apps from {@link #apps}.
      */
     public static class AppleAppAttest {
         /**
          * Whether Apple App Attest authentication is enabled. Default is {@code false}.
          */
         private boolean enabled;
-        /**
-         * Whether to automatically create a new user account when no existing user is
-         * found for the device key ID during the attestation (initial device registration)
-         * flow. Default is {@code false}.
-         */
-        private boolean autoCreateUserIfNotExists;
         /**
          * Whether to accept attestations from the development environment.
          * When {@code true}, both production and development AAGUIDs are accepted.
@@ -146,14 +137,6 @@ public class EulerBootAuthorizationServerProperties {
 
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
-        }
-
-        public boolean isAutoCreateUserIfNotExists() {
-            return autoCreateUserIfNotExists;
-        }
-
-        public void setAutoCreateUserIfNotExists(boolean autoCreateUserIfNotExists) {
-            this.autoCreateUserIfNotExists = autoCreateUserIfNotExists;
         }
 
         public boolean isAllowDevelopmentEnvironment() {

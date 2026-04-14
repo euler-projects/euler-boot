@@ -57,6 +57,16 @@
         </dependency>
         <dependency>
             <groupId>org.eulerframework</groupId>
+            <artifactId>euler-security-webauthn</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>com.webauthn4j</groupId>
+            <artifactId>webauthn4j-appattest</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.eulerframework</groupId>
             <artifactId>euler-security-oauth2-authorization-server</artifactId>
             <optional>true</optional>
         </dependency>
@@ -146,6 +156,13 @@
             <artifactId>spring-data-redis</artifactId>
             <optional>true</optional>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-webauthn</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport</artifactId>

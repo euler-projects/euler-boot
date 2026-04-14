@@ -24,6 +24,7 @@
         <spring-boot.version>4.0.3</spring-boot.version>
 
         <querydsl.version>5.1.0</querydsl.version>
+        <webauthn4j.version>0.31.2.RELEASE</webauthn4j.version>
     </properties>
 
     <dependencyManagement>
@@ -41,6 +42,12 @@
                 <artifactId>querydsl-jpa</artifactId>
                 <version>${querydsl.version}</version>
                 <classifier>jakarta</classifier>
+            </dependency>
+
+            <dependency>
+                <groupId>com.webauthn4j</groupId>
+                <artifactId>webauthn4j-appattest</artifactId>
+                <version>${webauthn4j.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

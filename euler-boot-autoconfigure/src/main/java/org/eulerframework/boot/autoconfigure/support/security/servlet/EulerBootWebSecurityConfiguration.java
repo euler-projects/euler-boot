@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2026 the original author or authors.
+ * Copyright 2013-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAppAttestProperties;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilterUtils;
+import org.eulerframework.security.config.annotation.web.configurers.apple.AppAttestSecurityConfigurer;
 import org.eulerframework.security.core.captcha.view.DefaultSmsCaptchaView;
 import org.eulerframework.security.core.captcha.view.SmsCaptchaView;
 import org.eulerframework.security.web.access.EulerAccessDeniedHandler;
@@ -49,6 +51,7 @@ import org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilte
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -61,6 +64,9 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.webauthn.authentication.WebAuthnAuthenticationFilter;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import java.util.Collections;
@@ -79,7 +85,11 @@ public class EulerBootWebSecurityConfiguration {
             @Qualifier(SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
             LoginPageAuthenticationEntryPoint loginPageEntryPoint,
             EulerBootSecurityWebProperties eulerBootSecurityWebProperties,
-            EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties) throws Exception {
+            EulerBootSecurityWebAuthnProperties eulerBootSecurityWebAuthnProperties,
+            EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties,
+            EulerBootSecurityAppAttestProperties eulerBootSecurityAppAttestProperties,
+            ObjectProvider<WebAuthnPresent> wenAuthnPresent,
+            ObjectProvider<AppAttestPresent> appAttestPresent) throws Exception {
         Assert.isTrue(eulerBootSecurityWebProperties.isEnabled(), "euler web properties disabled, can not init defaultSecurityFilterChain");
         this.logger.debug("Create default security filter chain");
 
@@ -123,6 +133,28 @@ public class EulerBootWebSecurityConfiguration {
                         }))
                 .logout(logout -> logout
                         .logoutUrl(eulerBootSecurityWebEndpointProperties.getUser().getLogoutProcessingUrl()));
+
+        if (eulerBootSecurityWebAuthnProperties.isEnabled()) {
+            if (wenAuthnPresent.getIfAvailable() == null) {
+                throw new IllegalStateException("WebAuthn is enabled but the required dependency is missing. " +
+                        "Please add the org.eulerframework:euler-security-wenauthn dependency to your project.");
+            }
+            logger.debug("WebAuthn dependency detected and enabled, configuring WebAuthn support.");
+            http
+                    .webAuthn((webAuthn) -> webAuthn
+                            .rpId(eulerBootSecurityWebAuthnProperties.getRpId())
+                            .allowedOrigins(eulerBootSecurityWebAuthnProperties.getAllowedOrigins())
+                    );
+        }
+
+        if (eulerBootSecurityAppAttestProperties.isEnabled()) {
+            if (appAttestPresent.getIfAvailable() == null) {
+                throw new IllegalStateException("App Attest is enabled but the required dependency is missing. " +
+                        "Please add the com.webauthn4j:webauthn4j-appattest dependency to your project.");
+            }
+            logger.debug("App Attest dependency detected and enabled, configuring App Attest registration endpoints.");
+            http.with(new AppAttestSecurityConfigurer(), Customizer.withDefaults());
+        }
 
         this.configAccessDeniedHandler(http);
         return http.build();
@@ -253,5 +285,15 @@ public class EulerBootWebSecurityConfiguration {
 
             return defaultEulerCaptchaController;
         }
+    }
+
+    @Component
+    @ConditionalOnClass(WebAuthnAuthenticationFilter.class)
+    public static class WebAuthnPresent {
+    }
+
+    @Component
+    @ConditionalOnClass(name = "com.webauthn4j.appattest.DeviceCheckManager")
+    public static class AppAttestPresent {
     }
 }
