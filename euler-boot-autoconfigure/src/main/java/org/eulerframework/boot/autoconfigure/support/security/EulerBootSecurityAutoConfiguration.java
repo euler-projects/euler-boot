@@ -68,13 +68,6 @@ public class EulerBootSecurityAutoConfiguration {
         return new InitializeWechatUserDetailsBeanManagerConfigurer(context);
     }
 
-    @Bean
-    @ConditionalOnProperty(prefix = "euler.security.app-attest", name = "enabled")
-    @ConditionalOnClass(name = "com.webauthn4j.appattest.DeviceCheckManager")
-    static public InitializeAppleAppAttestBeanManagerConfigurer initializeAppleAppAttestBeanManagerConfigurer(ApplicationContext context) {
-        return new InitializeAppleAppAttestBeanManagerConfigurer(context);
-    }
-
     /**
      * Auto-configuration for Apple App Attest related beans.
      * Creates default implementations of required services when no custom beans are provided.
@@ -116,8 +109,10 @@ public class EulerBootSecurityAutoConfiguration {
         public AppleAppAttestValidationService appleAppAttestValidationService(
                 DeviceCheckManager deviceCheckManager,
                 AppleAppRepository appleAppRepository,
-                AppAttestRegistrationService registrationService) {
-            return new Webauthn4jAppleAppAttestValidationService(deviceCheckManager, appleAppRepository, registrationService);
+                AppAttestRegistrationService registrationService,
+                EulerBootSecurityAppAttestProperties properties) {
+            return new Webauthn4jAppleAppAttestValidationService(deviceCheckManager, appleAppRepository, registrationService,
+                    properties.isAllowDevelopmentEnvironment());
         }
     }
 }
