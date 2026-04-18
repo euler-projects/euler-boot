@@ -18,14 +18,9 @@ package org.eulerframework.boot.autoconfigure.support.security;
 import org.eulerframework.boot.autoconfigure.support.data.jpa.EulerBootDataJpaAuditingAutoConfiguration;
 import org.eulerframework.security.authentication.ChallengeService;
 import org.eulerframework.security.authentication.InMemoryChallengeService;
-import org.eulerframework.security.authentication.apple.AppleAppRepository;
+import org.eulerframework.security.authentication.apple.*;
 import org.eulerframework.security.webauthn.authentication.AppleAppAttestRootCA;
-import org.eulerframework.security.authentication.apple.AppAttestRegistrationService;
-import org.eulerframework.security.authentication.apple.InMemoryAppAttestRegistrationService;
-import org.eulerframework.security.authentication.apple.InMemoryAppleAppRepository;
-import org.eulerframework.security.authentication.apple.RegisteredAppleApp;
 import org.eulerframework.security.webauthn.authentication.Webauthn4jAppleAppAttestValidationService;
-import org.eulerframework.security.authentication.apple.AppleAppAttestValidationService;
 import com.webauthn4j.appattest.DeviceCheckManager;
 import org.eulerframework.security.core.context.UserContext;
 import org.eulerframework.security.core.context.UserDetailsPrincipalUserContext;
@@ -88,8 +83,10 @@ public class EulerBootSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean(DeviceCheckManager.class)
-        public DeviceCheckManager deviceCheckManager() {
-            return AppleAppAttestRootCA.deviceCheckManager();
+        public DeviceCheckManager deviceCheckManager(EulerBootSecurityAppAttestProperties properties) {
+            DeviceCheckManager deviceCheckManager = AppleAppAttestRootCA.deviceCheckManager();
+            deviceCheckManager.getAttestationDataValidator().setProduction(!properties.isAllowDevelopmentEnvironment());
+            return deviceCheckManager;
         }
 
         @Bean
@@ -111,8 +108,11 @@ public class EulerBootSecurityAutoConfiguration {
                 AppleAppRepository appleAppRepository,
                 AppAttestRegistrationService registrationService,
                 EulerBootSecurityAppAttestProperties properties) {
-            return new Webauthn4jAppleAppAttestValidationService(deviceCheckManager, appleAppRepository, registrationService,
-                    properties.isAllowDevelopmentEnvironment());
+            DefaultAppleAppAttestValidationService defaultAppleAppAttestValidationService = new DefaultAppleAppAttestValidationService(appleAppRepository, registrationService);
+            defaultAppleAppAttestValidationService.setAllowDevelopmentEnvironment(properties.isAllowDevelopmentEnvironment());
+            return defaultAppleAppAttestValidationService;
+            //            return new Webauthn4jAppleAppAttestValidationService(deviceCheckManager, appleAppRepository, registrationService,
+//                    properties.isAllowDevelopmentEnvironment());
         }
     }
 }

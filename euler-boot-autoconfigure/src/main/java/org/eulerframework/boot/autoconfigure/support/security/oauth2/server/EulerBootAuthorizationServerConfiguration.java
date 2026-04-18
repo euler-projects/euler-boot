@@ -86,6 +86,7 @@ public class EulerBootAuthorizationServerConfiguration {
 
         // enable resource owner password credentials grant
         EulerAuthorizationServerConfiguration.configPasswordAuthentication(http, authenticationConfiguration);
+        EulerAuthorizationServerConfiguration.configClientAttestationAuthentication(http, authenticationConfiguration);
 
         if (eulerBootAuthorizationServerProperties.getDynamicClientRegistration().isEnabled()) {
             EulerAuthorizationServerConfiguration.configClientRegistrationEndpoint(http, authenticationConfiguration);
