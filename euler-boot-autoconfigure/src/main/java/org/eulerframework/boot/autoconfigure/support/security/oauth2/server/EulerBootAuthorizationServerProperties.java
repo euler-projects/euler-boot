@@ -27,7 +27,7 @@ public class EulerBootAuthorizationServerProperties {
 
     private String consentPage;
 
-    private DynamicClientRegistration dynamicClientRegistration =  new DynamicClientRegistration();
+    private DynamicClientRegistration dynamicClientRegistration = new DynamicClientRegistration();
 
     private WechatLogin wechatLogin = new WechatLogin();
 

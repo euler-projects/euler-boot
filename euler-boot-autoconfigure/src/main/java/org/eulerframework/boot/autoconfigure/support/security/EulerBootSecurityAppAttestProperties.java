@@ -39,8 +39,8 @@ import java.util.List;
  *       allow-development-environment: false
  * </pre>
  */
-@ConfigurationProperties(prefix = "euler.security.device-attest")
-public class EulerBootSecurityDeviceAttestProperties {
+@ConfigurationProperties(prefix = "euler.security.app-attest")
+public class EulerBootSecurityAppAttestProperties {
 
     /**
      * Whether device attestation is enabled. Default is {@code false}.
@@ -50,7 +50,7 @@ public class EulerBootSecurityDeviceAttestProperties {
     /**
      * List of allowed devices.
      */
-    private List<AllowedDevice> allowedDevices = new ArrayList<>();
+    private List<App> apps = new ArrayList<>();
 
     /**
      * Whether to accept attestations from the development environment.
@@ -59,7 +59,7 @@ public class EulerBootSecurityDeviceAttestProperties {
      * <p>
      * Should only be set to {@code true} during development and testing.
      */
-    private boolean allowDevelopmentEnvironment = false;
+    private boolean developmentEnvironment = false;
 
     public boolean isEnabled() {
         return enabled;
@@ -69,26 +69,26 @@ public class EulerBootSecurityDeviceAttestProperties {
         this.enabled = enabled;
     }
 
-    public List<AllowedDevice> getAllowedDevices() {
-        return allowedDevices;
+    public List<App> getApps() {
+        return apps;
     }
 
-    public void setAllowedDevices(List<AllowedDevice> allowedDevices) {
-        this.allowedDevices = allowedDevices;
+    public void setApps(List<App> apps) {
+        this.apps = apps;
     }
 
-    public boolean isAllowDevelopmentEnvironment() {
-        return allowDevelopmentEnvironment;
+    public boolean isDevelopmentEnvironment() {
+        return developmentEnvironment;
     }
 
-    public void setAllowDevelopmentEnvironment(boolean allowDevelopmentEnvironment) {
-        this.allowDevelopmentEnvironment = allowDevelopmentEnvironment;
+    public void setDevelopmentEnvironment(boolean developmentEnvironment) {
+        this.developmentEnvironment = developmentEnvironment;
     }
 
     /**
-     * Properties for a single allowed device.
+     * Properties for a single allowed App.
      */
-    public static class AllowedDevice {
+    public static class App {
         /**
          * The Apple Developer Team ID (10-character string).
          */
