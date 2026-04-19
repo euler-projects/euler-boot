@@ -20,9 +20,8 @@ import org.eulerframework.security.authentication.ChallengeService;
 import org.eulerframework.security.authentication.InMemoryChallengeService;
 import org.eulerframework.security.authentication.apple.*;
 import org.eulerframework.security.authentication.device.DeviceAttestRegistrationService;
-import org.eulerframework.security.authentication.device.InMemoryDeviceAttestRegistrationService;
+import org.eulerframework.security.authentication.device.JdbcDeviceAttestRegistrationService;
 import org.eulerframework.security.webauthn.authentication.AppleAppAttestRootCA;
-import org.eulerframework.security.webauthn.authentication.Webauthn4jAppleAppAttestValidationService;
 import com.webauthn4j.appattest.DeviceCheckManager;
 import org.eulerframework.security.core.context.UserContext;
 import org.eulerframework.security.core.context.UserDetailsPrincipalUserContext;
@@ -34,6 +33,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 
 import java.util.List;
@@ -93,8 +93,8 @@ public class EulerBootSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean(DeviceAttestRegistrationService.class)
-        public DeviceAttestRegistrationService deviceAttestRegistrationService() {
-            return new InMemoryDeviceAttestRegistrationService();
+        public DeviceAttestRegistrationService deviceAttestRegistrationService(JdbcOperations jdbcOperations) {
+            return new JdbcDeviceAttestRegistrationService(jdbcOperations);
         }
 
         @Bean
