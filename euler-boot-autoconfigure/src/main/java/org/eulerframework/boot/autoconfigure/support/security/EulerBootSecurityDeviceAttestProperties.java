@@ -31,7 +31,7 @@ import java.util.List;
  *   security:
  *     device-attest:
  *       enabled: true
- *       allowed-apps:
+ *       allowed-devices:
  *         - team-id: ABCDE12345
  *           bundle-id: com.example.myapp
  *         - team-id: ABCDE12345
@@ -48,10 +48,9 @@ public class EulerBootSecurityDeviceAttestProperties {
     private boolean enabled = false;
 
     /**
-     * List of allowed apps. Each entry defines a teamId + bundleId pair
-     * that together form the App ID ({@code teamId.bundleId}) for RP ID hash verification.
+     * List of allowed devices.
      */
-    private List<AllowedApp> allowedApps = new ArrayList<>();
+    private List<AllowedDevice> allowedDevices = new ArrayList<>();
 
     /**
      * Whether to accept attestations from the development environment.
@@ -70,12 +69,12 @@ public class EulerBootSecurityDeviceAttestProperties {
         this.enabled = enabled;
     }
 
-    public List<AllowedApp> getAllowedApps() {
-        return allowedApps;
+    public List<AllowedDevice> getAllowedDevices() {
+        return allowedDevices;
     }
 
-    public void setAllowedApps(List<AllowedApp> allowedApps) {
-        this.allowedApps = allowedApps;
+    public void setAllowedDevices(List<AllowedDevice> allowedDevices) {
+        this.allowedDevices = allowedDevices;
     }
 
     public boolean isAllowDevelopmentEnvironment() {
@@ -87,9 +86,9 @@ public class EulerBootSecurityDeviceAttestProperties {
     }
 
     /**
-     * Properties for a single allowed app.
+     * Properties for a single allowed device.
      */
-    public static class AllowedApp {
+    public static class AllowedDevice {
         /**
          * The Apple Developer Team ID (10-character string).
          */

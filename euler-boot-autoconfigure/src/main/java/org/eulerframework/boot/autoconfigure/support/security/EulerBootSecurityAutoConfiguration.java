@@ -18,9 +18,9 @@ package org.eulerframework.boot.autoconfigure.support.security;
 import org.eulerframework.boot.autoconfigure.support.data.jpa.EulerBootDataJpaAuditingAutoConfiguration;
 import org.eulerframework.security.authentication.ChallengeService;
 import org.eulerframework.security.authentication.InMemoryChallengeService;
-import org.eulerframework.security.authentication.apple.*;
-import org.eulerframework.security.authentication.device.DeviceAttestRegistrationService;
-import org.eulerframework.security.authentication.device.JdbcDeviceAttestRegistrationService;
+import org.eulerframework.security.authentication.apple.AppleAppAttestValidationService;
+import org.eulerframework.security.authentication.apple.DefaultAppleAppAttestValidationService;
+import org.eulerframework.security.authentication.device.*;
 import org.eulerframework.security.webauthn.authentication.AppleAppAttestRootCA;
 import com.webauthn4j.appattest.DeviceCheckManager;
 import org.eulerframework.security.core.context.UserContext;
@@ -75,12 +75,12 @@ public class EulerBootSecurityAutoConfiguration {
     static class DeviceAttestBeanConfiguration {
 
         @Bean
-        @ConditionalOnMissingBean(AppleAppRepository.class)
-        public AppleAppRepository appleAppRepository(EulerBootSecurityDeviceAttestProperties properties) {
-            List<RegisteredAppleApp> registeredApps = properties.getAllowedApps().stream()
-                    .map(app -> new RegisteredAppleApp(app.getTeamId(), app.getBundleId()))
+        @ConditionalOnMissingBean(DeviceRepository.class)
+        public DeviceRepository appleAppRepository(EulerBootSecurityDeviceAttestProperties properties) {
+            List<RegisteredDevice> registeredApps = properties.getAllowedDevices().stream()
+                    .map(app -> new RegisteredDevice(app.getTeamId(), app.getBundleId()))
                     .toList();
-            return new InMemoryAppleAppRepository(registeredApps);
+            return new InMemoryDeviceRepository(registeredApps);
         }
 
         @Bean
@@ -92,9 +92,9 @@ public class EulerBootSecurityAutoConfiguration {
         }
 
         @Bean
-        @ConditionalOnMissingBean(DeviceAttestRegistrationService.class)
-        public DeviceAttestRegistrationService deviceAttestRegistrationService(JdbcOperations jdbcOperations) {
-            return new JdbcDeviceAttestRegistrationService(jdbcOperations);
+        @ConditionalOnMissingBean(DeviceAttestationRegistrationService.class)
+        public DeviceAttestationRegistrationService deviceAttestRegistrationService(JdbcOperations jdbcOperations) {
+            return new JdbcDeviceAttestationRegistrationService(jdbcOperations);
         }
 
         @Bean
@@ -107,8 +107,8 @@ public class EulerBootSecurityAutoConfiguration {
         @ConditionalOnMissingBean(AppleAppAttestValidationService.class)
         public AppleAppAttestValidationService appleAppAttestValidationService(
                 DeviceCheckManager deviceCheckManager,
-                AppleAppRepository appleAppRepository,
-                DeviceAttestRegistrationService registrationService,
+                DeviceRepository appleAppRepository,
+                DeviceAttestationRegistrationService registrationService,
                 EulerBootSecurityDeviceAttestProperties properties) {
             DefaultAppleAppAttestValidationService defaultAppleAppAttestValidationService = new DefaultAppleAppAttestValidationService(appleAppRepository, registrationService);
             defaultAppleAppAttestValidationService.setAllowDevelopmentEnvironment(properties.isAllowDevelopmentEnvironment());
