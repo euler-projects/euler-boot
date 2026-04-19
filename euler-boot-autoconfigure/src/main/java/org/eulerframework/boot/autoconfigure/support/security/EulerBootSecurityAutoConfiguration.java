@@ -19,6 +19,8 @@ import org.eulerframework.boot.autoconfigure.support.data.jpa.EulerBootDataJpaAu
 import org.eulerframework.security.authentication.ChallengeService;
 import org.eulerframework.security.authentication.InMemoryChallengeService;
 import org.eulerframework.security.authentication.apple.*;
+import org.eulerframework.security.authentication.device.DeviceAttestRegistrationService;
+import org.eulerframework.security.authentication.device.InMemoryDeviceAttestRegistrationService;
 import org.eulerframework.security.webauthn.authentication.AppleAppAttestRootCA;
 import org.eulerframework.security.webauthn.authentication.Webauthn4jAppleAppAttestValidationService;
 import com.webauthn4j.appattest.DeviceCheckManager;
@@ -46,7 +48,7 @@ import java.util.List;
         })
 @EnableConfigurationProperties({
         EulerBootSecurityProperties.class,
-        EulerBootSecurityAppAttestProperties.class
+        EulerBootSecurityDeviceAttestProperties.class
 })
 @ConditionalOnClass(DefaultAuthenticationEventPublisher.class)
 public class EulerBootSecurityAutoConfiguration {
@@ -64,17 +66,17 @@ public class EulerBootSecurityAutoConfiguration {
     }
 
     /**
-     * Auto-configuration for Apple App Attest related beans.
+     * Auto-configuration for Device Attest related beans.
      * Creates default implementations of required services when no custom beans are provided.
      */
     @Configuration(proxyBeanMethods = false)
-    @ConditionalOnProperty(prefix = "euler.security.app-attest", name = "enabled", havingValue = "true")
+    @ConditionalOnProperty(prefix = "euler.security.device-attest", name = "enabled", havingValue = "true")
     @ConditionalOnClass(name = "com.webauthn4j.appattest.DeviceCheckManager")
-    static class AppAttestBeanConfiguration {
+    static class DeviceAttestBeanConfiguration {
 
         @Bean
         @ConditionalOnMissingBean(AppleAppRepository.class)
-        public AppleAppRepository appleAppRepository(EulerBootSecurityAppAttestProperties properties) {
+        public AppleAppRepository appleAppRepository(EulerBootSecurityDeviceAttestProperties properties) {
             List<RegisteredAppleApp> registeredApps = properties.getAllowedApps().stream()
                     .map(app -> new RegisteredAppleApp(app.getTeamId(), app.getBundleId()))
                     .toList();
@@ -83,16 +85,16 @@ public class EulerBootSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean(DeviceCheckManager.class)
-        public DeviceCheckManager deviceCheckManager(EulerBootSecurityAppAttestProperties properties) {
+        public DeviceCheckManager deviceCheckManager(EulerBootSecurityDeviceAttestProperties properties) {
             DeviceCheckManager deviceCheckManager = AppleAppAttestRootCA.deviceCheckManager();
             deviceCheckManager.getAttestationDataValidator().setProduction(!properties.isAllowDevelopmentEnvironment());
             return deviceCheckManager;
         }
 
         @Bean
-        @ConditionalOnMissingBean(AppAttestRegistrationService.class)
-        public AppAttestRegistrationService appAttestRegistrationService() {
-            return new InMemoryAppAttestRegistrationService();
+        @ConditionalOnMissingBean(DeviceAttestRegistrationService.class)
+        public DeviceAttestRegistrationService deviceAttestRegistrationService() {
+            return new InMemoryDeviceAttestRegistrationService();
         }
 
         @Bean
@@ -106,8 +108,8 @@ public class EulerBootSecurityAutoConfiguration {
         public AppleAppAttestValidationService appleAppAttestValidationService(
                 DeviceCheckManager deviceCheckManager,
                 AppleAppRepository appleAppRepository,
-                AppAttestRegistrationService registrationService,
-                EulerBootSecurityAppAttestProperties properties) {
+                DeviceAttestRegistrationService registrationService,
+                EulerBootSecurityDeviceAttestProperties properties) {
             DefaultAppleAppAttestValidationService defaultAppleAppAttestValidationService = new DefaultAppleAppAttestValidationService(appleAppRepository, registrationService);
             defaultAppleAppAttestValidationService.setAllowDevelopmentEnvironment(properties.isAllowDevelopmentEnvironment());
             return defaultAppleAppAttestValidationService;

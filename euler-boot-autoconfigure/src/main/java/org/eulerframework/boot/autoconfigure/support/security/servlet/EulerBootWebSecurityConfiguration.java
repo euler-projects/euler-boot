@@ -16,10 +16,10 @@
 package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAppAttestProperties;
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityDeviceAttestProperties;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilterUtils;
-import org.eulerframework.security.config.annotation.web.configurers.apple.AppAttestSecurityConfigurer;
+import org.eulerframework.security.config.annotation.web.configurers.device.DeviceAttestSecurityConfigurer;
 import org.eulerframework.security.core.captcha.view.DefaultSmsCaptchaView;
 import org.eulerframework.security.core.captcha.view.SmsCaptchaView;
 import org.eulerframework.security.web.access.EulerAccessDeniedHandler;
@@ -87,9 +87,9 @@ public class EulerBootWebSecurityConfiguration {
             EulerBootSecurityWebProperties eulerBootSecurityWebProperties,
             EulerBootSecurityWebAuthnProperties eulerBootSecurityWebAuthnProperties,
             EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties,
-            EulerBootSecurityAppAttestProperties eulerBootSecurityAppAttestProperties,
+            EulerBootSecurityDeviceAttestProperties eulerBootSecurityDeviceAttestProperties,
             ObjectProvider<WebAuthnPresent> wenAuthnPresent,
-            ObjectProvider<AppAttestPresent> appAttestPresent) throws Exception {
+            ObjectProvider<DeviceAttestPresent> deviceAttestPresent) throws Exception {
         Assert.isTrue(eulerBootSecurityWebProperties.isEnabled(), "euler web properties disabled, can not init defaultSecurityFilterChain");
         this.logger.debug("Create default security filter chain");
 
@@ -147,13 +147,13 @@ public class EulerBootWebSecurityConfiguration {
                     );
         }
 
-        if (eulerBootSecurityAppAttestProperties.isEnabled()) {
-            if (appAttestPresent.getIfAvailable() == null) {
-                throw new IllegalStateException("App Attest is enabled but the required dependency is missing. " +
+        if (eulerBootSecurityDeviceAttestProperties.isEnabled()) {
+            if (deviceAttestPresent.getIfAvailable() == null) {
+                throw new IllegalStateException("Device Attest is enabled but the required dependency is missing. " +
                         "Please add the com.webauthn4j:webauthn4j-appattest dependency to your project.");
             }
-            logger.debug("App Attest dependency detected and enabled, configuring App Attest registration endpoints.");
-            http.with(new AppAttestSecurityConfigurer(), Customizer.withDefaults());
+            logger.debug("Device Attest dependency detected and enabled, configuring Device Attest registration endpoints.");
+            http.with(new DeviceAttestSecurityConfigurer(), Customizer.withDefaults());
         }
 
         this.configAccessDeniedHandler(http);
@@ -294,6 +294,6 @@ public class EulerBootWebSecurityConfiguration {
 
     @Component
     @ConditionalOnClass(name = "com.webauthn4j.appattest.DeviceCheckManager")
-    public static class AppAttestPresent {
+    public static class DeviceAttestPresent {
     }
 }

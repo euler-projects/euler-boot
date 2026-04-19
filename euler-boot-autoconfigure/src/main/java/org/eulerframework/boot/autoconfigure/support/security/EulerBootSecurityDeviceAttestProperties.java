@@ -21,15 +21,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Configuration properties for Apple App Attest device registration and assertion.
+ * Configuration properties for device attestation registration and assertion.
  * <p>
- * These properties control the App Attest endpoint configuration including
+ * These properties control the device attest endpoint configuration including
  * the list of allowed apps (teamId + bundleId pairs) and environment settings.
  *
  * <pre>
  * euler:
  *   security:
- *     app-attest:
+ *     device-attest:
  *       enabled: true
  *       allowed-apps:
  *         - team-id: ABCDE12345
@@ -39,16 +39,16 @@ import java.util.List;
  *       allow-development-environment: false
  * </pre>
  */
-@ConfigurationProperties(prefix = "euler.security.app-attest")
-public class EulerBootSecurityAppAttestProperties {
+@ConfigurationProperties(prefix = "euler.security.device-attest")
+public class EulerBootSecurityDeviceAttestProperties {
 
     /**
-     * Whether Apple App Attest is enabled. Default is {@code false}.
+     * Whether device attestation is enabled. Default is {@code false}.
      */
     private boolean enabled = false;
 
     /**
-     * List of allowed Apple Apps. Each entry defines a teamId + bundleId pair
+     * List of allowed apps. Each entry defines a teamId + bundleId pair
      * that together form the App ID ({@code teamId.bundleId}) for RP ID hash verification.
      */
     private List<AllowedApp> allowedApps = new ArrayList<>();
@@ -87,7 +87,7 @@ public class EulerBootSecurityAppAttestProperties {
     }
 
     /**
-     * Properties for a single allowed Apple App.
+     * Properties for a single allowed app.
      */
     public static class AllowedApp {
         /**
@@ -96,7 +96,7 @@ public class EulerBootSecurityAppAttestProperties {
         private String teamId;
 
         /**
-         * The iOS app's Bundle ID (e.g. {@code com.example.myapp}).
+         * The app's Bundle ID (e.g. {@code com.example.myapp}).
          */
         private String bundleId;
 
