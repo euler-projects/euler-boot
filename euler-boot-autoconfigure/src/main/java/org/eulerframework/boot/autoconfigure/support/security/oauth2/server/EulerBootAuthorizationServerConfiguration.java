@@ -128,17 +128,13 @@ public class EulerBootAuthorizationServerConfiguration {
 //        return jdbcRegisteredClientRepository;
 //    }
 
-//    @Bean
-//    @ConditionalOnBean(EulerOAuth2ClientService.class)
-//    public RegisteredClientRepository registeredClientRepository(EulerOAuth2ClientService eulerOAuth2ClientService, OAuth2AuthorizationServerProperties properties) {
-//        OAuth2AuthorizationServerPropertiesMapper mapper = new OAuth2AuthorizationServerPropertiesMapper(properties);
-//        List<RegisteredClient> clients = mapper.asRegisteredClients();
-//        EulerRegisteredClientRepository eulerRegisteredClientRepository = new EulerRegisteredClientRepository(eulerOAuth2ClientService);
-//        for (RegisteredClient registeredClient : clients) {
-//            //eulerRegisteredClientRepository.save(registeredClient);
-//        }
-//        return eulerRegisteredClientRepository;
-//    }
+    @Bean
+    @ConditionalOnBean(EulerOAuth2ClientService.class)
+    public RegisteredClientRepository registeredClientRepository(EulerOAuth2ClientService eulerOAuth2ClientService, OAuth2AuthorizationServerProperties properties) {
+        OAuth2AuthorizationServerPropertiesMapper mapper = new OAuth2AuthorizationServerPropertiesMapper(properties);
+        List<RegisteredClient> clients = mapper.asRegisteredClients();
+        return new EulerRegisteredClientRepository(eulerOAuth2ClientService, clients);
+    }
 
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnProperty(prefix = "euler.security.oauth2.authorizationserver", name = "authorization-store-type", havingValue = "jdbc")
