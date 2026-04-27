@@ -33,10 +33,7 @@ import org.springframework.boot.security.oauth2.server.resource.autoconfigure.se
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.eulerframework.security.oauth2.core.context.OAuth2AuthenticatedPrincipalUserContext;
-import org.eulerframework.security.oauth2.core.userdetails.provider.OAuth2TokenUserDetailsProvider;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-
-import java.util.List;
 
 @AutoConfiguration(before = {
         EulerBootResourceServerAutoConfiguration.class,
@@ -58,9 +55,9 @@ public class EulerBootAuthorizationServerAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(UserContext.class)
-    public UserContext userContext(List<OAuth2TokenUserDetailsProvider> tokenUserDetailsProviders) {
+    public UserContext userContext() {
         OAuth2AuthenticatedPrincipalUserContext oauth2AuthenticatedPrincipalUserContext =
-                new OAuth2AuthenticatedPrincipalUserContext(tokenUserDetailsProviders);
+                new OAuth2AuthenticatedPrincipalUserContext();
         UserDetailsPrincipalUserContext userDetailsPrincipalUserContext = new UserDetailsPrincipalUserContext();
         return new DelegatingUserContext(oauth2AuthenticatedPrincipalUserContext, userDetailsPrincipalUserContext);
     }

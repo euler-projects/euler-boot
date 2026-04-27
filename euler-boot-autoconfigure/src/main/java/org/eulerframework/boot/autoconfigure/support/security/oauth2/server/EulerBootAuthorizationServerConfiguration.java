@@ -116,18 +116,6 @@ public class EulerBootAuthorizationServerConfiguration {
         return http.build();
     }
 
-//    @Bean
-//    @ConditionalOnMissingBean(EulerOAuth2ClientService.class)
-//    public RegisteredClientRepository registeredClientRepository(JdbcOperations jdbcOperations, OAuth2AuthorizationServerProperties properties) {
-//        OAuth2AuthorizationServerPropertiesMapper mapper = new OAuth2AuthorizationServerPropertiesMapper(properties);
-//        List<RegisteredClient> clients = mapper.asRegisteredClients();
-//        JdbcRegisteredClientRepository jdbcRegisteredClientRepository = new JdbcRegisteredClientRepository(jdbcOperations);
-//        for (RegisteredClient registeredClient : clients) {
-//            jdbcRegisteredClientRepository.save(registeredClient);
-//        }
-//        return jdbcRegisteredClientRepository;
-//    }
-
     @Bean
     @ConditionalOnBean(EulerOAuth2ClientService.class)
     public RegisteredClientRepository registeredClientRepository(EulerOAuth2ClientService eulerOAuth2ClientService, OAuth2AuthorizationServerProperties properties) {
