@@ -15,10 +15,11 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security;
 
+import org.eulerframework.security.authentication.appattest.RegisteredApp;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Configuration properties for device attestation registration and assertion.
@@ -29,14 +30,18 @@ import java.util.List;
  * <pre>
  * euler:
  *   security:
- *     device-attest:
+ *     app-attest:
  *       enabled: true
- *       allowed-devices:
- *         - team-id: ABCDE12345
+ *       apps:
+ *         myapp:
+ *           team-id: ABCDE12345
  *           bundle-id: com.example.myapp
- *         - team-id: ABCDE12345
+ *         myapp-dev:
+ *           team-id: ABCDE12345
  *           bundle-id: com.example.myapp.dev
- *       allow-development-environment: false
+ *           oauth2-enabled: true
+ *           oauth2-client-type: static
+ *       development-environment: false
  * </pre>
  */
 @ConfigurationProperties(prefix = "euler.security.app-attest")
@@ -48,9 +53,13 @@ public class EulerBootSecurityAppAttestProperties {
     private boolean enabled = false;
 
     /**
-     * List of allowed devices.
+     * Map of allowed apps, keyed by a logical app name chosen by the operator.
+     * <p>
+     * The key is an arbitrary identifier used to distinguish entries in configuration
+     * (e.g. {@code myapp}, {@code myapp-dev}); the canonical app identity is still
+     * derived from {@code teamId} + {@code bundleId} on the {@link App} value.
      */
-    private List<App> apps = new ArrayList<>();
+    private Map<String, App> apps = new LinkedHashMap<>();
 
     /**
      * Whether to accept attestations from the development environment.
@@ -69,11 +78,11 @@ public class EulerBootSecurityAppAttestProperties {
         this.enabled = enabled;
     }
 
-    public List<App> getApps() {
+    public Map<String, App> getApps() {
         return apps;
     }
 
-    public void setApps(List<App> apps) {
+    public void setApps(Map<String, App> apps) {
         this.apps = apps;
     }
 
@@ -99,6 +108,20 @@ public class EulerBootSecurityAppAttestProperties {
          */
         private String bundleId;
 
+        /**
+         * Whether this app may act as an OAuth2 client and request access tokens from the
+         * authorization server. Default is {@code false}.
+         */
+        private boolean oauth2Enabled = false;
+
+        /**
+         * How the OAuth2 {@code client_id} is provisioned. Required when
+         * {@link #oauth2Enabled} is {@code true}.
+         *
+         * @see RegisteredApp.OAuth2ClientType
+         */
+        private RegisteredApp.OAuth2ClientType oauth2ClientType;
+
         public String getTeamId() {
             return teamId;
         }
@@ -113,6 +136,22 @@ public class EulerBootSecurityAppAttestProperties {
 
         public void setBundleId(String bundleId) {
             this.bundleId = bundleId;
+        }
+
+        public boolean isOauth2Enabled() {
+            return oauth2Enabled;
+        }
+
+        public void setOauth2Enabled(boolean oauth2Enabled) {
+            this.oauth2Enabled = oauth2Enabled;
+        }
+
+        public RegisteredApp.OAuth2ClientType getOauth2ClientType() {
+            return oauth2ClientType;
+        }
+
+        public void setOauth2ClientType(RegisteredApp.OAuth2ClientType oauth2ClientType) {
+            this.oauth2ClientType = oauth2ClientType;
         }
     }
 }

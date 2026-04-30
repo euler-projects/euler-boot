@@ -21,11 +21,13 @@ import org.eulerframework.security.authentication.InMemoryChallengeService;
 import org.eulerframework.security.authentication.appattest.apple.AppleAppAttestValidationService;
 import org.eulerframework.security.authentication.appattest.apple.DefaultAppleAppAttestValidationService;
 import org.eulerframework.security.authentication.appattest.*;
+import org.eulerframework.security.oauth2.server.authorization.client.AppAttestOAuth2ClientProvisioningListener;
 import org.eulerframework.security.webauthn.authentication.AppleAppAttestRootCA;
 import com.webauthn4j.appattest.DeviceCheckManager;
 import org.eulerframework.security.core.context.UserContext;
 import org.eulerframework.security.core.context.UserDetailsPrincipalUserContext;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -35,7 +37,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 
+import java.util.Collections;
 import java.util.List;
 
 @AutoConfiguration(
@@ -76,11 +80,15 @@ public class EulerBootSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean(RegisteredAppRepository.class)
-        public RegisteredAppRepository appleAppRepository(EulerBootSecurityAppAttestProperties properties) {
-            List<RegisteredApp> registeredApps = properties.getApps().stream()
-                    .map(app -> new RegisteredApp(app.getTeamId(), app.getBundleId()))
+        public RegisteredAppRepository appleAppRepository(
+                EulerBootSecurityAppAttestProperties properties,
+                List<RegisteredAppChangeListener> listeners) {
+            List<RegisteredApp> registeredApps = properties.getApps().values().stream()
+                    .map(app -> new RegisteredApp(
+                            app.getTeamId(), app.getBundleId(),
+                            app.isOauth2Enabled(), app.getOauth2ClientType()))
                     .toList();
-            return new InMemoryRegisteredAppRepository(registeredApps);
+            return new InMemoryRegisteredAppRepository(registeredApps, listeners);
         }
 
         @Bean
@@ -115,6 +123,25 @@ public class EulerBootSecurityAutoConfiguration {
             return defaultAppleAppAttestValidationService;
             //            return new Webauthn4jAppleAppAttestValidationService(deviceCheckManager, appleAppRepository, registrationService,
 //                    properties.isAllowDevelopmentEnvironment());
+        }
+    }
+
+    /**
+     * Autoconfiguration for provisioning OAuth2 clients from registered apps.
+     * <p>
+     * This configuration class is separate from {@link DeviceAttestBeanConfiguration} to
+     * ensure the provisioning listener bean is created before the {@link RegisteredAppRepository}
+     * bean, so that the listener is available for injection when the repository is initialized.
+     */
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnProperty(prefix = "euler.security.app-attest", name = "enabled", havingValue = "true")
+    @ConditionalOnBean(RegisteredClientRepository.class)
+    static class AppAttestOAuth2ProvisioningConfiguration {
+
+        @Bean
+        public AppAttestOAuth2ClientProvisioningListener appAttestOAuth2ClientProvisioningListener(
+                RegisteredClientRepository registeredClientRepository) {
+            return new AppAttestOAuth2ClientProvisioningListener(registeredClientRepository);
         }
     }
 }
