@@ -83,10 +83,13 @@ public class EulerBootSecurityAutoConfiguration {
         public RegisteredAppRepository appleAppRepository(
                 EulerBootSecurityAppAttestProperties properties,
                 List<RegisteredAppChangeListener> listeners) {
-            List<RegisteredApp> registeredApps = properties.getApps().values().stream()
-                    .map(app -> new RegisteredApp(
-                            app.getTeamId(), app.getBundleId(),
-                            app.isOauth2Enabled(), app.getOauth2ClientType()))
+            List<RegisteredApp> registeredApps = properties.getApps().entrySet().stream()
+                    .map(entry -> RegisteredApp.withId(entry.getKey())
+                            .teamId(entry.getValue().getTeamId())
+                            .bundleId(entry.getValue().getBundleId())
+                            .oauth2Enabled(entry.getValue().isOauth2Enabled())
+                            .oauth2ClientType(entry.getValue().getOauth2ClientType())
+                            .build())
                     .toList();
             return new InMemoryRegisteredAppRepository(registeredApps, listeners);
         }

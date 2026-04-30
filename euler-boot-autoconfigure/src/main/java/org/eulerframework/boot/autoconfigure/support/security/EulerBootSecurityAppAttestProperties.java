@@ -55,9 +55,11 @@ public class EulerBootSecurityAppAttestProperties {
     /**
      * Map of allowed apps, keyed by a logical app name chosen by the operator.
      * <p>
-     * The key is an arbitrary identifier used to distinguish entries in configuration
-     * (e.g. {@code myapp}, {@code myapp-dev}); the canonical app identity is still
-     * derived from {@code teamId} + {@code bundleId} on the {@link App} value.
+     * The map key is both a human-readable identifier used in configuration (e.g.
+     * {@code myapp}, {@code myapp-dev}) and the {@code registrationId} of the
+     * corresponding registered app, uniquely identifying this registration record.
+     * Accordingly, {@link App} itself does not duplicate an id field; the canonical
+     * app identity is still derived from {@code teamId} + {@code bundleId}.
      */
     private Map<String, App> apps = new LinkedHashMap<>();
 
@@ -96,6 +98,10 @@ public class EulerBootSecurityAppAttestProperties {
 
     /**
      * Properties for a single allowed App.
+     * <p>
+     * This type does not carry its own id field &mdash; the containing map key serves
+     * as this app's {@code registrationId}, uniquely identifying the registration
+     * record.
      */
     public static class App {
         /**
