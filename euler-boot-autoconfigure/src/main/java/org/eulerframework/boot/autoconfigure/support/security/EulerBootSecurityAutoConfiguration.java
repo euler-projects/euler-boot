@@ -78,20 +78,64 @@ public class EulerBootSecurityAutoConfiguration {
     @ConditionalOnClass(name = "com.webauthn4j.appattest.DeviceCheckManager")
     static class DeviceAttestBeanConfiguration {
 
+        /**
+         * Service-backed {@link RegisteredAppRepository} used when an
+         * {@link AppAttestAppService} bean is present in the context. Delegates
+         * persistence to the service and wraps the result in a
+         * {@link NotifyingRegisteredAppRepository} so that
+         * {@link RegisteredAppChangeListener} beans are invoked uniformly.
+         * Apps declared under {@code euler.security.app-attest.apps} are preloaded
+         * on startup via the decorator, so listeners observe both the initial
+         * provisioning and any subsequent saves.
+         */
         @Bean
         @ConditionalOnMissingBean(RegisteredAppRepository.class)
+        @ConditionalOnBean(AppAttestAppService.class)
         public RegisteredAppRepository appleAppRepository(
+                AppAttestAppService appAttestAppService,
                 EulerBootSecurityAppAttestProperties properties,
                 List<RegisteredAppChangeListener> listeners) {
-            List<RegisteredApp> registeredApps = properties.getApps().entrySet().stream()
-                    .map(entry -> RegisteredApp.withId(entry.getKey())
-                            .teamId(entry.getValue().getTeamId())
-                            .bundleId(entry.getValue().getBundleId())
-                            .oauth2Enabled(entry.getValue().isOauth2Enabled())
-                            .oauth2ClientType(entry.getValue().getOauth2ClientType())
-                            .build())
-                    .toList();
-            return new InMemoryRegisteredAppRepository(registeredApps, listeners);
+            return preloadedRepository(
+                    new AppAttestServiceRegisteredAppRepository(appAttestAppService),
+                    properties, listeners);
+        }
+
+        /**
+         * In-memory fallback {@link RegisteredAppRepository} used when no
+         * {@link AppAttestAppService} bean is available. The repository is
+         * preloaded with apps declared under {@code euler.security.app-attest.apps}
+         * via the decorator so that {@link RegisteredAppChangeListener} beans are
+         * notified for each preloaded app.
+         */
+        @Bean
+        @ConditionalOnMissingBean({RegisteredAppRepository.class, AppAttestAppService.class})
+        public RegisteredAppRepository inMemoryAppleAppRepository(
+                EulerBootSecurityAppAttestProperties properties,
+                List<RegisteredAppChangeListener> listeners) {
+            return preloadedRepository(
+                    new InMemoryRegisteredAppRepository(),
+                    properties, listeners);
+        }
+
+        /**
+         * Wraps {@code delegate} in a {@link NotifyingRegisteredAppRepository} and
+         * preloads every app declared under {@code euler.security.app-attest.apps}
+         * via the decorator's {@link RegisteredAppRepository#save(RegisteredApp)
+         * save}, so that each {@link RegisteredAppChangeListener} observes the
+         * preloaded entries.
+         */
+        private static RegisteredAppRepository preloadedRepository(
+                RegisteredAppRepository delegate,
+                EulerBootSecurityAppAttestProperties properties,
+                List<RegisteredAppChangeListener> listeners) {
+            RegisteredAppRepository repository = new NotifyingRegisteredAppRepository(delegate, listeners);
+            properties.getApps().forEach((id, app) -> repository.save(RegisteredApp.withId(id)
+                    .teamId(app.getTeamId())
+                    .bundleId(app.getBundleId())
+                    .oauth2Enabled(app.isOauth2Enabled())
+                    .oauth2ClientType(app.getOauth2ClientType())
+                    .build()));
+            return repository;
         }
 
         @Bean
