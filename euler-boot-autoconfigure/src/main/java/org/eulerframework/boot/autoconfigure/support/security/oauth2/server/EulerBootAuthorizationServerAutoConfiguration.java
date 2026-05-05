@@ -42,7 +42,8 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
         OAuth2AuthorizationServerAutoConfiguration.class,
         OAuth2ResourceServerAutoConfiguration.class
 })
-@EnableConfigurationProperties(EulerBootAuthorizationServerProperties.class)
+@EnableConfigurationProperties({EulerBootAuthorizationServerProperties.class,
+        EulerBootAuthorizationServerJwkProperties.class})
 @ConditionalOnClass(OAuth2Authorization.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @Import(EulerBootAuthorizationServerConfiguration.class)
