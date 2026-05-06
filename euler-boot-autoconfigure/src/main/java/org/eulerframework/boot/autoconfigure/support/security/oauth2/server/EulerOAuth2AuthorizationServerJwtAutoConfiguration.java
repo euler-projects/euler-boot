@@ -17,7 +17,7 @@
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
 import com.nimbusds.jose.jwk.source.JWKSource;
-import org.eulerframework.security.oauth2.server.authorization.jwk.source.ReloadableJwkSource;
+import org.eulerframework.security.jwk.source.ManagedJwkSource;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -30,7 +30,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
         after = UserDetailsServiceAutoConfiguration.class,
         before = OAuth2AuthorizationServerJwtAutoConfiguration.class,
         afterName = "org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration")
-@ConditionalOnClass({OAuth2Authorization.class, JWKSource.class, ReloadableJwkSource.class})
+@ConditionalOnClass({OAuth2Authorization.class, JWKSource.class, ManagedJwkSource.class})
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @Import({EulerOAuth2AuthorizationServerJwkConfiguration.class})
 public class EulerOAuth2AuthorizationServerJwtAutoConfiguration {
