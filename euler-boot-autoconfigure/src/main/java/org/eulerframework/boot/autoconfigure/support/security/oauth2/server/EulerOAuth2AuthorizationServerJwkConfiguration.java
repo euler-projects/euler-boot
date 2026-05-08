@@ -15,226 +15,128 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.proc.SecurityContext;
+import com.nimbusds.jose.jwk.JWK;
 import org.eulerframework.boot.autoconfigure.support.security.oauth2.server.EulerBootAuthorizationServerJwkProperties.KeyDefinition;
 import org.eulerframework.boot.autoconfigure.support.security.oauth2.server.util.JwkEntryParser;
-import org.eulerframework.security.oauth2.server.authorization.jwk.*;
-import org.eulerframework.security.oauth2.server.authorization.jwk.source.ClusteredReloadableJwkSource;
-import org.eulerframework.security.oauth2.server.authorization.jwk.source.ReloadableJwkSource;
-import org.eulerframework.security.oauth2.server.authorization.jwk.source.StandaloneReloadableJwkSource;
-import org.eulerframework.security.oauth2.server.authorization.jwk.source.coordinator.JwkClusterCoordinator;
-import org.eulerframework.security.oauth2.server.authorization.jwk.source.coordinator.RedisJwkClusterCoordinator;
+import org.eulerframework.security.jwk.*;
+import org.eulerframework.security.jwk.source.ManagedJwkSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Role;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncodingException;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+
 /**
- * Autoconfiguration for the JWK subsystem: repository, reloadable JWK source
- * (standalone or clustered), optional key generator, observability, and the
- * Nimbus {@link JWKSource} bean consumed by Spring Authorization Server.
- *
- * <h3>Activation</h3>
- * Gated by two class-level conditions:
- * <ol>
- *   <li>{@code @ConditionalOnClass(ReloadableJwkSource.class)} &mdash; the
- *       {@code euler-security-oauth2-authorization-server} module must be on
- *       the classpath.</li>
- *   <li>{@code @Conditional(OnJwkKeysConfiguredCondition.class)} &mdash; at
- *       least one entry must be declared under
- *       {@code euler.security.oauth2.authorizationserver.jwk.keys}. Leaving
- *       the map empty disables the entire subsystem and Spring Authorization
- *       Server falls back to its built-in ephemeral signing key.</li>
- * </ol>
- *
- * <h3>Repository wiring</h3>
- * <ul>
- *   <li>When a {@link JwkManageService} bean is present the repository is a
- *       {@link PersistentJwkRepository} that bridges to the management service.
- *       The pre-configured keys are then upserted into the persistent backend
- *       on every startup so deployments restart from a known baseline.</li>
- *   <li>When no {@link JwkManageService} is present the repository is an
- *       {@link InMemoryJwkRepository} built directly from the pre-configured
- *       entries. No admin-driven mutation endpoints are exposed.</li>
- * </ul>
- *
- * <h3>Source wiring</h3>
- * Controlled by {@code ...jwk.manager.type}:
- * <ul>
- *   <li>{@code standalone} (default) &mdash; {@link StandaloneReloadableJwkSource}.</li>
- *   <li>{@code clustered} &mdash; {@link ClusteredReloadableJwkSource} backed by a
- *       {@link JwkClusterCoordinator}. When no custom coordinator bean is
- *       supplied, the nested Redis coordinator configuration auto-wires a
- *       Redis-backed coordinator together with its
- *       {@link RedisMessageListenerContainer}.</li>
- * </ul>
+ * Auto-configuration that replaces Spring Boot's built-in
+ * {@link com.nimbusds.jose.jwk.source.ImmutableJWKSet} with a {@link ManagedJwkSource}
+ * whenever at least one JWK is predefined through the Spring Boot configuration file.
+ * Unlike the immutable default, {@link ManagedJwkSource} resolves JWKs dynamically from
+ * a {@link JwkRepository}, so key changes are picked up at runtime.
+ * <p>
+ * This configuration also redefines the {@link NimbusJwtEncoder} bean so that multiple
+ * usable JWKs sharing the same signature algorithm can coexist.
+ * <p>
+ * Every bean exposed here can be overridden by an application-defined bean of the same
+ * type. Partial overrides are supported as well &mdash; for example, a project may only
+ * customise {@link ManagedJwkSource} while still relying on the {@link NimbusJwtEncoder}
+ * built by {@link EulerOAuth2AuthorizationServerJwkConfiguration#jwtEncoder(ManagedJwkSource)},
+ * or only replace {@link JwkRepository} and keep everything else.
  */
 @Configuration(proxyBeanMethods = false)
-@ConditionalOnClass(ReloadableJwkSource.class)
+@ConditionalOnClass(ManagedJwkSource.class)
 @Conditional(OnJwkKeysConfiguredCondition.class)
 public class EulerOAuth2AuthorizationServerJwkConfiguration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EulerOAuth2AuthorizationServerJwkConfiguration.class);
 
     /**
-     * Persistent repository backed by an application-supplied
-     * {@link JwkManageService}. The pre-configured entries are upserted on
-     * every startup so the cluster converges to the declared baseline.
+     * The default {@link JwtEncoder} wired by {@code OAuth2ConfigurerUtils} does not handle
+     * the case where several keys share the same signature algorithm. This method replaces
+     * it with a {@link NimbusJwtEncoder} that installs a custom {@code JwkSelector}: when
+     * multiple JWKs match the requested algorithm the selector picks the first one that
+     * carries a private key and uses it for signing.
+     *
+     * @param jwkSource managed source backing the encoder; must expose at least one JWK with
+     *                  a private part for every signing algorithm used by the application
+     * @return a {@link NimbusJwtEncoder} configured with the private-key-preferring selector
      */
     @Bean
-    @ConditionalOnMissingBean(JwkRepository.class)
-    @ConditionalOnBean(JwkManageService.class)
-    JwkRepository persistentJwkRepository(JwkManageService manageService,
-                                          EulerBootAuthorizationServerJwkProperties props,
-                                          ResourceLoader resourceLoader) {
-        PersistentJwkRepository repository = new PersistentJwkRepository(manageService);
-        List<JwkEntry> bootstrap = preconfiguredEntries(props, new JwkEntryParser(resourceLoader));
-        for (JwkEntry entry : bootstrap) {
-            repository.save(entry);
-        }
-        LOGGER.info("JWK repository: PersistentJwkRepository (bootstrap upserted {} preconfigured entries)",
-                bootstrap.size());
-        return repository;
+    @ConditionalOnMissingBean(JwtEncoder.class)
+    JwtEncoder jwtEncoder(ManagedJwkSource jwkSource) {
+        NimbusJwtEncoder jwtEncoder = new NimbusJwtEncoder(jwkSource);
+        jwtEncoder.setJwkSelector(jwks -> jwks.stream()
+                .filter(JWK::isPrivate)
+                .findFirst()
+                .orElseThrow(() -> new JwtEncodingException(String.format(
+                        "An error occurred while attempting to encode the Jwt: " +
+                                "all available key for for the signing algorithm [%s] does not contain a private key.",
+                        jwks.getFirst().getAlgorithm()))));
+        return jwtEncoder;
     }
 
-    /**
-     * In-memory repository used when no {@link JwkManageService} bean is
-     * present. The repository snapshot is immutable across the lifetime of
-     * the application: mutation endpoints are intentionally not wired in
-     * this profile.
-     */
-    @Bean
-    @ConditionalOnMissingBean({JwkRepository.class, JwkManageService.class})
-    JwkRepository inMemoryJwkRepository(EulerBootAuthorizationServerJwkProperties props,
-                                        ResourceLoader resourceLoader) {
-        List<JwkEntry> entries = preconfiguredEntries(props, new JwkEntryParser(resourceLoader));
-        LOGGER.info("JWK repository: InMemoryJwkRepository ({} preconfigured entries)", entries.size());
-        return new InMemoryJwkRepository(entries);
-    }
-
-    // ---- reloadable sources ----
-
-    /**
-     * Standalone single-node {@link ReloadableJwkSource} for non-clustered
-     * deployments and tests. Activated when
-     * {@code ...jwk.manager.type=standalone} (default when absent).
-     */
     @Configuration(proxyBeanMethods = false)
-    @ConditionalOnProperty(prefix = "euler.security.oauth2.authorizationserver.jwk.manager",
-            name = "type", havingValue = "standalone", matchIfMissing = true)
-    static class StandaloneReloadableJwkSourceConfiguration {
+    @ConditionalOnMissingBean(ManagedJwkSource.class)
+    static class ManagedJwkSourceConfiguration {
+        @Bean
+        @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+        ManagedJwkSource managedJwkSource(JwkRepository repository) {
+            return new ManagedJwkSource(repository);
+        }
 
         @Bean
-        JWKSource<SecurityContext> reloadableJwkSource(JwkRepository repository,
-                                                       ApplicationEventPublisher publisher) {
-            StandaloneReloadableJwkSource source = new StandaloneReloadableJwkSource(repository, publisher);
-            source.reload();
-            LOGGER.info("JWK source: StandaloneReloadableJwkSource (single-node)");
-            return source;
+        @ConditionalOnMissingBean(JwkRepository.class)
+        @ConditionalOnBean(JwkManageService.class)
+        JwkRepository managedJwkRepository(
+                JwkManageService manageService,
+                EulerBootAuthorizationServerJwkProperties props,
+                ResourceLoader resourceLoader) {
+            List<JwkEntry> initialEntries = parseJwkEntries(props, new JwkEntryParser(resourceLoader));
+            ManagedJwkRepository repository = new ManagedJwkRepository(manageService, initialEntries);
+            LOGGER.info("Managed JWK repository initialized with {} preconfigured jwks", initialEntries.size());
+            return repository;
         }
-    }
-
-    /**
-     * Clustered {@link ReloadableJwkSource} for multi-node deployments.
-     * Activated when {@code ...jwk.manager.type=clustered}. Requires a
-     * {@link JwkClusterCoordinator} bean; the nested Redis coordinator
-     * configuration supplies a default when none is provided.
-     */
-    @Configuration(proxyBeanMethods = false)
-    @ConditionalOnProperty(prefix = "euler.security.oauth2.authorizationserver.jwk.manager",
-            name = "type", havingValue = "clustered")
-    @EnableScheduling
-    static class ClusteredReloadableJwkSourceConfiguration {
 
         @Bean
-        JWKSource<SecurityContext> reloadableJwkSource(JwkRepository repository,
-                                                       ApplicationEventPublisher publisher,
-                                                       JwkClusterCoordinator coordinator,
-                                                       TaskScheduler scheduler,
-                                                       EulerBootAuthorizationServerJwkProperties props) {
-            EulerBootAuthorizationServerJwkProperties.Manager.Cluster cfg =
-                    props.getManager().getCluster();
-            ClusteredReloadableJwkSource.ClusteredReloadableJwkSourceOptions options = new ClusteredReloadableJwkSource.ClusteredReloadableJwkSourceOptions(
-                    cfg.getNodeId(),
-                    cfg.getHeartbeatInterval(),
-                    cfg.getHeartbeatTtl(),
-                    cfg.getSafetyReloadInterval());
-            ClusteredReloadableJwkSource source = new ClusteredReloadableJwkSource(repository, coordinator,
-                    publisher, scheduler, options);
-            LOGGER.info("JWK source: ClusteredReloadableJwkSource (nodeId={}, coordinator={})",
-                    source.nodeId(), coordinator.getClass().getSimpleName());
-            return source;
+        @ConditionalOnMissingBean({
+                JwkRepository.class,
+                JwkManageService.class
+        })
+        JwkRepository inMemoryJwkRepository(EulerBootAuthorizationServerJwkProperties props,
+                                            ResourceLoader resourceLoader) {
+            List<JwkEntry> initialEntries = parseJwkEntries(props, new JwkEntryParser(resourceLoader));
+            InMemoryJwkRepository repository = new InMemoryJwkRepository(initialEntries);
+            LOGGER.info("In memory JWK repository initialized with {} preconfigured jwks", initialEntries.size());
+            return repository;
         }
 
-        /**
-         * Default Redis-backed coordinator wiring. The class-level
-         * {@code @ConditionalOnMissingBean(JwkClusterCoordinator.class)}
-         * ensures both the {@link RedisMessageListenerContainer} bean and
-         * the {@link RedisJwkClusterCoordinator} bean are either both
-         * active or both skipped.
-         */
-        @Configuration(proxyBeanMethods = false)
-        @ConditionalOnMissingBean(JwkClusterCoordinator.class)
-        static class DefaultRedisCoordinatorConfiguration {
-
-            @Bean
-            @ConditionalOnMissingBean(RedisMessageListenerContainer.class)
-            RedisMessageListenerContainer redisMessageListenerContainer(
-                    RedisConnectionFactory connectionFactory) {
-                RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-                container.setConnectionFactory(connectionFactory);
-                return container;
+        private static List<JwkEntry> parseJwkEntries(
+                EulerBootAuthorizationServerJwkProperties props,
+                JwkEntryParser parser) {
+            Map<String, KeyDefinition> keys = props.getKeys();
+            List<JwkEntry> jwkEntries = new ArrayList<>(keys.size());
+            for (Map.Entry<String, KeyDefinition> e : keys.entrySet()) {
+                KeyDefinition def = e.getValue();
+                if (!StringUtils.hasText(def.getKid())) {
+                    def.setKid(e.getKey());
+                }
+                jwkEntries.add(parser.parse(def));
             }
-
-            @Bean
-            JwkClusterCoordinator jwkClusterCoordinator(
-                    StringRedisTemplate redis,
-                    RedisMessageListenerContainer listeners,
-                    EulerBootAuthorizationServerJwkProperties props) {
-                RedisJwkClusterCoordinator.RedisJwkClusterCoordinatorOptions options = new RedisJwkClusterCoordinator.RedisJwkClusterCoordinatorOptions(
-                        props.getManager().getCluster().getRedis().getNamespace());
-                return new RedisJwkClusterCoordinator(redis, listeners, options);
-            }
+            return jwkEntries;
         }
-    }
-
-    // ---- helpers ----
-
-    /**
-     * Materialize the {@code euler.security.oauth2.authorizationserver.jwk.keys}
-     * map into {@link JwkEntry} instances. The map key is used as the
-     * fallback {@code kid} when a {@link KeyDefinition} does not declare an
-     * explicit one, so end-users can keep YAML compact in the common case
-     * (one entry, kid == map key) yet override the {@code kid} when needed.
-     */
-    private static List<JwkEntry> preconfiguredEntries(EulerBootAuthorizationServerJwkProperties props,
-                                                       JwkEntryParser parser) {
-        Map<String, KeyDefinition> keys = props.getKeys();
-        List<JwkEntry> out = new ArrayList<>(keys.size());
-        for (Map.Entry<String, KeyDefinition> e : keys.entrySet()) {
-            KeyDefinition def = e.getValue();
-            if (def.getKid() == null || def.getKid().isBlank()) {
-                def.setKid(e.getKey());
-            }
-            out.add(parser.parse(def));
-        }
-        return List.copyOf(out);
     }
 }

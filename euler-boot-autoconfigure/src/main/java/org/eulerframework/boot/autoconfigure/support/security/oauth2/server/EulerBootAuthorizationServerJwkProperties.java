@@ -15,7 +15,7 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
-import org.eulerframework.security.oauth2.server.authorization.jwk.JwkStatus;
+import org.eulerframework.security.jwk.JwkStatus;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.Assert;
 
