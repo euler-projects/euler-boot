@@ -35,7 +35,9 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.util.StringUtils;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Wires the JPA-layer data-encryption stack from
@@ -79,37 +81,67 @@ public class EulerBootDataJpaEncryptionAutoConfiguration {
     @ConditionalOnMissingBean
     public KeyRepository dataJpaEncryptionKeyRepository(EulerBootDataJpaEncryptionProperties properties) {
         InMemoryKeyRepository.Builder builder = InMemoryKeyRepository.builder();
-        Map<String, EulerBootDataJpaEncryptionProperties.AlgorithmKeys> keys = properties.getKeys();
-        for (Map.Entry<String, EulerBootDataJpaEncryptionProperties.AlgorithmKeys> algEntry : keys.entrySet()) {
-            String alg = algEntry.getKey();
-            EulerBootDataJpaEncryptionProperties.AlgorithmKeys algKeys = algEntry.getValue();
-            if (algKeys == null) {
+        Map<String, EulerBootDataJpaEncryptionProperties.KeyDefinition> keys = properties.getKeys();
+        if (keys.isEmpty()) {
+            return builder.build();
+        }
+
+        // Group entries by alg for primary validation
+        Map<String, List<Map.Entry<String, EulerBootDataJpaEncryptionProperties.KeyDefinition>>> byAlg =
+                keys.entrySet().stream()
+                        .collect(Collectors.groupingBy(
+                                e -> normalizeAlg(e.getValue().getAlg()),
+                                LinkedHashMap::new,
+                                Collectors.toList()));
+
+        for (Map.Entry<String, List<Map.Entry<String, EulerBootDataJpaEncryptionProperties.KeyDefinition>>> algGroup
+                : byAlg.entrySet()) {
+            String alg = algGroup.getKey();
+            List<Map.Entry<String, EulerBootDataJpaEncryptionProperties.KeyDefinition>> entries = algGroup.getValue();
+
+            // Validate exactly one primary per algorithm
+            List<Map.Entry<String, EulerBootDataJpaEncryptionProperties.KeyDefinition>> primaries = entries.stream()
+                    .filter(e -> e.getValue().isPrimary())
+                    .toList();
+            if (primaries.isEmpty()) {
                 throw new IllegalStateException(
-                        PROPERTY_PREFIX + ".keys." + alg + " is present but empty");
+                        PROPERTY_PREFIX + ".keys: algorithm '" + alg
+                                + "' has no entry with 'primary: true' — exactly one is required");
             }
-            if (!StringUtils.hasText(algKeys.getPrimaryKid())) {
+            if (primaries.size() > 1) {
+                String duplicateIds = primaries.stream()
+                        .map(Map.Entry::getKey)
+                        .collect(Collectors.joining(", "));
                 throw new IllegalStateException(
-                        PROPERTY_PREFIX + ".keys." + alg + ".primary-kid is required");
+                        PROPERTY_PREFIX + ".keys: algorithm '" + alg
+                                + "' has multiple entries with 'primary: true' (" + duplicateIds
+                                + ") — exactly one is required");
             }
-            if (algKeys.getItems().isEmpty()) {
-                throw new IllegalStateException(
-                        PROPERTY_PREFIX + ".keys." + alg + ".items must contain at least one entry");
-            }
-            builder.primaryKid(alg, algKeys.getPrimaryKid());
-            for (Map.Entry<String, EulerBootDataJpaEncryptionProperties.KeyItem> kidEntry
-                    : algKeys.getItems().entrySet()) {
-                String kid = kidEntry.getKey();
-                EulerBootDataJpaEncryptionProperties.KeyItem item = kidEntry.getValue();
-                if (item == null) {
+
+            String primaryKid = primaries.getFirst().getValue().getKid();
+            builder.primaryKid(alg, primaryKid);
+
+            for (Map.Entry<String, EulerBootDataJpaEncryptionProperties.KeyDefinition> entry : entries) {
+                String logicalId = entry.getKey();
+                EulerBootDataJpaEncryptionProperties.KeyDefinition def = entry.getValue();
+                if (!StringUtils.hasText(def.getKid())) {
                     throw new IllegalStateException(
-                            PROPERTY_PREFIX + ".keys." + alg + ".items." + kid + " is empty");
+                            PROPERTY_PREFIX + ".keys." + logicalId + ".kid is required");
                 }
-                byte[] material = KeyMaterialLoader.load(alg, kid,
-                        item.getKeyFile(), item.getPassphrase(), item.getSaltNamespace());
-                builder.addKey(alg, kid, material);
+                if (!StringUtils.hasText(def.getAlg())) {
+                    throw new IllegalStateException(
+                            PROPERTY_PREFIX + ".keys." + logicalId + ".alg is required");
+                }
+                byte[] material = KeyMaterialLoader.load(def.getAlg(), def.getKid(),
+                        def.getKeyFile(), def.getProperties());
+                builder.addKey(alg, def.getKid(), material);
             }
         }
         return builder.build();
+    }
+
+    private static String normalizeAlg(String alg) {
+        return alg == null ? "" : alg.toUpperCase();
     }
 
     @Bean

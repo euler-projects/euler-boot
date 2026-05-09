@@ -58,7 +58,7 @@ public class JwkEntryParser {
     /**
      * Convert a single {@link KeyDefinition} into a fully-populated
      * {@link JwkEntry}. Mandatory fields ({@code kid}, {@code alg},
-     * {@code use}, {@code status}, {@code iat}, {@code pem}) are guaranteed
+     * {@code use}, {@code status}, {@code iat}, {@code key-file}) are guaranteed
      * non-blank by the property setters; the only remaining check here is
      * that the caller has already resolved the {@code kid} (either explicitly
      * set on the definition or defaulted to the enclosing map key).
@@ -73,7 +73,7 @@ public class JwkEntryParser {
     public JwkEntry parse(KeyDefinition def) {
         Assert.hasText(def.getKid(), "kid must not be blank");
 
-        JWK parsed = loadPem(def);
+        JWK parsed = loadKeyFile(def);
         JWSAlgorithm alg = JWSAlgorithm.parse(def.getAlg().joseName());
         KeyUse keyUse = parseKeyUse(def);
         validateAlgorithmMatchesKey(def, alg, parsed);
@@ -82,24 +82,24 @@ public class JwkEntryParser {
     }
 
     /**
-     * Resolve {@link KeyDefinition#getPem()} via the configured
+     * Resolve {@link KeyDefinition#getKeyFile()} via the configured
      * {@link ResourceLoader} ({@code file:...} / {@code classpath:...} and
      * plain filesystem paths are honoured uniformly) and parse it into a
      * Nimbus {@link JWK} via {@link JwkPemParser}.
      */
-    private JWK loadPem(KeyDefinition def) {
-        String location = def.getPem();
+    private JWK loadKeyFile(KeyDefinition def) {
+        String location = def.getKeyFile();
         Resource resource = loader.getResource(location);
         if (!resource.exists()) {
             throw new IllegalStateException(
-                    "Entry " + def.getKid() + ": PEM resource not found at '" + location + "'");
+                    "Entry " + def.getKid() + ": key file not found at '" + location + "'");
         }
         try (InputStream in = resource.getInputStream()) {
             return JwkPemParser.parse(new String(in.readAllBytes(), StandardCharsets.UTF_8));
         }
         catch (IOException ex) {
             throw new IllegalStateException(
-                    "Entry " + def.getKid() + ": unable to read PEM at '" + location + "'", ex);
+                    "Entry " + def.getKid() + ": unable to read key file at '" + location + "'", ex);
         }
     }
 

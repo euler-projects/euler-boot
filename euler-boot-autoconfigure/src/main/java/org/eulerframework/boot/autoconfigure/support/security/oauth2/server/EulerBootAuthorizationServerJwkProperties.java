@@ -19,7 +19,6 @@ import org.eulerframework.security.jwk.JwkStatus;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.Assert;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -38,9 +37,6 @@ import java.util.Map;
  *       repository; with a management bean present the map is upserted into
  *       the persistent backend so every deployment restarts from a known
  *       baseline.</li>
- *   <li>{@link Manager}: deployment mode and runtime parameters for the managed
- *       JWK source. Choose between {@link Manager.Type#STANDALONE} (single-node)
- *       and {@link Manager.Type#CLUSTERED} (coordinator-based multi-node).</li>
  * </ul>
  * <p>
  * Extracted from {@code EulerBootAuthorizationServerProperties} to keep the JWK
@@ -68,8 +64,6 @@ public class EulerBootAuthorizationServerJwkProperties {
      */
     private Map<String, KeyDefinition> keys = new LinkedHashMap<>();
 
-    private Manager manager = new Manager();
-
     public Map<String, KeyDefinition> getKeys() {
         return keys;
     }
@@ -78,21 +72,13 @@ public class EulerBootAuthorizationServerJwkProperties {
         this.keys = keys;
     }
 
-    public Manager getManager() {
-        return manager;
-    }
-
-    public void setManager(Manager manager) {
-        this.manager = manager;
-    }
-
     /**
      * Declarative definition of a single JWK entry. Carries the {@code kid},
-     * algorithm, use, lifecycle status, issued-at timestamp and PEM location.
-     * The {@link #getKid() kid} is mandatory and is the sole source of the
-     * JWK {@code kid} header &mdash; it is never defaulted from the enclosing
-     * {@link #getKeys() keys} map key, which is reserved for profile-based
-     * overriding.
+     * algorithm, use, lifecycle status, issued-at timestamp and PEM key file
+     * location. The {@link #getKid() kid} is mandatory and is the sole source
+     * of the JWK {@code kid} header &mdash; it is never defaulted from the
+     * enclosing {@link #getKeys() keys} map key, which is reserved for
+     * profile-based overriding.
      */
     public static class KeyDefinition {
         /**
@@ -127,13 +113,13 @@ public class EulerBootAuthorizationServerJwkProperties {
         private Instant iat = Instant.now();
 
         /**
-         * Spring {@code Resource} URL for the PEM file (supports
+         * Spring {@code Resource} URL for the PEM key file (supports
          * {@code file:...} / {@code classpath:...} prefixes). The file MUST
          * contain a PKCS#8 {@code -----BEGIN PRIVATE KEY-----} envelope or an
          * X.509 {@code -----BEGIN PUBLIC KEY-----} envelope; legacy PKCS#1
          * ({@code -----BEGIN RSA PRIVATE KEY-----}) is not supported.
          */
-        private String pem;
+        private String keyFile;
 
         public String getKid() {
             return kid;
@@ -180,141 +166,13 @@ public class EulerBootAuthorizationServerJwkProperties {
             this.iat = iat;
         }
 
-        public String getPem() {
-            return pem;
+        public String getKeyFile() {
+            return keyFile;
         }
 
-        public void setPem(String pem) {
-            Assert.hasText(pem, "'pem' must be specified");
-            this.pem = pem;
-        }
-    }
-
-    /**
-     * Runtime parameters for the managed JWK source.
-     */
-    public static class Manager {
-        /**
-         * Deployment mode for the managed JWK source. Defaults to {@link Type#STANDALONE}.
-         */
-        private Type type = Type.STANDALONE;
-        /**
-         * Cluster-mode parameters; effective only when {@link #type} is {@link Type#CLUSTERED}.
-         */
-        private Cluster cluster = new Cluster();
-
-        public Type getType() {
-            return type;
-        }
-
-        public void setType(Type type) {
-            this.type = type;
-        }
-
-        public Cluster getCluster() {
-            return cluster;
-        }
-
-        public void setCluster(Cluster cluster) {
-            this.cluster = cluster;
-        }
-
-        /**
-         * Deployment mode for the managed JWK source.
-         * <ul>
-         *   <li>{@link #STANDALONE} &mdash; single-node in-memory manager, no coordinator required.</li>
-         *   <li>{@link #CLUSTERED} &mdash; multi-node manager backed by a {@code JwkClusterCoordinator}.
-         *       The default coordinator implementation is Redis-backed; applications may supply a
-         *       custom {@code JwkClusterCoordinator} bean to override the default.</li>
-         * </ul>
-         */
-        public enum Type {
-            STANDALONE, CLUSTERED
-        }
-
-        /**
-         * Coordinator-backend-agnostic options for clustered mode. Effective only when
-         * {@link Manager#getType()} is {@link Type#CLUSTERED}.
-         */
-        public static class Cluster {
-            /**
-             * Stable node id; leave blank to auto-generate as {@code hostname-pid-rand6}.
-             */
-            private String nodeId;
-            /**
-             * Heartbeat interval for refreshing the node registration.
-             */
-            private Duration heartbeatInterval = Duration.ofSeconds(15);
-            /**
-             * Heartbeat TTL; must exceed {@code heartbeatInterval}.
-             */
-            private Duration heartbeatTtl = Duration.ofSeconds(60);
-            /**
-             * Fallback reload cadence in case coordinator-driven notifications are missed.
-             */
-            private Duration safetyReloadInterval = Duration.ofMinutes(5);
-            /**
-             * Redis-backed coordinator options (effective when using the default coordinator).
-             */
-            private Redis redis = new Redis();
-
-            public String getNodeId() {
-                return nodeId;
-            }
-
-            public void setNodeId(String nodeId) {
-                this.nodeId = nodeId;
-            }
-
-            public Duration getHeartbeatInterval() {
-                return heartbeatInterval;
-            }
-
-            public void setHeartbeatInterval(Duration heartbeatInterval) {
-                this.heartbeatInterval = heartbeatInterval;
-            }
-
-            public Duration getHeartbeatTtl() {
-                return heartbeatTtl;
-            }
-
-            public void setHeartbeatTtl(Duration heartbeatTtl) {
-                this.heartbeatTtl = heartbeatTtl;
-            }
-
-            public Duration getSafetyReloadInterval() {
-                return safetyReloadInterval;
-            }
-
-            public void setSafetyReloadInterval(Duration safetyReloadInterval) {
-                this.safetyReloadInterval = safetyReloadInterval;
-            }
-
-            public Redis getRedis() {
-                return redis;
-            }
-
-            public void setRedis(Redis redis) {
-                this.redis = redis;
-            }
-
-            /**
-             * Redis-coordinator specific options.
-             */
-            public static class Redis {
-                /**
-                 * Redis key prefix shared by all cluster members; override per issuer/tenant.
-                 */
-                private String namespace = "euler:oauth2:jwk";
-
-                public String getNamespace() {
-                    return namespace;
-                }
-
-                public void setNamespace(String namespace) {
-                    this.namespace = namespace;
-                }
-            }
+        public void setKeyFile(String keyFile) {
+            Assert.hasText(keyFile, "'key-file' must be specified");
+            this.keyFile = keyFile;
         }
     }
 }

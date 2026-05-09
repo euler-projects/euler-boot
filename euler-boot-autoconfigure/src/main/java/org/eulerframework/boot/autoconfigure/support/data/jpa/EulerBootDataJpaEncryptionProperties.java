@@ -17,6 +17,7 @@ package org.eulerframework.boot.autoconfigure.support.data.jpa;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -27,8 +28,7 @@ import java.util.Map;
  * {@code AbstractEncryptedAttributeConverter} in the application consumes.
  * They are deliberately located at the JPA layer rather than underneath any
  * domain-specific prefix, because a single {@code DataCipher} instance
- * governs the encryption of <em>all</em> encrypted entity columns — not just
- * JWK material.
+ * governs the encryption of <em>all</em> encrypted entity columns.
  *
  * <p>Binds the following shape under prefix {@code euler.data.jpa.encryption}:
  *
@@ -39,35 +39,42 @@ import java.util.Map;
  *       encryption:
  *         primary-alg: AES-256-GCM      # or "noop"
  *         keys:
- *           AES-256-GCM:
- *             primary-kid: k1
- *             items:
- *               k1:
- *                 key-file: /abs/path   # 32-byte POSIX-0600 file
- *                 passphrase: ...        # fallback when key-file is blank
+ *           my-key:                      # opaque logical id (profile-override coordinate)
+ *             kid: k1                    # actual key identifier
+ *             alg: AES-256-GCM          # algorithm this key belongs to
+ *             primary: true              # marks this as the primary kid for its alg
+ *             key-file: /abs/path        # key file path (format depends on algorithm)
+ *             properties:                # algorithm-specific properties
+ *               passphrase: dev          # fallback: derive key via SHA-256 (dev only)
  * </pre>
  *
- * <p>{@code noop} is always registered by
- * {@link EulerBootDataJpaEncryptionAutoConfiguration} and needs no entry under
- * {@code keys}; it can still be named as {@code primary-alg} to disable data
- * encryption entirely (useful for development / historical-data compatibility).
+ * <p>Each distinct {@code alg} among the keys MUST have exactly one entry
+ * with {@code primary: true}. The {@code primary-alg} selects which
+ * algorithm is used for new writes; {@code noop} is always available and
+ * needs no entry under {@code keys}.
+ *
+ * @see EulerBootDataJpaEncryptionAutoConfiguration
  */
 @ConfigurationProperties(prefix = "euler.data.jpa.encryption")
 public class EulerBootDataJpaEncryptionProperties {
 
     /**
      * Algorithm identifier used for writes. MUST be either {@code "noop"}
-     * or a key present in {@link #keys}. Matched case-insensitively.
+     * or an {@code alg} present among the {@link #keys} entries. Matched
+     * case-insensitively.
      */
     private String primaryAlg;
 
     /**
-     * Registered keyed algorithms. Key is the algorithm identifier
-     * (e.g. {@code AES-256-GCM}); the value carries the primary {@code
-     * kid} plus the per-{@code kid} material source. Algorithms without
-     * keys (i.e. {@code noop}) do not appear here.
+     * Flat map of encryption key definitions keyed by an opaque logical id.
+     * The map key is purely a profile-override coordinate (so that different
+     * {@code application-*.yml} files can override the same logical entry);
+     * it is NOT used as the key's {@code kid}. Every {@link KeyDefinition}
+     * MUST carry an explicit non-blank {@link KeyDefinition#getKid() kid}.
+     * <p>
+     * Iteration preserves declaration order ({@link LinkedHashMap}).
      */
-    private final Map<String, AlgorithmKeys> keys = new LinkedHashMap<>();
+    private Map<String, KeyDefinition> keys = new LinkedHashMap<>();
 
     public String getPrimaryAlg() {
         return primaryAlg;
@@ -77,64 +84,88 @@ public class EulerBootDataJpaEncryptionProperties {
         this.primaryAlg = primaryAlg;
     }
 
-    public Map<String, AlgorithmKeys> getKeys() {
+    public Map<String, KeyDefinition> getKeys() {
         return keys;
     }
 
-    /** Per-algorithm key-rotation block. */
-    public static class AlgorithmKeys {
-
-        /**
-         * Identifier of the {@code kid} that new ciphertexts are encrypted
-         * under. MUST be a key in {@link #items}.
-         */
-        private String primaryKid;
-
-        /** Per-{@code kid} material source. */
-        private final Map<String, KeyItem> items = new LinkedHashMap<>();
-
-        public String getPrimaryKid() {
-            return primaryKid;
-        }
-
-        public void setPrimaryKid(String primaryKid) {
-            this.primaryKid = primaryKid;
-        }
-
-        public Map<String, KeyItem> getItems() {
-            return items;
-        }
+    public void setKeys(Map<String, KeyDefinition> keys) {
+        this.keys = keys;
     }
 
     /**
-     * Single key material source. {@link #keyFile} takes precedence; when it
-     * is blank, falls back to {@link #passphrase} (development only). Both
-     * blank is a fail-fast at startup.
+     * Definition of a single encryption key. Each entry declares the key
+     * identity, file-based key source, and algorithm-specific parameters
+     * via a generic {@link #properties} map.
+     *
+     * <p>The common fields ({@link #kid}, {@link #alg}, {@link #primary},
+     * {@link #keyFile}) are shared across all algorithms. Algorithm-specific
+     * parameters (e.g. {@code passphrase}) live inside {@link #properties}
+     * and are validated at key-material load time.
      */
-    public static class KeyItem {
+    public static class KeyDefinition {
 
         /**
-         * Absolute file system path to a 32-byte binary KEY. POSIX permissions
-         * MUST be {@code 0600} (owner read/write only).
+         * Mandatory key identifier. Stamped into the encrypted envelope
+         * header so that the correct key can be located during decryption.
+         * Must be non-blank and unique within the same {@link #alg}.
+         */
+        private String kid;
+
+        /**
+         * Algorithm this key belongs to (e.g. {@code AES-256-GCM}).
+         * Must be non-blank.
+         */
+        private String alg;
+
+        /**
+         * Whether this key is the primary for its {@link #alg}. Exactly
+         * one key per algorithm MUST be marked {@code primary: true}; it
+         * is the key used to encrypt new data under that algorithm.
+         */
+        private boolean primary;
+
+        /**
+         * Path or Spring Resource URL for the key file. The expected file
+         * format depends on the algorithm (e.g. 32-byte raw binary for
+         * {@code AES-256-GCM}). Takes precedence over any key material
+         * source in {@link #properties}.
          */
         private String keyFile;
 
         /**
-         * Development-only passphrase used to derive 32 bytes via
-         * PBKDF2-HMAC-SHA256 (600k iterations, salt derived from
-         * {@link #saltNamespace} + the {@code kid}). Consulted only when
-         * {@link #keyFile} is blank.
+         * Algorithm-specific properties used to resolve key material when
+         * {@link #keyFile} is not provided. For {@code AES-256-GCM}:
+         * <ul>
+         *   <li>{@code passphrase} — development-only passphrase; key is
+         *       derived via SHA-256.</li>
+         * </ul>
+         * Missing required properties result in a fail-fast startup error.
          */
-        private String passphrase;
+        private Map<String, String> properties = Collections.emptyMap();
 
-        /**
-         * Optional override for the PBKDF2 salt namespace, only used on the
-         * passphrase path. Blank/unset falls back to the framework default
-         * ({@code "euler-data-key/"}). Set this to the historical value of a
-         * pre-existing deployment (e.g. {@code "euler-uc-data-key/"}) to keep
-         * legacy passphrase-derived ciphertexts decryptable.
-         */
-        private String saltNamespace;
+        public String getKid() {
+            return kid;
+        }
+
+        public void setKid(String kid) {
+            this.kid = kid;
+        }
+
+        public String getAlg() {
+            return alg;
+        }
+
+        public void setAlg(String alg) {
+            this.alg = alg;
+        }
+
+        public boolean isPrimary() {
+            return primary;
+        }
+
+        public void setPrimary(boolean primary) {
+            this.primary = primary;
+        }
 
         public String getKeyFile() {
             return keyFile;
@@ -144,20 +175,12 @@ public class EulerBootDataJpaEncryptionProperties {
             this.keyFile = keyFile;
         }
 
-        public String getPassphrase() {
-            return passphrase;
+        public Map<String, String> getProperties() {
+            return properties;
         }
 
-        public void setPassphrase(String passphrase) {
-            this.passphrase = passphrase;
-        }
-
-        public String getSaltNamespace() {
-            return saltNamespace;
-        }
-
-        public void setSaltNamespace(String saltNamespace) {
-            this.saltNamespace = saltNamespace;
+        public void setProperties(Map<String, String> properties) {
+            this.properties = properties;
         }
     }
 }
