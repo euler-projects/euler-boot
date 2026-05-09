@@ -34,12 +34,10 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncodingException;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
-import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -94,7 +92,7 @@ public class EulerOAuth2AuthorizationServerJwkConfiguration {
      *                  ACTIVE JWK with a private part for every signing algorithm used
      *                  by the application
      * @return a {@link NimbusJwtEncoder} bound to the signing-only projection, with a
-     *         deterministic tie-breaker installed
+     * deterministic tie-breaker installed
      */
     @Bean
     @ConditionalOnMissingBean(JwtEncoder.class)
@@ -132,7 +130,7 @@ public class EulerOAuth2AuthorizationServerJwkConfiguration {
                 JwkManageService manageService,
                 EulerBootAuthorizationServerJwkProperties props,
                 ResourceLoader resourceLoader) {
-            List<JwkEntry> initialEntries = parseJwkEntries(props, new JwkEntryParser(resourceLoader));
+            List<JwkEntry> initialEntries = parseJwkEntries(props.getKeys().values(), new JwkEntryParser(resourceLoader));
             ManagedJwkRepository repository = new ManagedJwkRepository(manageService, initialEntries);
             LOGGER.info("Managed JWK repository initialized with {} preconfigured jwks", initialEntries.size());
             return repository;
@@ -145,25 +143,18 @@ public class EulerOAuth2AuthorizationServerJwkConfiguration {
         })
         JwkRepository inMemoryJwkRepository(EulerBootAuthorizationServerJwkProperties props,
                                             ResourceLoader resourceLoader) {
-            List<JwkEntry> initialEntries = parseJwkEntries(props, new JwkEntryParser(resourceLoader));
+            List<JwkEntry> initialEntries = parseJwkEntries(props.getKeys().values(), new JwkEntryParser(resourceLoader));
             InMemoryJwkRepository repository = new InMemoryJwkRepository(initialEntries);
             LOGGER.info("In memory JWK repository initialized with {} preconfigured jwks", initialEntries.size());
             return repository;
         }
 
         private static List<JwkEntry> parseJwkEntries(
-                EulerBootAuthorizationServerJwkProperties props,
+                Collection<KeyDefinition> keyDefinitions,
                 JwkEntryParser parser) {
-            Map<String, KeyDefinition> keys = props.getKeys();
-            List<JwkEntry> jwkEntries = new ArrayList<>(keys.size());
-            for (Map.Entry<String, KeyDefinition> e : keys.entrySet()) {
-                KeyDefinition def = e.getValue();
-                if (!StringUtils.hasText(def.getKid())) {
-                    def.setKid(e.getKey());
-                }
-                jwkEntries.add(parser.parse(def));
-            }
-            return jwkEntries;
+            return keyDefinitions.stream()
+                    .map(parser::parse)
+                    .toList();
         }
     }
 }

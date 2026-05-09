@@ -27,8 +27,13 @@ import java.util.Map;
 /**
  * JWK configuration properties, split into two concerns:
  * <ul>
- *   <li>{@link #getKeys() keys}: a map of {@code kid -> KeyDefinition} entries
- *       bootstrapped into the JWK subsystem at startup. With no
+ *   <li>{@link #getKeys() keys}: a map of {@code id -> KeyDefinition} entries
+ *       bootstrapped into the JWK subsystem at startup. The map key is an
+ *       opaque logical id used solely as a stable coordinate so that different
+ *       Spring profiles (e.g. {@code application-prod.yml},
+ *       {@code application-staging.yml}) can override the same entry; it has
+ *       no bearing on the JWK {@code kid} header, which MUST be declared
+ *       explicitly on {@link KeyDefinition#getKid()}. With no
  *       {@code JwkManageService} bean present the map backs an in-memory
  *       repository; with a management bean present the map is upserted into
  *       the persistent backend so every deployment restarts from a known
@@ -46,14 +51,20 @@ import java.util.Map;
 public class EulerBootAuthorizationServerJwkProperties {
 
     /**
-     * Pre-configured keys keyed by their effective {@code kid}. Iteration
-     * preserves declaration order (Spring Boot binds maps as
-     * {@link LinkedHashMap}) so deterministic bootstrap upsert is possible.
-     * The map key is used as the {@code kid} of each entry by default; a
-     * {@link KeyDefinition#getKid() kid} explicitly declared on the entry
-     * itself takes precedence. Leaving the map empty disables the Euler JWK
-     * subsystem entirely: Spring Authorization Server falls back to its
-     * built-in {@code ImmutableJWKSet} with a randomly-generated keypair.
+     * Pre-configured keys keyed by an opaque logical id. Iteration preserves
+     * declaration order (Spring Boot binds maps as {@link LinkedHashMap}) so
+     * deterministic bootstrap upsert is possible.
+     * <p>
+     * The map key is purely a profile-override coordinate &mdash; different
+     * {@code application-*.yml} files may redefine the same logical id to
+     * publish a different {@code kid} per deployment environment, thereby
+     * avoiding cross-environment {@code kid} collisions. It is NOT used as
+     * the JWK {@code kid}; every {@link KeyDefinition} MUST carry an explicit
+     * non-blank {@link KeyDefinition#getKid() kid}.
+     * <p>
+     * Leaving the map empty disables the Euler JWK subsystem entirely: Spring
+     * Authorization Server falls back to its built-in {@code ImmutableJWKSet}
+     * with a randomly-generated keypair.
      */
     private Map<String, KeyDefinition> keys = new LinkedHashMap<>();
 
@@ -76,20 +87,21 @@ public class EulerBootAuthorizationServerJwkProperties {
     }
 
     /**
-     * Declarative definition of a single JWK entry. Carries the algorithm,
-     * use, lifecycle status, issued-at timestamp, PEM location and an
-     * optional explicit {@code kid}. When {@link #getKid()} is left blank
-     * the autoconfiguration falls back to the enclosing
-     * {@link #getKeys() keys} map key.
+     * Declarative definition of a single JWK entry. Carries the {@code kid},
+     * algorithm, use, lifecycle status, issued-at timestamp and PEM location.
+     * The {@link #getKid() kid} is mandatory and is the sole source of the
+     * JWK {@code kid} header &mdash; it is never defaulted from the enclosing
+     * {@link #getKeys() keys} map key, which is reserved for profile-based
+     * overriding.
      */
     public static class KeyDefinition {
         /**
-         * Optional explicit JWK {@code kid}. When {@code null} or blank the
-         * autoconfiguration falls back to the enclosing
-         * {@link #getKeys() keys} map key, so most deployments can omit this
-         * field. Set it explicitly only when the desired {@code kid} differs
-         * from the YAML key (for example when migrating between two map
-         * layouts while preserving the JWS {@code kid} header value).
+         * Mandatory JWK {@code kid}. Must be non-blank; startup fails fast
+         * otherwise. The enclosing {@link #getKeys() keys} map key is an
+         * opaque profile-override coordinate and is NOT used as a fallback.
+         * Declaring {@code kid} explicitly lets different Spring profiles
+         * publish distinct {@code kid} values for the same logical entry
+         * across deployment environments without collisions.
          */
         private String kid;
 
@@ -128,6 +140,7 @@ public class EulerBootAuthorizationServerJwkProperties {
         }
 
         public void setKid(String kid) {
+            Assert.hasText(kid, "'kid' must be specified");
             this.kid = kid;
         }
 
