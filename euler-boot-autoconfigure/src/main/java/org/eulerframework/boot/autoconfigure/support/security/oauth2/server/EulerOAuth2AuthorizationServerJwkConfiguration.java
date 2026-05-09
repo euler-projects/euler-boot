@@ -37,6 +37,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -48,8 +49,12 @@ import java.util.Map;
  * Unlike the immutable default, {@link ManagedJwkSource} resolves JWKs dynamically from
  * a {@link JwkRepository}, so key changes are picked up at runtime.
  * <p>
- * This configuration also redefines the {@link NimbusJwtEncoder} bean so that multiple
- * usable JWKs sharing the same signature algorithm can coexist.
+ * This configuration also redefines the {@link NimbusJwtEncoder} bean so that it is
+ * wired against the signing-only projection exposed by
+ * {@link ManagedJwkSource#signingJwkSource()}, which restricts signing candidates to
+ * {@link JwkStatus#ACTIVE} entries holding a private key, and installs a deterministic
+ * {@code JwkSelector} tie-breaker for the rare case where several candidates share the
+ * same algorithm.
  * <p>
  * Every bean exposed here can be overridden by an application-defined bean of the same
  * type. Partial overrides are supported as well &mdash; for example, a project may only
@@ -65,27 +70,49 @@ public class EulerOAuth2AuthorizationServerJwkConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(EulerOAuth2AuthorizationServerJwkConfiguration.class);
 
     /**
-     * The default {@link JwtEncoder} wired by {@code OAuth2ConfigurerUtils} does not handle
-     * the case where several keys share the same signature algorithm. This method replaces
-     * it with a {@link NimbusJwtEncoder} that installs a custom {@code JwkSelector}: when
-     * multiple JWKs match the requested algorithm the selector picks the first one that
-     * carries a private key and uses it for signing.
+     * Replace the default {@link JwtEncoder} wired by {@code OAuth2ConfigurerUtils}.
+     * The default encoder binds against the full {@link ManagedJwkSource}, which also
+     * serves the {@code /oauth2/jwks} endpoint and therefore intentionally publishes
+     * {@link JwkStatus#PENDING}, {@link JwkStatus#DEPRECATED} and
+     * {@link JwkStatus#VERIFY_ONLY} keys for verifier warm-up. Feeding that same set
+     * into the encoder risks picking a non-ACTIVE key for signing.
      *
-     * @param jwkSource managed source backing the encoder; must expose at least one JWK with
-     *                  a private part for every signing algorithm used by the application
-     * @return a {@link NimbusJwtEncoder} configured with the private-key-preferring selector
+     * <p>Instead, this encoder is wired against
+     * {@link ManagedJwkSource#signingJwkSource()}, a projection restricted to
+     * {@linkplain JwkEntry#isActive() active} entries carrying a private key. Bundled
+     * repositories enforce "at most one ACTIVE key per algorithm", which keeps the
+     * projection unambiguous per algorithm, but a custom {@link JwkManageService} may
+     * not carry that guarantee. To stay deterministic even in that case, a
+     * {@code JwkSelector} tie-breaker is installed via
+     * {@link NimbusJwtEncoder#setJwkSelector(org.springframework.core.convert.converter.Converter)}:
+     * among candidates returned by Nimbus for a given algorithm, the entry with the
+     * newer {@code iat} wins; on identical {@code iat}, the entry with the smaller
+     * {@code kid} (lexicographic) wins. When no ACTIVE signing key is available, the
+     * encoder fails fast rather than silently falling back onto a PENDING one.
+     *
+     * @param jwkSource managed source backing the encoder; must expose at least one
+     *                  ACTIVE JWK with a private part for every signing algorithm used
+     *                  by the application
+     * @return a {@link NimbusJwtEncoder} bound to the signing-only projection, with a
+     *         deterministic tie-breaker installed
      */
     @Bean
     @ConditionalOnMissingBean(JwtEncoder.class)
     JwtEncoder jwtEncoder(ManagedJwkSource jwkSource) {
-        NimbusJwtEncoder jwtEncoder = new NimbusJwtEncoder(jwkSource);
+        NimbusJwtEncoder jwtEncoder = new NimbusJwtEncoder(jwkSource.signingJwkSource());
         jwtEncoder.setJwkSelector(jwks -> jwks.stream()
                 .filter(JWK::isPrivate)
-                .findFirst()
+                // Deterministic tie-breaker when several ACTIVE signing candidates
+                // collide on the same algorithm (bundled repositories enforce
+                // uniqueness, but custom JwkManageService implementations may not):
+                // newer iat wins; on identical iat, smaller kid (lexicographic) wins.
+                .min(Comparator
+                        .comparing(JWK::getIssueTime, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(JWK::getKeyID, Comparator.nullsLast(Comparator.naturalOrder())))
                 .orElseThrow(() -> new JwtEncodingException(String.format(
                         "An error occurred while attempting to encode the Jwt: " +
-                                "all available key for for the signing algorithm [%s] does not contain a private key.",
-                        jwks.getFirst().getAlgorithm()))));
+                                "no ACTIVE signing key with a private key is available for algorithm [%s].",
+                        jwks.isEmpty() ? "<none>" : jwks.getFirst().getAlgorithm()))));
         return jwtEncoder;
     }
 
