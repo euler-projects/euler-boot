@@ -162,7 +162,8 @@ public class EulerBootWebSecurityConfiguration {
         if (eulerBootSecurityOtpProperties.isEnabled()) {
             logger.debug("OTP module enabled, configuring OTP ticket issue endpoint.");
             http.with(new OtpSecurityConfigurer(), otp -> otp
-                    .issueEndpointUri(eulerBootSecurityOtpProperties.getIssueEndpointUri()));
+                    .issueEndpointUri(eulerBootSecurityOtpProperties.getIssueEndpointUri())
+                    .pkceRequired(eulerBootSecurityOtpProperties.getPkce().isEnabled()));
         }
 
         this.configAccessDeniedHandler(http);

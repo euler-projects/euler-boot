@@ -112,7 +112,8 @@ public class EulerBootAuthorizationServerConfiguration {
                                 + "OtpTicketService=" + (otpTicketService != null)
                                 + ", EulerUserDetailsService=" + (eulerUserDetailsService != null));
             }
-            EulerAuthorizationServerConfiguration.configOtpAuthentication(http, otpTicketService, eulerUserDetailsService);
+            EulerAuthorizationServerConfiguration.configOtpAuthentication(http, otpTicketService, eulerUserDetailsService,
+                    eulerBootSecurityOtpProperties.getPkce().isEnabled());
         }
 
         // Enable extended claims support for the UserInfo endpoints
