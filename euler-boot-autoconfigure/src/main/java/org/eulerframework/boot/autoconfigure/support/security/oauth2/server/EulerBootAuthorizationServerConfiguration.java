@@ -15,7 +15,10 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityOtpProperties;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
+import org.eulerframework.security.authentication.otp.OtpTicketService;
+import org.eulerframework.security.core.userdetails.EulerUserDetailsService;
 import org.eulerframework.security.jackson.EulerSecurityJsonMapperFactory;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationConsentService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationService;
@@ -25,6 +28,7 @@ import org.eulerframework.security.config.annotation.web.configurers.oauth2.serv
 import org.eulerframework.security.config.annotation.web.configurers.oauth2.server.authorization.EulerOAuth2AuthorizationServerConfigurer;
 import org.eulerframework.security.web.authentication.LoginPageAuthenticationEntryPoint;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -71,7 +75,10 @@ public class EulerBootAuthorizationServerConfiguration {
             AuthenticationConfiguration authenticationConfiguration,
             @Qualifier(SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
             LoginPageAuthenticationEntryPoint loginPageEntryPoint,
-            EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties) {
+            EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties,
+            EulerBootSecurityOtpProperties eulerBootSecurityOtpProperties,
+            ObjectProvider<OtpTicketService> otpTicketServiceProvider,
+            ObjectProvider<EulerUserDetailsService> userDetailsServiceProvider) {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
         EulerOAuth2AuthorizationServerConfigurer eulerOAuth2AuthorizationServerConfigurer = new EulerOAuth2AuthorizationServerConfigurer();
 
@@ -94,6 +101,18 @@ public class EulerBootAuthorizationServerConfiguration {
 
         if (eulerBootAuthorizationServerProperties.getWechatLogin().isEnabled()) {
             EulerAuthorizationServerConfiguration.configWechatAuthentication(http, authenticationConfiguration);
+        }
+
+        if (eulerBootSecurityOtpProperties.isEnabled()) {
+            OtpTicketService otpTicketService = otpTicketServiceProvider.getIfAvailable();
+            EulerUserDetailsService eulerUserDetailsService = userDetailsServiceProvider.getIfAvailable();
+            if (otpTicketService == null || eulerUserDetailsService == null) {
+                throw new IllegalStateException(
+                        "OTP grant is enabled but required beans are missing: "
+                                + "OtpTicketService=" + (otpTicketService != null)
+                                + ", EulerUserDetailsService=" + (eulerUserDetailsService != null));
+            }
+            EulerAuthorizationServerConfiguration.configOtpAuthentication(http, otpTicketService, eulerUserDetailsService);
         }
 
         // Enable extended claims support for the UserInfo endpoints
