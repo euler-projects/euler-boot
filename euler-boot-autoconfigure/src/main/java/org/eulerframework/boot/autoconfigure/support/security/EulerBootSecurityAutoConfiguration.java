@@ -21,6 +21,16 @@ import org.eulerframework.security.authentication.InMemoryChallengeService;
 import org.eulerframework.security.authentication.appattest.apple.AppleAppAttestValidationService;
 import org.eulerframework.security.authentication.appattest.apple.DefaultAppleAppAttestValidationService;
 import org.eulerframework.security.authentication.appattest.*;
+import org.eulerframework.security.authentication.otp.InMemoryOtpTicketService;
+import org.eulerframework.security.authentication.otp.JdbcOtpTicketService;
+import org.eulerframework.security.authentication.otp.OtpChannel;
+import org.eulerframework.security.authentication.otp.OtpGenerator;
+import org.eulerframework.security.authentication.otp.OtpPolicyResolver;
+import org.eulerframework.security.authentication.otp.OtpTicketService;
+import org.eulerframework.security.authentication.otp.RedisOtpTicketService;
+import org.eulerframework.security.authentication.otp.SecureRandomOtpGenerator;
+import org.eulerframework.security.authentication.otp.StaticOtpPolicyResolver;
+import org.eulerframework.security.authentication.otp.StdoutOtpChannel;
 import org.eulerframework.security.oauth2.server.authorization.client.AppAttestOAuth2ClientProvisioningListener;
 import org.eulerframework.security.webauthn.authentication.AppleAppAttestRootCA;
 import com.webauthn4j.appattest.DeviceCheckManager;
@@ -35,6 +45,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -52,7 +63,8 @@ import java.util.List;
         })
 @EnableConfigurationProperties({
         EulerBootSecurityProperties.class,
-        EulerBootSecurityAppAttestProperties.class
+        EulerBootSecurityAppAttestProperties.class,
+        EulerBootSecurityOtpProperties.class
 })
 @ConditionalOnClass(DefaultAuthenticationEventPublisher.class)
 public class EulerBootSecurityAutoConfiguration {
@@ -162,6 +174,76 @@ public class EulerBootSecurityAutoConfiguration {
             return defaultAppleAppAttestValidationService;
             //            return new Webauthn4jAppleAppAttestValidationService(deviceCheckManager, appleAppRepository, registrationService,
 //                    properties.isAllowDevelopmentEnvironment());
+        }
+    }
+
+    /**
+     * Autoconfiguration for the OTP module beans. Activated by
+     * {@code euler.security.otp.enabled=true}.
+     */
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnProperty(prefix = "euler.security.otp", name = "enabled", havingValue = "true")
+    static class OtpBeanConfiguration {
+
+        @Bean
+        @ConditionalOnMissingBean
+        public OtpGenerator otpGenerator() {
+            return new SecureRandomOtpGenerator();
+        }
+
+        @Bean
+        @ConditionalOnMissingBean
+        public OtpPolicyResolver otpPolicyResolver(EulerBootSecurityOtpProperties properties) {
+            return new StaticOtpPolicyResolver(properties.getPolicy().toOtpPolicy());
+        }
+
+        // OtpRecipientResolver: not provided by default. When the request carries
+        // identity_id but no resolver bean is registered, the endpoint returns
+        // invalid_identity_id.
+
+        // ---- OtpTicketService: in-memory | jdbc | redis (mutually exclusive by storage) ----
+
+        @Bean
+        @ConditionalOnMissingBean(OtpTicketService.class)
+        @ConditionalOnProperty(prefix = "euler.security.otp", name = "storage",
+                havingValue = "in-memory", matchIfMissing = true)
+        public OtpTicketService inMemoryOtpTicketService(EulerBootSecurityOtpProperties properties) {
+            return new InMemoryOtpTicketService(
+                    InMemoryOtpTicketService.DEFAULT_MAX_TICKETS,
+                    properties.getPolicy().getMaxFailures());
+        }
+
+        @Bean
+        @ConditionalOnMissingBean(OtpTicketService.class)
+        @ConditionalOnProperty(prefix = "euler.security.otp", name = "storage", havingValue = "jdbc")
+        @ConditionalOnBean(JdbcOperations.class)
+        public OtpTicketService jdbcOtpTicketService(JdbcOperations jdbcOperations,
+                                                     EulerBootSecurityOtpProperties properties) {
+            return new JdbcOtpTicketService(
+                    jdbcOperations,
+                    JdbcOtpTicketService.DEFAULT_TABLE_NAME,
+                    properties.getPolicy().getMaxFailures());
+        }
+
+        @Bean
+        @ConditionalOnMissingBean(OtpTicketService.class)
+        @ConditionalOnProperty(prefix = "euler.security.otp", name = "storage", havingValue = "redis")
+        //@ConditionalOnBean(StringRedisTemplate.class)
+        public OtpTicketService redisOtpTicketService(StringRedisTemplate redisTemplate,
+                                                      EulerBootSecurityOtpProperties properties) {
+            return new RedisOtpTicketService(redisTemplate, properties.getPolicy().getMaxFailures());
+        }
+
+        // ---- Channels ----
+        // Boot only ships the stdout fallback. The actual OtpChannel bean (typically a
+        // DelegatingOtpChannel composing business channels with stdout as fallback) is
+        // expected to be assembled by the application; the routing table is a business
+        // concern and must not be locked down by the framework.
+
+        @Bean
+        @ConditionalOnMissingBean(name = "stdoutOtpChannel")
+        public OtpChannel stdoutOtpChannel() {
+            return new StdoutOtpChannel();
         }
     }
 

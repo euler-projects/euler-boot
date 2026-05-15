@@ -17,9 +17,11 @@ package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAppAttestProperties;
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityOtpProperties;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilterUtils;
 import org.eulerframework.security.config.annotation.web.configurers.appattest.AppAttestSecurityConfigurer;
+import org.eulerframework.security.config.annotation.web.configurers.otp.OtpSecurityConfigurer;
 import org.eulerframework.security.core.captcha.view.DefaultSmsCaptchaView;
 import org.eulerframework.security.core.captcha.view.SmsCaptchaView;
 import org.eulerframework.security.web.access.EulerAccessDeniedHandler;
@@ -88,6 +90,7 @@ public class EulerBootWebSecurityConfiguration {
             EulerBootSecurityWebAuthnProperties eulerBootSecurityWebAuthnProperties,
             EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties,
             EulerBootSecurityAppAttestProperties eulerBootSecurityAppAttestProperties,
+            EulerBootSecurityOtpProperties eulerBootSecurityOtpProperties,
             ObjectProvider<WebAuthnPresent> wenAuthnPresent,
             ObjectProvider<DeviceAttestPresent> deviceAttestPresent) throws Exception {
         Assert.isTrue(eulerBootSecurityWebProperties.isEnabled(), "euler web properties disabled, can not init defaultSecurityFilterChain");
@@ -154,6 +157,12 @@ public class EulerBootWebSecurityConfiguration {
             }
             logger.debug("App Attest dependency detected and enabled, configuring App Attest registration endpoints.");
             http.with(new AppAttestSecurityConfigurer(), Customizer.withDefaults());
+        }
+
+        if (eulerBootSecurityOtpProperties.isEnabled()) {
+            logger.debug("OTP module enabled, configuring OTP ticket issue endpoint.");
+            http.with(new OtpSecurityConfigurer(), otp -> otp
+                    .issueEndpointUri(eulerBootSecurityOtpProperties.getIssueEndpointUri()));
         }
 
         this.configAccessDeniedHandler(http);
