@@ -15,10 +15,9 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
-import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAuthenticationFactorProperties;
 import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityOtpProperties;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
-import org.eulerframework.security.authentication.factor.DelegatingUserAuthenticationService;
+import org.eulerframework.security.authentication.factor.UserAuthenticationFactorService;
 import org.eulerframework.security.authentication.otp.OtpTicketService;
 import org.eulerframework.security.config.annotation.web.configurers.factor.UserAuthenticationFactorSecurityConfigurer;
 import org.eulerframework.security.core.userdetails.EulerUserDetailsService;
@@ -82,26 +81,24 @@ public class EulerBootAuthorizationServerConfiguration {
             EulerBootSecurityOtpProperties eulerBootSecurityOtpProperties,
             ObjectProvider<OtpTicketService> otpTicketServiceProvider,
             ObjectProvider<EulerUserDetailsService> userDetailsServiceProvider,
-            EulerBootSecurityAuthenticationFactorProperties authenticationFactorProperties,
-            ObjectProvider<DelegatingUserAuthenticationService> userAuthenticationServiceProvider) {
+            ObjectProvider<UserAuthenticationFactorService> userAuthenticationFactorServiceProvider) {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
         EulerOAuth2AuthorizationServerConfigurer eulerOAuth2AuthorizationServerConfigurer = new EulerOAuth2AuthorizationServerConfigurer();
 
         RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
         RequestMatcher eulerEndpointsMatcher = eulerOAuth2AuthorizationServerConfigurer.getEndpointsMatcher();
 
-        // Optionally attach the /user/identities filter to this chain when at
-        // least one factor-specific UserAuthenticationService bean is
-        // registered (the DelegatingUserAuthenticationService bean is only
-        // auto-configured under that condition).
+        // Optionally attach the /user/identities filter to this chain when
+        // business code provides a UserAuthenticationFactorService bean.
+        // No framework-side default bean is auto-configured: the filter is
+        // activated solely on the presence of the SPI bean, with no
+        // additional property toggle.
         UserAuthenticationFactorSecurityConfigurer authenticationFactorConfigurer = null;
-        DelegatingUserAuthenticationService userAuthenticationService =
-                userAuthenticationServiceProvider.getIfAvailable();
-        if (userAuthenticationService != null
-                && !userAuthenticationService.getRegisteredFactorTypes().isEmpty()) {
+        UserAuthenticationFactorService userAuthenticationFactorService =
+                userAuthenticationFactorServiceProvider.getIfAvailable();
+        if (userAuthenticationFactorService != null) {
             authenticationFactorConfigurer = new UserAuthenticationFactorSecurityConfigurer()
-                    .userAuthenticationService(userAuthenticationService)
-                    .endpointBaseUri(authenticationFactorProperties.getEndpointBaseUri());
+                    .userAuthenticationService(userAuthenticationFactorService);
         }
 
         if (authenticationFactorConfigurer != null) {
