@@ -20,7 +20,7 @@ import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChai
 import org.eulerframework.security.authentication.factor.UserAuthenticationFactorService;
 import org.eulerframework.security.authentication.otp.OtpTicketService;
 import org.eulerframework.security.config.annotation.web.configurers.factor.UserAuthenticationFactorSecurityConfigurer;
-import org.eulerframework.security.core.userdetails.EulerUserDetailsService;
+import org.eulerframework.security.core.EulerUserService;
 import org.eulerframework.security.jackson.EulerSecurityJsonMapperFactory;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationConsentService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationService;
@@ -80,7 +80,7 @@ public class EulerBootAuthorizationServerConfiguration {
             EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties,
             EulerBootSecurityOtpProperties eulerBootSecurityOtpProperties,
             ObjectProvider<OtpTicketService> otpTicketServiceProvider,
-            ObjectProvider<EulerUserDetailsService> userDetailsServiceProvider,
+            ObjectProvider<EulerUserService> eulerUserServiceProvider,
             ObjectProvider<UserAuthenticationFactorService> userAuthenticationFactorServiceProvider) {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
         EulerOAuth2AuthorizationServerConfigurer eulerOAuth2AuthorizationServerConfigurer = new EulerOAuth2AuthorizationServerConfigurer();
@@ -133,14 +133,18 @@ public class EulerBootAuthorizationServerConfiguration {
 
         if (eulerBootSecurityOtpProperties.isEnabled()) {
             OtpTicketService otpTicketService = otpTicketServiceProvider.getIfAvailable();
-            EulerUserDetailsService eulerUserDetailsService = userDetailsServiceProvider.getIfAvailable();
-            if (otpTicketService == null || eulerUserDetailsService == null) {
+            EulerUserService eulerUserService = eulerUserServiceProvider.getIfAvailable();
+            if (otpTicketService == null
+                    || userAuthenticationFactorService == null
+                    || eulerUserService == null) {
                 throw new IllegalStateException(
                         "OTP grant is enabled but required beans are missing: "
                                 + "OtpTicketService=" + (otpTicketService != null)
-                                + ", EulerUserDetailsService=" + (eulerUserDetailsService != null));
+                                + ", UserAuthenticationFactorService=" + (userAuthenticationFactorService != null)
+                                + ", EulerUserService=" + (eulerUserService != null));
             }
-            EulerAuthorizationServerConfiguration.configOtpAuthentication(http, otpTicketService, eulerUserDetailsService,
+            EulerAuthorizationServerConfiguration.configOtpAuthentication(http, otpTicketService,
+                    userAuthenticationFactorService, eulerUserService,
                     eulerBootSecurityOtpProperties.getPkce().isEnabled());
         }
 
