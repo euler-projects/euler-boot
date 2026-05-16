@@ -15,9 +15,12 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAuthenticationFactorProperties;
 import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityOtpProperties;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
+import org.eulerframework.security.authentication.factor.DelegatingUserAuthenticationService;
 import org.eulerframework.security.authentication.otp.OtpTicketService;
+import org.eulerframework.security.config.annotation.web.configurers.factor.UserAuthenticationFactorSecurityConfigurer;
 import org.eulerframework.security.core.userdetails.EulerUserDetailsService;
 import org.eulerframework.security.jackson.EulerSecurityJsonMapperFactory;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationConsentService;
@@ -78,18 +81,46 @@ public class EulerBootAuthorizationServerConfiguration {
             EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties,
             EulerBootSecurityOtpProperties eulerBootSecurityOtpProperties,
             ObjectProvider<OtpTicketService> otpTicketServiceProvider,
-            ObjectProvider<EulerUserDetailsService> userDetailsServiceProvider) {
+            ObjectProvider<EulerUserDetailsService> userDetailsServiceProvider,
+            EulerBootSecurityAuthenticationFactorProperties authenticationFactorProperties,
+            ObjectProvider<DelegatingUserAuthenticationService> userAuthenticationServiceProvider) {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
         EulerOAuth2AuthorizationServerConfigurer eulerOAuth2AuthorizationServerConfigurer = new EulerOAuth2AuthorizationServerConfigurer();
 
         RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
         RequestMatcher eulerEndpointsMatcher = eulerOAuth2AuthorizationServerConfigurer.getEndpointsMatcher();
-        http.securityMatcher(new OrRequestMatcher(endpointsMatcher, eulerEndpointsMatcher));
+
+        // Optionally attach the /user/identities filter to this chain when at
+        // least one factor-specific UserAuthenticationService bean is
+        // registered (the DelegatingUserAuthenticationService bean is only
+        // auto-configured under that condition).
+        UserAuthenticationFactorSecurityConfigurer authenticationFactorConfigurer = null;
+        DelegatingUserAuthenticationService userAuthenticationService =
+                userAuthenticationServiceProvider.getIfAvailable();
+        if (userAuthenticationService != null
+                && !userAuthenticationService.getRegisteredFactorTypes().isEmpty()) {
+            authenticationFactorConfigurer = new UserAuthenticationFactorSecurityConfigurer()
+                    .userAuthenticationService(userAuthenticationService)
+                    .endpointBaseUri(authenticationFactorProperties.getEndpointBaseUri());
+        }
+
+        if (authenticationFactorConfigurer != null) {
+            http.securityMatcher(new OrRequestMatcher(
+                    endpointsMatcher,
+                    eulerEndpointsMatcher,
+                    authenticationFactorConfigurer.getEndpointsMatcher()));
+        } else {
+            http.securityMatcher(new OrRequestMatcher(endpointsMatcher, eulerEndpointsMatcher));
+        }
 
         http
                 .with(authorizationServerConfigurer, Customizer.withDefaults())
                 .with(eulerOAuth2AuthorizationServerConfigurer, Customizer.withDefaults())
                 .requestCache(RequestCacheConfigurer::disable);
+
+        if (authenticationFactorConfigurer != null) {
+            http.with(authenticationFactorConfigurer, Customizer.withDefaults());
+        }
 
         // enable resource owner password credentials grant
         EulerAuthorizationServerConfiguration.configPasswordAuthentication(http, authenticationConfiguration);
