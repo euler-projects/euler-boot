@@ -21,6 +21,7 @@ import org.eulerframework.security.authentication.factor.UserAuthenticationFacto
 import org.eulerframework.security.authentication.otp.OtpTicketService;
 import org.eulerframework.security.config.annotation.web.configurers.factor.UserAuthenticationFactorSecurityConfigurer;
 import org.eulerframework.security.core.EulerUserService;
+import org.eulerframework.security.core.userdetails.EulerDeviceUserDetailsService;
 import org.eulerframework.security.jackson.EulerSecurityJsonMapperFactory;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationConsentService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationService;
@@ -81,7 +82,8 @@ public class EulerBootAuthorizationServerConfiguration {
             EulerBootSecurityOtpProperties eulerBootSecurityOtpProperties,
             ObjectProvider<OtpTicketService> otpTicketServiceProvider,
             ObjectProvider<EulerUserService> eulerUserServiceProvider,
-            ObjectProvider<UserAuthenticationFactorService> userAuthenticationFactorServiceProvider) {
+            ObjectProvider<UserAuthenticationFactorService> userAuthenticationFactorServiceProvider,
+            ObjectProvider<EulerDeviceUserDetailsService> deviceUserDetailsServiceProvider) {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
         EulerOAuth2AuthorizationServerConfigurer eulerOAuth2AuthorizationServerConfigurer = new EulerOAuth2AuthorizationServerConfigurer();
 
@@ -143,8 +145,14 @@ public class EulerBootAuthorizationServerConfiguration {
                                 + ", UserAuthenticationFactorService=" + (userAuthenticationFactorService != null)
                                 + ", EulerUserService=" + (eulerUserService != null));
             }
+            // Optional: when an EulerDeviceUserDetailsService bean is present,
+            // OTP requests carrying a verified App Attest device get device-to-user
+            // consistency enforcement and first-use auto-binding.
+            EulerDeviceUserDetailsService deviceUserDetailsService =
+                    deviceUserDetailsServiceProvider.getIfAvailable();
             EulerAuthorizationServerConfiguration.configOtpAuthentication(http, otpTicketService,
                     userAuthenticationFactorService, eulerUserService,
+                    deviceUserDetailsService,
                     eulerBootSecurityOtpProperties.getPkce().isEnabled());
         }
 
