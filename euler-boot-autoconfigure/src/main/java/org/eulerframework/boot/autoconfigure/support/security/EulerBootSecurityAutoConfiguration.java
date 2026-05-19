@@ -241,7 +241,7 @@ public class EulerBootSecurityAutoConfiguration {
         // concern and must not be locked down by the framework.
 
         @Bean
-        @ConditionalOnMissingBean(name = "stdoutOtpChannel")
+        @ConditionalOnMissingBean
         public OtpChannel stdoutOtpChannel() {
             return new StdoutOtpChannel();
         }
