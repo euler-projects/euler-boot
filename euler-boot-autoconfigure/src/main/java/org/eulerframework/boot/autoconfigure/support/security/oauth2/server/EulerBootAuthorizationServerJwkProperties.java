@@ -118,6 +118,27 @@ public class EulerBootAuthorizationServerJwkProperties {
          * contain a PKCS#8 {@code -----BEGIN PRIVATE KEY-----} envelope or an
          * X.509 {@code -----BEGIN PUBLIC KEY-----} envelope; legacy PKCS#1
          * ({@code -----BEGIN RSA PRIVATE KEY-----}) is not supported.
+         *
+         * <p>Generate key files with:
+         * <pre>{@code
+         * # RSA 2048 (RS256)
+         * openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out rs256.pem
+         *
+         * # RSA 3072 (RS384)
+         * openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out rs384.pem
+         *
+         * # RSA 4096 (RS512)
+         * openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out rs512.pem
+         *
+         * # EC P-256 (ES256)
+         * openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out es256.pem
+         *
+         * # EC P-384 (ES384)
+         * openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-384 -out es384.pem
+         *
+         * # EC P-521 (ES512)
+         * openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-521 -out es512.pem
+         * }</pre>
          */
         private String keyFile;
 

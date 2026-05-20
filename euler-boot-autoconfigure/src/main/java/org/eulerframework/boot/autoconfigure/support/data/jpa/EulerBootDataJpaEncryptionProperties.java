@@ -129,6 +129,11 @@ public class EulerBootDataJpaEncryptionProperties {
          * format depends on the algorithm (e.g. 32-byte raw binary for
          * {@code AES-256-GCM}). Takes precedence over any key material
          * source in {@link #properties}.
+         *
+         * <p>Generate a 256-bit random key file with:
+         * <pre>{@code
+         * openssl rand 32 > /path/to/aes256.key
+         * }</pre>
          */
         private String keyFile;
 
