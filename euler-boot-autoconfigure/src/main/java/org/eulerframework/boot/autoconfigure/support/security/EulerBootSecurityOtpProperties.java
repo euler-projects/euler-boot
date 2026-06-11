@@ -19,6 +19,9 @@ import org.eulerframework.security.authentication.otp.OtpPolicy;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Configuration properties for the OTP module.
@@ -37,6 +40,12 @@ import java.time.Duration;
  *         expires-in: 5m
  *         retry-after: 60s
  *         max-failures: 5
+ *       test:
+ *         enabled: false            # test-account short-circuit; default OFF
+ *         fixed-otp: "000000"       # 6-digit fixed OTP handed out for test accounts
+ *         accounts:                 # any channel-addressable string (phone, email, ...)
+ *           - +8613800000000
+ *           - test@example.com
  * </pre>
  */
 @ConfigurationProperties(prefix = "euler.security.otp")
@@ -72,6 +81,17 @@ public class EulerBootSecurityOtpProperties {
      * by providing a custom {@link org.eulerframework.security.authentication.otp.OtpPolicyResolver OtpPolicyResolver} bean).
      */
     private Policy policy = new Policy();
+
+    /**
+     * Test-account short-circuit settings. Disabled by default; when enabled,
+     * any resolved recipient listed in {@link Test#getAccounts()} receives the
+     * configured {@link Test#getFixedOtp() fixed OTP} and the real channel
+     * delivery is skipped. A single {@code WARN} line is emitted per such
+     * request. Verification re-uses the standard plaintext compare path on the
+     * persisted ticket, so no further test-mode logic exists in the verify
+     * flow.
+     */
+    private Test test = new Test();
 
     public boolean isEnabled() {
         return enabled;
@@ -111,6 +131,14 @@ public class EulerBootSecurityOtpProperties {
 
     public void setPkce(Pkce pkce) {
         this.pkce = pkce;
+    }
+
+    public Test getTest() {
+        return test;
+    }
+
+    public void setTest(Test test) {
+        this.test = test;
     }
 
     public enum Storage {
@@ -202,6 +230,71 @@ public class EulerBootSecurityOtpProperties {
 
         public OtpPolicy toOtpPolicy() {
             return new OtpPolicy(this.otpLength, this.expiresIn, this.retryAfter, this.maxFailures);
+        }
+    }
+
+    /**
+     * Properties carrier for the OTP test-account whitelist.
+     */
+    public static class Test {
+
+        private static final Pattern SIX_DIGITS = Pattern.compile("\\d{6}");
+
+        /**
+         * Whether the test-account short-circuit is active. Default is
+         * {@code false}. When {@code false}, {@link #accounts} and
+         * {@link #fixedOtp} are ignored regardless of their values.
+         */
+        private boolean enabled = false;
+
+        /**
+         * The 6-digit fixed OTP value handed out for any recipient listed in
+         * {@link #accounts}. Must be exactly 6 digits when {@link #enabled} is
+         * {@code true}.
+         */
+        private String fixedOtp = "000000";
+
+        /**
+         * Test recipients (phone numbers, email addresses, or any other
+         * channel-addressable string). Match is exact (case-sensitive).
+         */
+        private List<String> accounts = new ArrayList<>();
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getFixedOtp() {
+            return fixedOtp;
+        }
+
+        public void setFixedOtp(String fixedOtp) {
+            this.fixedOtp = fixedOtp;
+        }
+
+        public List<String> getAccounts() {
+            return accounts;
+        }
+
+        public void setAccounts(List<String> accounts) {
+            this.accounts = accounts;
+        }
+
+        /**
+         * @return {@code true} if {@link #enabled} is {@code true}, the
+         *         {@link #fixedOtp} is a 6-digit numeric string and at least
+         *         one entry exists in {@link #accounts}
+         */
+        public boolean isUsable() {
+            return this.enabled
+                    && this.fixedOtp != null
+                    && SIX_DIGITS.matcher(this.fixedOtp).matches()
+                    && this.accounts != null
+                    && !this.accounts.isEmpty();
         }
     }
 }

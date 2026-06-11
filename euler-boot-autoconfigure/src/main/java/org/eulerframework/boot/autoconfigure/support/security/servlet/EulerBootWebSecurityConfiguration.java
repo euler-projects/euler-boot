@@ -21,6 +21,7 @@ import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityO
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilterUtils;
 import org.eulerframework.security.config.annotation.web.configurers.appattest.AppAttestSecurityConfigurer;
+import org.eulerframework.security.authentication.otp.OtpTestAccountSupport;
 import org.eulerframework.security.config.annotation.web.configurers.otp.OtpSecurityConfigurer;
 import org.eulerframework.security.core.captcha.view.DefaultSmsCaptchaView;
 import org.eulerframework.security.core.captcha.view.SmsCaptchaView;
@@ -161,9 +162,18 @@ public class EulerBootWebSecurityConfiguration {
 
         if (eulerBootSecurityOtpProperties.isEnabled()) {
             logger.debug("OTP module enabled, configuring OTP ticket issue endpoint.");
+            OtpTestAccountSupport otpTestAccountSupport = null;
+            EulerBootSecurityOtpProperties.Test test = eulerBootSecurityOtpProperties.getTest();
+            if (test != null && test.isUsable()) {
+                otpTestAccountSupport = new OtpTestAccountSupport(test.getAccounts(), test.getFixedOtp());
+                logger.warn("OTP test-account short-circuit is ENABLED ({} account(s)) - DO NOT use in production.",
+                        otpTestAccountSupport.getAccounts().size());
+            }
+            OtpTestAccountSupport otpTestAccountSupportFinal = otpTestAccountSupport;
             http.with(new OtpSecurityConfigurer(), otp -> otp
                     .issueEndpointUri(eulerBootSecurityOtpProperties.getIssueEndpointUri())
-                    .pkceRequired(eulerBootSecurityOtpProperties.getPkce().isEnabled()));
+                    .pkceRequired(eulerBootSecurityOtpProperties.getPkce().isEnabled())
+                    .testAccountSupport(otpTestAccountSupportFinal));
         }
 
         this.configAccessDeniedHandler(http);
