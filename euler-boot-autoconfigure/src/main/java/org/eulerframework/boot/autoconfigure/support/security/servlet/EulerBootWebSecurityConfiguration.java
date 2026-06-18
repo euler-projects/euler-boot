@@ -111,6 +111,7 @@ public class EulerBootWebSecurityConfiguration {
                         .requestMatchers(eulerBootSecurityWebEndpointProperties.getSignup().getSignupPage()).permitAll()
                         .requestMatchers(eulerBootSecurityWebEndpointProperties.getSignup().getSignupProcessingUrl()).permitAll()
                         .requestMatchers(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage()).permitAll()
+                        .requestMatchers("/assets/**").permitAll()
                         .requestMatchers("/captcha").permitAll()
                         .requestMatchers("/captcha/validCaptcha").permitAll()
                         .requestMatchers("/error").permitAll()
