@@ -30,11 +30,9 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.util.StringUtils;
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -122,78 +120,38 @@ class EulerBootResourceServerConfiguration {
     static class LocalAuthorizationServerResourceServerConfiguration {
 
         /**
-         * Session-aware filter chain that accepts either an existing HTTP
-         * session login (loaded by {@code SecurityContextHolderFilter}) or an
-         * OAuth2 Bearer token resolved against the local
-         * {@link OAuth2AuthorizationService}.
+         * Stateless Bearer-only filter chain for resource endpoints colocated
+         * with the local OAuth2 Authorization Server.
          *
-         * <p>Activated only when {@code euler.security.web.enabled=true},
-         * because the session half of the chain depends on the default web
-         * security filter chain performing the actual form login that
-         * populates the session. When web security is disabled, the
-         * {@link Stateless} fallback is used instead.</p>
+         * <p>Authentication is delegated to
+         * {@link OAuth2NativeTokenAuthenticationManager}, which resolves
+         * Bearer tokens directly against the in-process
+         * {@link OAuth2AuthorizationService}. Because the resource server and
+         * the authorization server share the same authorization store, token
+         * validation is a local lookup &mdash; this chain does <em>not</em>
+         * fetch a JWK set and does <em>not</em> call an introspection
+         * endpoint, avoiding the network round-trip that the sibling
+         * {@link JwkSetUriResourceServerConfiguration} and
+         * {@link OpaqueTokenResourceServerConfiguration} chains incur.</p>
          *
-         * <p>{@link SessionCreationPolicy#IF_REQUIRED} is required so the chain
-         * still reads any pre-existing session populated by the default form
-         * login filter chain, instead of the resource server's default
-         * {@code STATELESS} policy which would discard it.</p>
-         *
-         * <p>CSRF protection is kept enabled using the shared
-         * {@link CsrfTokenRepository} bean (aligned with the default web filter
-         * chain) so cookie/session based requests are still protected. Requests
-         * carrying an {@code Authorization} header are exempted, because
-         * Bearer-token calls do not rely on ambient credentials and are not
-         * vulnerable to CSRF.</p>
+         * <p>The chain is fully stateless: CSRF is disabled and no HTTP
+         * session is read or created. Cookie/session-based authentication,
+         * when required, must be supplied by a separate filter chain rather
+         * than mixed into this one.</p>
          */
-        @Configuration(proxyBeanMethods = false)
-        @ConditionalOnProperty(prefix = "euler.security.web", name = "enabled", havingValue = "true")
-        static class SessionAware {
-            @Bean(SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
-            @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
-            @Order(SecurityFilterProperties.BASIC_AUTH_ORDER - 1)
-            SecurityFilterChain resourceServerSecurityFilterChain(
-                    HttpSecurity http,
-                    OAuth2AuthorizationService authorizationService,
-                    CsrfTokenRepository csrfTokenRepository,
-                    EulerBootResourceServerProperties eulerBootResourceServerProperties) throws Exception {
-                EulerBootResourceServerConfiguration.applyCommonConfiguration(http, eulerBootResourceServerProperties);
-                http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
-                http.csrf(csrf -> csrf
-                        .csrfTokenRepository(csrfTokenRepository)
-                        .ignoringRequestMatchers(request -> request.getHeader("Authorization") != null));
-                AuthenticationManager authenticationManager = new OAuth2NativeTokenAuthenticationManager(authorizationService);
-                http.oauth2ResourceServer(resourceServer -> resourceServer
-                        .authenticationManagerResolver(request -> authenticationManager));
-                return http.build();
-            }
-        }
-
-        /**
-         * Stateless Bearer-only filter chain used when
-         * {@code euler.security.web.enabled} is false or absent. Behaves the
-         * same way as the other stateless resource-server chains
-         * (JWK/OpaqueToken/KeyValueJwt): CSRF disabled, no session reliance.
-         * Authentication is still delegated to the local
-         * {@link OAuth2AuthorizationService} via
-         * {@link OAuth2NativeTokenAuthenticationManager}.
-         */
-        @Configuration(proxyBeanMethods = false)
-        @ConditionalOnProperty(prefix = "euler.security.web", name = "enabled", havingValue = "false", matchIfMissing = true)
-        static class Stateless {
-            @Bean(SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
-            @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
-            @Order(SecurityFilterProperties.BASIC_AUTH_ORDER - 1)
-            SecurityFilterChain resourceServerSecurityFilterChain(
-                    HttpSecurity http,
-                    OAuth2AuthorizationService authorizationService,
-                    EulerBootResourceServerProperties eulerBootResourceServerProperties) throws Exception {
-                EulerBootResourceServerConfiguration.applyCommonConfiguration(http, eulerBootResourceServerProperties);
-                EulerBootResourceServerConfiguration.applyStatelessBearerCsrf(http);
-                AuthenticationManager authenticationManager = new OAuth2NativeTokenAuthenticationManager(authorizationService);
-                http.oauth2ResourceServer(resourceServer -> resourceServer
-                        .authenticationManagerResolver(request -> authenticationManager));
-                return http.build();
-            }
+        @Bean(SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
+        @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.RESOURCE_SERVER_SECURITY_FILTER_CHAIN)
+        @Order(SecurityFilterProperties.BASIC_AUTH_ORDER - 1)
+        SecurityFilterChain resourceServerSecurityFilterChain(
+                HttpSecurity http,
+                OAuth2AuthorizationService authorizationService,
+                EulerBootResourceServerProperties eulerBootResourceServerProperties) throws Exception {
+            EulerBootResourceServerConfiguration.applyCommonConfiguration(http, eulerBootResourceServerProperties);
+            EulerBootResourceServerConfiguration.applyStatelessBearerCsrf(http);
+            AuthenticationManager authenticationManager = new OAuth2NativeTokenAuthenticationManager(authorizationService);
+            http.oauth2ResourceServer(resourceServer -> resourceServer
+                    .authenticationManagerResolver(request -> authenticationManager));
+            return http.build();
         }
     }
 

@@ -98,6 +98,20 @@ public class EulerBootWebSecurityConfiguration {
     @Bean
     @ConditionalOnMissingBean(CsrfTokenRepository.class)
     public CsrfTokenRepository csrfTokenRepository() {
+        // The XSRF-TOKEN cookie is written by Spring Security itself, so it
+        // is NOT covered by server.servlet.session.cookie.* (which only
+        // governs the JSESSIONID cookie). The defaults below are inherited
+        // from Spring Security 6 and are already aligned with the project's
+        // baseline:
+        //   * HttpOnly = true   (front-end retrieves the token via /_csrf)
+        //   * SameSite = Lax
+        //   * Secure   = request.isSecure()  -> emits Secure on production
+        //                HTTPS once server.forward-headers-strategy=framework
+        //                is honoured by the consuming application.
+        // No further customisation is required; resist the temptation to
+        // pin Secure to a hard-coded boolean here, which would break either
+        // local http://localhost development (if true) or production HTTPS
+        // hardening (if false).
         return new CookieCsrfTokenRepository();
     }
 
