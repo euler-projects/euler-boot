@@ -67,6 +67,7 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthenticationFilter;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
@@ -80,6 +81,26 @@ import java.util.Map;
 public class EulerBootWebSecurityConfiguration {
     private final Logger logger = LoggerFactory.getLogger(EulerBootWebSecurityConfiguration.class);
 
+    /**
+     * Shared {@link CsrfTokenRepository} used by both the default web security
+     * filter chain (form-login / session based) and the hybrid resource-server
+     * filter chain that accepts session authentication alongside Bearer tokens.
+     * Centralizing the bean keeps the CSRF cookie definition (name, attributes)
+     * in a single place so the two chains remain interoperable for browser
+     * clients sharing the same session.
+     *
+     * <p>This bean is gated by {@code euler.security.web.enabled=true} because
+     * its hybrid use makes sense only when the default web security chain (which
+     * actually performs the form login that populates the session) is active.
+     * When web security is disabled, the resource-server side falls back to the
+     * pure stateless Bearer chain which does not need this bean.</p>
+     */
+    @Bean
+    @ConditionalOnMissingBean(CsrfTokenRepository.class)
+    public CsrfTokenRepository csrfTokenRepository() {
+        return new CookieCsrfTokenRepository();
+    }
+
     @Bean(SecurityFilterChainBeanNames.DEFAULT_SECURITY_FILTER_CHAIN)
     @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.DEFAULT_SECURITY_FILTER_CHAIN)
     @Order(SecurityFilterProperties.BASIC_AUTH_ORDER)
@@ -87,6 +108,7 @@ public class EulerBootWebSecurityConfiguration {
             HttpSecurity http,
             @Qualifier(SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
             LoginPageAuthenticationEntryPoint loginPageEntryPoint,
+            CsrfTokenRepository csrfTokenRepository,
             EulerBootSecurityWebProperties eulerBootSecurityWebProperties,
             EulerBootSecurityWebAuthnProperties eulerBootSecurityWebAuthnProperties,
             EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties,
@@ -118,7 +140,7 @@ public class EulerBootWebSecurityConfiguration {
                         .requestMatchers("/favicon.ico").permitAll()
                         .anyRequest().authenticated())
                 .requestCache(RequestCacheConfigurer::disable)
-                .csrf(csrf -> csrf.csrfTokenRepository(new CookieCsrfTokenRepository()))
+                .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository))
                 .formLogin(formLogin -> formLogin
                         .loginPage(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage())
                         .loginProcessingUrl(eulerBootSecurityWebEndpointProperties.getUser().getLoginProcessingUrl())
