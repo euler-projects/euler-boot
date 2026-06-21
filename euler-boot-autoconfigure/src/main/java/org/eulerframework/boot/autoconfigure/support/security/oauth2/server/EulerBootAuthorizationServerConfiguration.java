@@ -17,9 +17,9 @@ package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
 import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityOtpProperties;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
-import org.eulerframework.security.authentication.factor.UserAuthenticationFactorService;
+import org.eulerframework.security.core.identity.UserIdentityService;
 import org.eulerframework.security.authentication.otp.OtpTicketService;
-import org.eulerframework.security.config.annotation.web.configurers.factor.UserAuthenticationFactorSecurityConfigurer;
+import org.eulerframework.security.config.annotation.web.configurers.identity.UserIdentitySecurityConfigurer;
 import org.eulerframework.security.core.EulerUserService;
 import org.eulerframework.security.core.userdetails.EulerDeviceUserDetailsService;
 import org.eulerframework.security.jackson.EulerSecurityJsonMapperFactory;
@@ -82,7 +82,7 @@ public class EulerBootAuthorizationServerConfiguration {
             EulerBootSecurityOtpProperties eulerBootSecurityOtpProperties,
             ObjectProvider<OtpTicketService> otpTicketServiceProvider,
             ObjectProvider<EulerUserService> eulerUserServiceProvider,
-            ObjectProvider<UserAuthenticationFactorService> userAuthenticationFactorServiceProvider,
+            ObjectProvider<UserIdentityService> userIdentityServiceProvider,
             ObjectProvider<EulerDeviceUserDetailsService> deviceUserDetailsServiceProvider) {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
         EulerOAuth2AuthorizationServerConfigurer eulerOAuth2AuthorizationServerConfigurer = new EulerOAuth2AuthorizationServerConfigurer();
@@ -90,24 +90,22 @@ public class EulerBootAuthorizationServerConfiguration {
         RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
         RequestMatcher eulerEndpointsMatcher = eulerOAuth2AuthorizationServerConfigurer.getEndpointsMatcher();
 
-        // Optionally attach the /user/identities filter to this chain when
-        // business code provides a UserAuthenticationFactorService bean.
-        // No framework-side default bean is auto-configured: the filter is
-        // activated solely on the presence of the SPI bean, with no
-        // additional property toggle.
-        UserAuthenticationFactorSecurityConfigurer authenticationFactorConfigurer = null;
-        UserAuthenticationFactorService userAuthenticationFactorService =
-                userAuthenticationFactorServiceProvider.getIfAvailable();
-        if (userAuthenticationFactorService != null) {
-            authenticationFactorConfigurer = new UserAuthenticationFactorSecurityConfigurer()
-                    .userAuthenticationService(userAuthenticationFactorService);
+        // Attach the /user/identities filter to this chain when a
+        // UserIdentityService bean is available. No framework default
+        // bean is auto-configured: the filter is activated solely on
+        // the presence of the SPI bean.
+        UserIdentitySecurityConfigurer userIdentityConfigurer = null;
+        UserIdentityService userIdentityService = userIdentityServiceProvider.getIfAvailable();
+        if (userIdentityService != null) {
+            userIdentityConfigurer = new UserIdentitySecurityConfigurer()
+                    .userIdentityService(userIdentityService);
         }
 
-        if (authenticationFactorConfigurer != null) {
+        if (userIdentityConfigurer != null) {
             http.securityMatcher(new OrRequestMatcher(
                     endpointsMatcher,
                     eulerEndpointsMatcher,
-                    authenticationFactorConfigurer.getEndpointsMatcher()));
+                    userIdentityConfigurer.getEndpointsMatcher()));
         } else {
             http.securityMatcher(new OrRequestMatcher(endpointsMatcher, eulerEndpointsMatcher));
         }
@@ -117,8 +115,8 @@ public class EulerBootAuthorizationServerConfiguration {
                 .with(eulerOAuth2AuthorizationServerConfigurer, Customizer.withDefaults())
                 .requestCache(RequestCacheConfigurer::disable);
 
-        if (authenticationFactorConfigurer != null) {
-            http.with(authenticationFactorConfigurer, Customizer.withDefaults());
+        if (userIdentityConfigurer != null) {
+            http.with(userIdentityConfigurer, Customizer.withDefaults());
         }
 
         // enable resource owner password credentials grant
@@ -137,21 +135,22 @@ public class EulerBootAuthorizationServerConfiguration {
             OtpTicketService otpTicketService = otpTicketServiceProvider.getIfAvailable();
             EulerUserService eulerUserService = eulerUserServiceProvider.getIfAvailable();
             if (otpTicketService == null
-                    || userAuthenticationFactorService == null
+                    || userIdentityService == null
                     || eulerUserService == null) {
                 throw new IllegalStateException(
                         "OTP grant is enabled but required beans are missing: "
                                 + "OtpTicketService=" + (otpTicketService != null)
-                                + ", UserAuthenticationFactorService=" + (userAuthenticationFactorService != null)
+                                + ", UserIdentityService=" + (userIdentityService != null)
                                 + ", EulerUserService=" + (eulerUserService != null));
             }
-            // Optional: when an EulerDeviceUserDetailsService bean is present,
-            // OTP requests carrying a verified App Attest device get device-to-user
-            // consistency enforcement and first-use auto-binding.
+            // When an EulerDeviceUserDetailsService bean is present,
+            // OTP requests carrying a verified App Attest device receive
+            // device-to-user consistency enforcement and first-sighting
+            // auto-binding.
             EulerDeviceUserDetailsService deviceUserDetailsService =
                     deviceUserDetailsServiceProvider.getIfAvailable();
             EulerAuthorizationServerConfiguration.configOtpAuthentication(http, otpTicketService,
-                    userAuthenticationFactorService, eulerUserService,
+                    userIdentityService, eulerUserService,
                     deviceUserDetailsService,
                     eulerBootSecurityOtpProperties.getPkce().isEnabled());
         }
