@@ -20,8 +20,10 @@ import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChai
 import org.eulerframework.security.core.identity.UserIdentityService;
 import org.eulerframework.security.authentication.otp.OtpTicketService;
 import org.eulerframework.security.config.annotation.web.configurers.identity.UserIdentitySecurityConfigurer;
+import org.eulerframework.security.config.annotation.web.configurers.user.UserSecurityConfigurer;
 import org.eulerframework.security.core.EulerUserService;
 import org.eulerframework.security.core.userdetails.EulerDeviceUserDetailsService;
+import org.eulerframework.security.provisioning.EulerUserDetailsManager;
 import org.eulerframework.security.jackson.EulerSecurityJsonMapperFactory;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationConsentService;
 import org.eulerframework.security.oauth2.server.authorization.EulerRedisOAuth2AuthorizationService;
@@ -61,6 +63,7 @@ import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -83,6 +86,7 @@ public class EulerBootAuthorizationServerConfiguration {
             ObjectProvider<OtpTicketService> otpTicketServiceProvider,
             ObjectProvider<EulerUserService> eulerUserServiceProvider,
             ObjectProvider<UserIdentityService> userIdentityServiceProvider,
+            ObjectProvider<EulerUserDetailsManager> userDetailsManagerProvider,
             ObjectProvider<EulerDeviceUserDetailsService> deviceUserDetailsServiceProvider) {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
         EulerOAuth2AuthorizationServerConfigurer eulerOAuth2AuthorizationServerConfigurer = new EulerOAuth2AuthorizationServerConfigurer();
@@ -101,14 +105,26 @@ public class EulerBootAuthorizationServerConfiguration {
                     .userIdentityService(userIdentityService);
         }
 
-        if (userIdentityConfigurer != null) {
-            http.securityMatcher(new OrRequestMatcher(
-                    endpointsMatcher,
-                    eulerEndpointsMatcher,
-                    userIdentityConfigurer.getEndpointsMatcher()));
-        } else {
-            http.securityMatcher(new OrRequestMatcher(endpointsMatcher, eulerEndpointsMatcher));
+        // Attach the /user filter to this chain when an
+        // EulerUserDetailsManager bean is available. Activation is
+        // driven by bean presence, mirroring the identity filter above.
+        UserSecurityConfigurer userConfigurer = null;
+        EulerUserDetailsManager userDetailsManager = userDetailsManagerProvider.getIfAvailable();
+        if (userDetailsManager != null) {
+            userConfigurer = new UserSecurityConfigurer()
+                    .userDetailsManager(userDetailsManager);
         }
+
+        List<RequestMatcher> chainMatchers = new ArrayList<>();
+        chainMatchers.add(endpointsMatcher);
+        chainMatchers.add(eulerEndpointsMatcher);
+        if (userIdentityConfigurer != null) {
+            chainMatchers.add(userIdentityConfigurer.getEndpointsMatcher());
+        }
+        if (userConfigurer != null) {
+            chainMatchers.add(userConfigurer.getEndpointsMatcher());
+        }
+        http.securityMatcher(new OrRequestMatcher(chainMatchers));
 
         http
                 .with(authorizationServerConfigurer, Customizer.withDefaults())
@@ -117,6 +133,10 @@ public class EulerBootAuthorizationServerConfiguration {
 
         if (userIdentityConfigurer != null) {
             http.with(userIdentityConfigurer, Customizer.withDefaults());
+        }
+
+        if (userConfigurer != null) {
+            http.with(userConfigurer, Customizer.withDefaults());
         }
 
         // enable resource owner password credentials grant
