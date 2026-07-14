@@ -102,7 +102,8 @@ public class EulerBootAuthorizationServerConfiguration {
         UserIdentityService userIdentityService = userIdentityServiceProvider.getIfAvailable();
         if (userIdentityService != null) {
             userIdentityConfigurer = new UserIdentitySecurityConfigurer()
-                    .userIdentityService(userIdentityService);
+                    .userIdentityService(userIdentityService)
+                    .endpointBaseUri("/api" + UserIdentitySecurityConfigurer.DEFAULT_ENDPOINT_BASE_URI);
         }
 
         // Attach the /user filter to this chain when an
@@ -112,7 +113,8 @@ public class EulerBootAuthorizationServerConfiguration {
         EulerUserDetailsManager userDetailsManager = userDetailsManagerProvider.getIfAvailable();
         if (userDetailsManager != null) {
             userConfigurer = new UserSecurityConfigurer()
-                    .userDetailsManager(userDetailsManager);
+                    .userDetailsManager(userDetailsManager)
+                    .endpointBaseUri("/api" + UserSecurityConfigurer.DEFAULT_ENDPOINT_BASE_URI);
         }
 
         List<RequestMatcher> chainMatchers = new ArrayList<>();
