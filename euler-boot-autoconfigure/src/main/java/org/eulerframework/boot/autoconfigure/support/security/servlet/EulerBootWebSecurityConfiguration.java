@@ -22,6 +22,7 @@ import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChai
 import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilterUtils;
 import org.eulerframework.security.config.annotation.web.configurers.appattest.AppAttestSecurityConfigurer;
 import org.eulerframework.security.authentication.otp.OtpTestAccountSupport;
+import org.eulerframework.security.config.annotation.web.configurers.oauth2.OAuth2LoginSecurityConfigurer;
 import org.eulerframework.security.config.annotation.web.configurers.otp.OtpSecurityConfigurer;
 import org.eulerframework.security.core.captcha.view.DefaultSmsCaptchaView;
 import org.eulerframework.security.core.captcha.view.SmsCaptchaView;
@@ -129,7 +130,8 @@ public class EulerBootWebSecurityConfiguration {
             EulerBootSecurityAppAttestProperties eulerBootSecurityAppAttestProperties,
             EulerBootSecurityOtpProperties eulerBootSecurityOtpProperties,
             ObjectProvider<WebAuthnPresent> wenAuthnPresent,
-            ObjectProvider<DeviceAttestPresent> deviceAttestPresent) throws Exception {
+            ObjectProvider<DeviceAttestPresent> deviceAttestPresent,
+            ObjectProvider<OAuth2LoginPresent> oauth2LoginPresent) throws Exception {
         Assert.isTrue(eulerBootSecurityWebProperties.isEnabled(), "euler web properties disabled, can not init defaultSecurityFilterChain");
         this.logger.debug("Create default security filter chain");
 
@@ -211,6 +213,23 @@ public class EulerBootWebSecurityConfiguration {
                     .issueEndpointUri(eulerBootSecurityOtpProperties.getIssueEndpointUri())
                     .pkceRequired(eulerBootSecurityOtpProperties.getPkce().isEnabled())
                     .testAccountSupport(otpTestAccountSupportFinal));
+        }
+
+        boolean anyOAuth2LoginMethod = eulerBootSecurityWebProperties.getLoginMethods().values().stream()
+                .anyMatch(m -> m != null && "oauth2".equals(m.getType()));
+        if (anyOAuth2LoginMethod) {
+            if (oauth2LoginPresent.getIfAvailable() == null) {
+                throw new IllegalStateException("At least one entry under " +
+                        "euler.security.web.login-methods.* declares type=oauth2 " +
+                        "but the required dependencies are missing. Please add the " +
+                        "org.eulerframework:euler-security-oauth2-client dependency and " +
+                        "org.springframework.boot:spring-boot-starter-oauth2-client to your project.");
+            }
+            logger.debug("At least one type=oauth2 login-method declared; configuring oauth2Login() branch.");
+            http.with(new OAuth2LoginSecurityConfigurer(), oauth2 -> oauth2
+                    .loginPage(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage())
+                    .targetUrlParameter(
+                            eulerBootSecurityWebEndpointProperties.getUser().getLoginSuccessRedirectParameter()));
         }
 
         this.configAccessDeniedHandler(http);
@@ -352,5 +371,13 @@ public class EulerBootWebSecurityConfiguration {
     @Component
     @ConditionalOnClass(name = "com.webauthn4j.appattest.DeviceCheckManager")
     public static class DeviceAttestPresent {
+    }
+
+    @Component
+    @ConditionalOnClass(name = {
+            "org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter",
+            "org.eulerframework.security.oauth2.client.authentication.OAuth2LoginPrincipalPromotingSuccessHandler"
+    })
+    public static class OAuth2LoginPresent {
     }
 }

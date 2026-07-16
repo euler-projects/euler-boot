@@ -74,7 +74,7 @@ public class EulerBootDataJpaEncryptionProperties {
      * <p>
      * Iteration preserves declaration order ({@link LinkedHashMap}).
      */
-    private Map<String, KeyDefinition> keys = new LinkedHashMap<>();
+    private final Map<String, KeyDefinition> keys = new LinkedHashMap<>();
 
     public String getPrimaryAlg() {
         return primaryAlg;
@@ -86,10 +86,6 @@ public class EulerBootDataJpaEncryptionProperties {
 
     public Map<String, KeyDefinition> getKeys() {
         return keys;
-    }
-
-    public void setKeys(Map<String, KeyDefinition> keys) {
-        this.keys = keys;
     }
 
     /**

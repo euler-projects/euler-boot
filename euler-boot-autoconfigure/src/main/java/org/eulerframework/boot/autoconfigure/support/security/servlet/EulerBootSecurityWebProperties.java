@@ -16,13 +16,18 @@
 package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
 import org.eulerframework.security.web.endpoint.EulerSecurityEndpoints;
+import org.eulerframework.security.web.endpoint.user.login.LoginMethod;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @ConfigurationProperties(prefix = "euler.security.web")
 public class EulerBootSecurityWebProperties {
     private String[] urlPatterns;
     private String[] ignoredUrlPatterns;
     private boolean enabled = false;
+    private final Map<String, LoginMethod> loginMethods = new LinkedHashMap<>();
 
     public String[] getUrlPatterns() {
         return urlPatterns;
@@ -46,5 +51,9 @@ public class EulerBootSecurityWebProperties {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public Map<String, LoginMethod> getLoginMethods() {
+        return loginMethods;
     }
 }
