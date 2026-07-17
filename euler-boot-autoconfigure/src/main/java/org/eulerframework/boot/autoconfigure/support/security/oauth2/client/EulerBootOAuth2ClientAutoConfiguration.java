@@ -17,6 +17,7 @@ package org.eulerframework.boot.autoconfigure.support.security.oauth2.client;
 
 import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootSecurityWebAutoConfiguration;
 import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootSecurityWebProperties;
+import org.eulerframework.common.util.collections.MapUtils;
 import org.eulerframework.security.core.EulerUserService;
 import org.eulerframework.security.core.identity.UserIdentityService;
 import org.eulerframework.security.oauth2.client.authentication.OAuth2LoginPrincipalPromotingSuccessHandler;
@@ -140,16 +141,16 @@ public class EulerBootOAuth2ClientAutoConfiguration {
                 continue;
             }
             Map<String, Object> properties = method.getProperties();
-            String registrationId = asString(properties,
+            String registrationId = MapUtils.getString(properties,
                     OAuth2LoginMethodTypeHandler.PROP_OAUTH_CLIENT_REGISTRATION_ID);
             if (registrationId == null || registrationId.isEmpty()) {
                 registrationId = name;
             }
-            String identityType = asString(properties, "identity-type");
+            String identityType = MapUtils.getString(properties, "identity-type");
             if (identityType == null || identityType.isEmpty()) {
                 identityType = name;
             }
-            boolean autoCreateUser = asBoolean(properties, "auto-create-user", false);
+            boolean autoCreateUser = MapUtils.getBoolean(properties, "auto-create-user", false);
             List<String> defaultAuthorities = asStringList(properties, "default-authorities");
             if (autoCreateUser && defaultAuthorities.isEmpty()) {
                 // Refuse to auto-create with an empty authority list:
@@ -165,40 +166,29 @@ public class EulerBootOAuth2ClientAutoConfiguration {
         return Map.copyOf(policies);
     }
 
-    private static String asString(Map<String, Object> properties, String key) {
-        if (properties == null) return null;
-        Object value = properties.get(key);
-        return value == null ? null : value.toString();
-    }
-
-    private static boolean asBoolean(Map<String, Object> properties, String key, boolean fallback) {
-        if (properties == null) return fallback;
-        Object value = properties.get(key);
-        if (value == null) return fallback;
-        if (value instanceof Boolean b) return b;
-        return Boolean.parseBoolean(value.toString());
-    }
-
     /**
-     * Coerce the free-form {@code properties.<key>} entry into a
+     * Coerce a free-form {@code properties.<key>} entry into a
      * {@code List<String>}. Only three shapes are accepted:
      * <ul>
      *   <li>Java array (from programmatic overrides)</li>
      *   <li>{@link List}</li>
-     *   <li>{@link Map} - Spring Boot's relaxed binder materialises
+     *   <li>{@link Map} &mdash; Spring Boot's relaxed binder materialises
      *       YAML sequences under a {@code Map<String, Object>} bag as
      *       {@link java.util.LinkedHashMap} keyed by {@code "0"},
-     *       {@code "1"}, ... so the values collection is the intended
-     *       list.</li>
+     *       {@code "1"}, &hellip; so the values collection is the
+     *       intended list.</li>
      * </ul>
-     * Any other shape (scalar, comma-separated string, ...) is rejected
-     * with {@link IllegalArgumentException} so misconfiguration surfaces
-     * at startup rather than silently collapsing to a one-element list.
+     * Any other shape is rejected with {@link IllegalArgumentException}
+     * so misconfiguration surfaces at startup.
      */
     private static List<String> asStringList(Map<String, Object> properties, String key) {
-        if (properties == null) return List.of();
+        if (properties == null) {
+            return List.of();
+        }
         Object value = properties.get(key);
-        if (value == null) return List.of();
+        if (value == null) {
+            return List.of();
+        }
         if (value instanceof Object[] arr) {
             return java.util.Arrays.stream(arr).map(String::valueOf).toList();
         }
