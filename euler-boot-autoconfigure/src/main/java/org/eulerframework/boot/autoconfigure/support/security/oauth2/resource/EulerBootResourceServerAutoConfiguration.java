@@ -34,8 +34,13 @@ import org.springframework.security.oauth2.server.resource.authentication.Bearer
 
 @AutoConfiguration(
         before = {
+                // Ensure the resource server's Spring Security overrides take effect,
+                // including but not limited to:
+                // - Preferring the resource server's UserContext
                 EulerBootSecurityWebAutoConfiguration.class,
                 EulerBootSecurityAutoConfiguration.class,
+
+                // Supersede Spring's default resource server auto-configuration
                 OAuth2ResourceServerAutoConfiguration.class
         })
 @EnableConfigurationProperties(EulerBootResourceServerProperties.class)
