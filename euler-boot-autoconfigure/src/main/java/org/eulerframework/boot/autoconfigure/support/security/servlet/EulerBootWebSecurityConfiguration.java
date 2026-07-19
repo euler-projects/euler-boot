@@ -24,6 +24,7 @@ import org.eulerframework.security.config.annotation.web.configurers.appattest.A
 import org.eulerframework.security.authentication.otp.OtpTestAccountSupport;
 import org.eulerframework.security.config.annotation.web.configurers.oauth2.OAuth2LoginSecurityConfigurer;
 import org.eulerframework.security.config.annotation.web.configurers.otp.OtpSecurityConfigurer;
+import org.eulerframework.security.oauth2.client.authentication.OAuth2LoginPrincipalPromotingSuccessHandler;
 import org.eulerframework.security.core.captcha.view.DefaultSmsCaptchaView;
 import org.eulerframework.security.core.captcha.view.SmsCaptchaView;
 import org.eulerframework.security.web.access.EulerAccessDeniedHandler;
@@ -61,6 +62,7 @@ import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
+import org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
@@ -130,7 +132,6 @@ public class EulerBootWebSecurityConfiguration {
             EulerBootSecurityAppAttestProperties eulerBootSecurityAppAttestProperties,
             EulerBootSecurityOtpProperties eulerBootSecurityOtpProperties,
             ObjectProvider<WebAuthnPresent> wenAuthnPresent,
-            ObjectProvider<DeviceAttestPresent> deviceAttestPresent,
             ObjectProvider<OAuth2LoginPresent> oauth2LoginPresent) throws Exception {
         Assert.isTrue(eulerBootSecurityWebProperties.isEnabled(), "euler web properties disabled, can not init defaultSecurityFilterChain");
         this.logger.debug("Create default security filter chain");
@@ -180,7 +181,7 @@ public class EulerBootWebSecurityConfiguration {
         if (eulerBootSecurityWebAuthnProperties.isEnabled()) {
             if (wenAuthnPresent.getIfAvailable() == null) {
                 throw new IllegalStateException("WebAuthn is enabled but the required dependency is missing. " +
-                        "Please add the org.eulerframework:euler-security-wenauthn dependency to your project.");
+                        "Please add the org.eulerframework:euler-security-webauthn dependency to your project.");
             }
             logger.debug("WebAuthn dependency detected and enabled, configuring WebAuthn support.");
             http
@@ -191,11 +192,11 @@ public class EulerBootWebSecurityConfiguration {
         }
 
         if (eulerBootSecurityAppAttestProperties.isEnabled()) {
-            if (deviceAttestPresent.getIfAvailable() == null) {
-                throw new IllegalStateException("App Attest is enabled but the required dependency is missing. " +
-                        "Please add the com.webauthn4j:webauthn4j-appattest dependency to your project.");
-            }
-            logger.debug("App Attest dependency detected and enabled, configuring App Attest registration endpoints.");
+            // App Attest core classes live in euler-security-web (AppAttestSecurityConfigurer)
+            // and euler-security-core (DefaultAppleAppAttestValidationService), both of which
+            // are non-optional transitive dependencies of this autoconfigure module. No
+            // classpath probe is needed here; the property switch alone gates activation.
+            logger.debug("App Attest enabled, configuring App Attest registration endpoints.");
             http.with(new AppAttestSecurityConfigurer(), Customizer.withDefaults());
         }
 
@@ -369,14 +370,9 @@ public class EulerBootWebSecurityConfiguration {
     }
 
     @Component
-    @ConditionalOnClass(name = "com.webauthn4j.appattest.DeviceCheckManager")
-    public static class DeviceAttestPresent {
-    }
-
-    @Component
-    @ConditionalOnClass(name = {
-            "org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter",
-            "org.eulerframework.security.oauth2.client.authentication.OAuth2LoginPrincipalPromotingSuccessHandler"
+    @ConditionalOnClass({
+            OAuth2LoginAuthenticationFilter.class,
+            OAuth2LoginPrincipalPromotingSuccessHandler.class
     })
     public static class OAuth2LoginPresent {
     }

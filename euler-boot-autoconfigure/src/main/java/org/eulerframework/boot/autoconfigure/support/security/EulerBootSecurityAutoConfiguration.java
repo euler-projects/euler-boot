@@ -32,8 +32,6 @@ import org.eulerframework.security.authentication.otp.SecureRandomOtpGenerator;
 import org.eulerframework.security.authentication.otp.StaticOtpPolicyResolver;
 import org.eulerframework.security.authentication.otp.StdoutOtpChannel;
 import org.eulerframework.security.oauth2.server.authorization.client.AppAttestOAuth2ClientProvisioningListener;
-import org.eulerframework.security.webauthn.authentication.AppleAppAttestRootCA;
-import com.webauthn4j.appattest.DeviceCheckManager;
 import org.eulerframework.security.core.context.UserContext;
 import org.eulerframework.security.core.context.UserDetailsPrincipalUserContext;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -83,11 +81,19 @@ public class EulerBootSecurityAutoConfiguration {
 
     /**
      * Autoconfiguration for App Attest related beans.
-     * Creates default implementations of required services when no custom beans are provided.
+     * <p>
+     * Provides default implementations of {@link RegisteredAppRepository},
+     * {@link AppAttestAttestationRegistrationService}, {@link ChallengeService} and
+     * {@link AppleAppAttestValidationService}. The default validation service is
+     * {@link DefaultAppleAppAttestValidationService}, which embeds Apple's App Attestation
+     * Root CA and performs full validation without any webauthn4j dependency. If an
+     * application wants to use the webauthn4j-based implementation
+     * ({@code Webauthn4jAppleAppAttestValidationService}), it can define its own
+     * {@link AppleAppAttestValidationService} bean and this default will step aside via
+     * {@link ConditionalOnMissingBean}.
      */
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnProperty(prefix = "euler.security.app-attest", name = "enabled", havingValue = "true")
-    @ConditionalOnClass(name = "com.webauthn4j.appattest.DeviceCheckManager")
     static class DeviceAttestBeanConfiguration {
 
         /**
@@ -143,14 +149,6 @@ public class EulerBootSecurityAutoConfiguration {
         }
 
         @Bean
-        @ConditionalOnMissingBean(DeviceCheckManager.class)
-        public DeviceCheckManager deviceCheckManager(EulerBootSecurityAppAttestProperties properties) {
-            DeviceCheckManager deviceCheckManager = AppleAppAttestRootCA.deviceCheckManager();
-            deviceCheckManager.getAttestationDataValidator().setProduction(!properties.isDevelopmentEnvironment());
-            return deviceCheckManager;
-        }
-
-        @Bean
         @ConditionalOnMissingBean(AppAttestAttestationRegistrationService.class)
         public AppAttestAttestationRegistrationService deviceAttestRegistrationService(JdbcOperations jdbcOperations) {
             return new JdbcAppAttestAttestationRegistrationService(jdbcOperations);
@@ -165,15 +163,16 @@ public class EulerBootSecurityAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean(AppleAppAttestValidationService.class)
         public AppleAppAttestValidationService appleAppAttestValidationService(
-                DeviceCheckManager deviceCheckManager,
                 RegisteredAppRepository appleAppRepository,
                 AppAttestAttestationRegistrationService registrationService,
                 EulerBootSecurityAppAttestProperties properties) {
-            DefaultAppleAppAttestValidationService defaultAppleAppAttestValidationService = new DefaultAppleAppAttestValidationService(appleAppRepository, registrationService);
-            defaultAppleAppAttestValidationService.setAllowDevelopmentEnvironment(properties.isDevelopmentEnvironment());
-            return defaultAppleAppAttestValidationService;
-            //            return new Webauthn4jAppleAppAttestValidationService(deviceCheckManager, appleAppRepository, registrationService,
-//                    properties.isAllowDevelopmentEnvironment());
+            // Default implementation: bundled Apple Root CA + pure-JDK X.509 / CBOR validation.
+            // No webauthn4j dependency required. Applications that prefer the webauthn4j
+            // implementation can register their own AppleAppAttestValidationService bean.
+            DefaultAppleAppAttestValidationService defaultService =
+                    new DefaultAppleAppAttestValidationService(appleAppRepository, registrationService);
+            defaultService.setAllowDevelopmentEnvironment(properties.isDevelopmentEnvironment());
+            return defaultService;
         }
     }
 
