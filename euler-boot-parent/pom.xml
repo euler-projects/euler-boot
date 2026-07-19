@@ -21,7 +21,7 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
-        <spring-boot.version>4.0.3</spring-boot.version>
+        <spring-boot.version>4.1.0</spring-boot.version>
 
         <querydsl.version>5.1.0</querydsl.version>
         <webauthn4j.version>0.31.2.RELEASE</webauthn4j.version>
