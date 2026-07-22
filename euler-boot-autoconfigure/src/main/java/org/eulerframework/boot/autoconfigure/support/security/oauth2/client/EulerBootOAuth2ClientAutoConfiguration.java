@@ -81,6 +81,7 @@ import java.util.Map;
         }
 )
 @ConditionalOnClass(OAuth2LoginAuthenticationFilter.class)
+@ConditionalOnBean(ClientRegistrationRepository.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class EulerBootOAuth2ClientAutoConfiguration {
 
