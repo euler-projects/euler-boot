@@ -33,8 +33,6 @@ import java.util.regex.Pattern;
  *       enabled: false
  *       issue-endpoint-uri: /otp/tickets
  *       storage: in-memory          # in-memory | jdbc | redis
- *       pkce:
- *         enabled: false            # PKCE (RFC 7636) is opt-in; default OFF
  *       policy:
  *         otp-length: 6
  *         expires-in: 5m
@@ -68,28 +66,16 @@ public class EulerBootSecurityOtpProperties {
     private Storage storage = Storage.IN_MEMORY;
 
     /**
-     * PKCE (RFC 7636) settings. Disabled by default; when disabled, neither
-     * the {@code POST /otp/tickets} issue endpoint nor the
-     * {@code grant_type=otp} token endpoint accepts (or requires) PKCE
-     * parameters.
-     */
-    private Pkce pkce = new Pkce();
-
-    /**
-     * Default OTP policy (the framework only ships a single global policy; per
-     * channel / purpose / identity differentiation is a business concern handled
-     * by providing a custom {@link org.eulerframework.security.authentication.otp.OtpPolicyResolver OtpPolicyResolver} bean).
+     * Default OTP policy. Per channel / purpose / identity differentiation is
+     * achieved by providing a custom
+     * {@link org.eulerframework.security.authentication.otp.OtpPolicyResolver OtpPolicyResolver} bean.
      */
     private Policy policy = new Policy();
 
     /**
      * Test-account short-circuit settings. Disabled by default; when enabled,
-     * any resolved recipient listed in {@link Test#getAccounts()} receives the
-     * configured {@link Test#getFixedOtp() fixed OTP} and the real channel
-     * delivery is skipped. A single {@code WARN} line is emitted per such
-     * request. Verification re-uses the standard plaintext compare path on the
-     * persisted ticket, so no further test-mode logic exists in the verify
-     * flow.
+     * recipients listed in {@link Test#getAccounts()} receive the configured
+     * fixed OTP and real channel delivery is skipped.
      */
     private Test test = new Test();
 
@@ -125,14 +111,6 @@ public class EulerBootSecurityOtpProperties {
         this.policy = policy;
     }
 
-    public Pkce getPkce() {
-        return pkce;
-    }
-
-    public void setPkce(Pkce pkce) {
-        this.pkce = pkce;
-    }
-
     public Test getTest() {
         return test;
     }
@@ -145,28 +123,6 @@ public class EulerBootSecurityOtpProperties {
         IN_MEMORY,
         JDBC,
         REDIS
-    }
-
-    /**
-     * PKCE switch carrier.
-     */
-    public static class Pkce {
-
-        /**
-         * Whether PKCE (RFC 7636) is required for OTP. When {@code false}
-         * (default), {@code code_challenge} / {@code code_challenge_method}
-         * on the issue endpoint and {@code code_verifier} on the token
-         * endpoint are neither required nor consulted.
-         */
-        private boolean enabled = false;
-
-        public boolean isEnabled() {
-            return enabled;
-        }
-
-        public void setEnabled(boolean enabled) {
-            this.enabled = enabled;
-        }
     }
 
     /**

@@ -212,7 +212,6 @@ public class EulerBootWebSecurityConfiguration {
             OtpTestAccountSupport otpTestAccountSupportFinal = otpTestAccountSupport;
             http.with(new OtpSecurityConfigurer(), otp -> otp
                     .issueEndpointUri(eulerBootSecurityOtpProperties.getIssueEndpointUri())
-                    .pkceRequired(eulerBootSecurityOtpProperties.getPkce().isEnabled())
                     .testAccountSupport(otpTestAccountSupportFinal));
         }
 
