@@ -122,12 +122,12 @@ public class EulerBootOAuth2ClientAutoConfiguration {
     }
 
     /**
-     * Translate every {@code type=oauth2} entry in
-     * {@code login-methods} into a
+     * Translates every {@code type=oauth2} login-method entry into a
      * {@code registrationId -> PerRegistrationLoginPolicy} mapping.
-     * The registration ID resolves as
-     * {@code properties.oauth-client-registration-id} defaulting to
-     * the login-method key; identity-type defaults to the same value.
+     * The registration ID resolves from
+     * {@code properties.oauth-client-registration-id} and the identity
+     * type from the top-level {@code identity-type} field, each
+     * defaulting to the login-method key.
      */
     private static Map<String, PerRegistrationLoginPolicy> buildPolicies(
             Map<String, LoginMethod> loginMethods) {
@@ -141,18 +141,19 @@ public class EulerBootOAuth2ClientAutoConfiguration {
             if (method == null || !OAuth2LoginMethodTypeHandler.TYPE.equals(method.getType())) {
                 continue;
             }
-            Map<String, Object> properties = method.getProperties();
-            String registrationId = MapUtils.getString(properties,
+            String registrationId = MapUtils.getString(method.getProperties(),
                     OAuth2LoginMethodTypeHandler.PROP_OAUTH_CLIENT_REGISTRATION_ID);
             if (registrationId == null || registrationId.isEmpty()) {
                 registrationId = name;
             }
-            String identityType = MapUtils.getString(properties, "identity-type");
+            String identityType = method.getIdentityType();
             if (identityType == null || identityType.isEmpty()) {
                 identityType = name;
             }
-            boolean autoCreateUser = MapUtils.getBoolean(properties, "auto-create-user", false);
-            List<String> defaultAuthorities = asStringList(properties, "default-authorities");
+            boolean autoCreateUser = method.isAutoCreateUser();
+            String[] declaredAuthorities = method.getDefaultAuthorities();
+            List<String> defaultAuthorities = declaredAuthorities == null
+                    ? List.of() : List.of(declaredAuthorities);
             if (autoCreateUser && defaultAuthorities.isEmpty()) {
                 // Refuse to auto-create with an empty authority list:
                 // an unauthenticated ghost row would only cause
@@ -165,43 +166,5 @@ public class EulerBootOAuth2ClientAutoConfiguration {
                     new PerRegistrationLoginPolicy(autoCreateUser, defaultAuthorities, identityType));
         }
         return Map.copyOf(policies);
-    }
-
-    /**
-     * Coerce a free-form {@code properties.<key>} entry into a
-     * {@code List<String>}. Only three shapes are accepted:
-     * <ul>
-     *   <li>Java array (from programmatic overrides)</li>
-     *   <li>{@link List}</li>
-     *   <li>{@link Map} &mdash; Spring Boot's relaxed binder materialises
-     *       YAML sequences under a {@code Map<String, Object>} bag as
-     *       {@link java.util.LinkedHashMap} keyed by {@code "0"},
-     *       {@code "1"}, &hellip; so the values collection is the
-     *       intended list.</li>
-     * </ul>
-     * Any other shape is rejected with {@link IllegalArgumentException}
-     * so misconfiguration surfaces at startup.
-     */
-    private static List<String> asStringList(Map<String, Object> properties, String key) {
-        if (properties == null) {
-            return List.of();
-        }
-        Object value = properties.get(key);
-        if (value == null) {
-            return List.of();
-        }
-        if (value instanceof Object[] arr) {
-            return java.util.Arrays.stream(arr).map(String::valueOf).toList();
-        }
-        if (value instanceof List<?> list) {
-            return list.stream().map(String::valueOf).toList();
-        }
-        if (value instanceof Map<?, ?> map) {
-            return map.values().stream().map(String::valueOf).toList();
-        }
-        throw new IllegalArgumentException("Property '" + key + "' under an " +
-                "euler.security.web.login-methods.<name>.properties entry must be " +
-                "declared as a YAML list (bound as List, Map, or array); got " +
-                value.getClass().getName() + " with value '" + value + "'.");
     }
 }
