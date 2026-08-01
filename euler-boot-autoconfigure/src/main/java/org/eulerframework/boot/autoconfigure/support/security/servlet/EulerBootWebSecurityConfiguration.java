@@ -16,8 +16,10 @@
 package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAppAttestProperties;
-import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityOtpProperties;
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAuthenticationAppAttestProperties;
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAuthenticationOtpProperties;
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAuthenticationWebauthnProperties;
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityProperties;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilterUtils;
 import org.eulerframework.security.config.annotation.web.configurers.appattest.AppAttestSecurityConfigurer;
@@ -25,6 +27,8 @@ import org.eulerframework.security.authentication.otp.OtpTestAccountSupport;
 import org.eulerframework.security.config.annotation.web.configurers.oauth2.OAuth2LoginSecurityConfigurer;
 import org.eulerframework.security.config.annotation.web.configurers.otp.OtpSecurityConfigurer;
 import org.eulerframework.security.oauth2.client.authentication.OAuth2LoginPrincipalPromotingSuccessHandler;
+import org.eulerframework.security.provisioning.JitProvisioningPolicyResolver;
+import org.eulerframework.security.web.endpoint.user.login.LoginMethodConfigDrivenContributor;
 import org.eulerframework.security.core.captcha.view.DefaultSmsCaptchaView;
 import org.eulerframework.security.core.captcha.view.SmsCaptchaView;
 import org.eulerframework.security.web.access.EulerAccessDeniedHandler;
@@ -126,11 +130,14 @@ public class EulerBootWebSecurityConfiguration {
             @Qualifier(SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
             LoginPageAuthenticationEntryPoint loginPageEntryPoint,
             CsrfTokenRepository csrfTokenRepository,
+            EulerBootSecurityProperties eulerBootSecurityProperties,
             EulerBootSecurityWebProperties eulerBootSecurityWebProperties,
-            EulerBootSecurityWebAuthnProperties eulerBootSecurityWebAuthnProperties,
+            EulerBootSecurityAuthenticationWebauthnProperties eulerBootSecurityWebAuthnProperties,
             EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties,
-            EulerBootSecurityAppAttestProperties eulerBootSecurityAppAttestProperties,
-            EulerBootSecurityOtpProperties eulerBootSecurityOtpProperties,
+            EulerBootSecurityAuthenticationAppAttestProperties eulerBootSecurityAppAttestProperties,
+            EulerBootSecurityAuthenticationOtpProperties eulerBootSecurityOtpProperties,
+            LoginMethodConfigDrivenContributor loginMethodContributor,
+            JitProvisioningPolicyResolver jitProvisioningPolicyResolver,
             ObjectProvider<WebAuthnPresent> wenAuthnPresent,
             ObjectProvider<OAuth2LoginPresent> oauth2LoginPresent) throws Exception {
         Assert.isTrue(eulerBootSecurityWebProperties.isEnabled(), "euler web properties disabled, can not init defaultSecurityFilterChain");
@@ -150,6 +157,7 @@ public class EulerBootWebSecurityConfiguration {
                         .requestMatchers(eulerBootSecurityWebEndpointProperties.getSignup().getSignupPage()).permitAll()
                         .requestMatchers(eulerBootSecurityWebEndpointProperties.getSignup().getSignupProcessingUrl()).permitAll()
                         .requestMatchers(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage()).permitAll()
+                        .requestMatchers(eulerBootSecurityWebEndpointProperties.getLoginMethodDispatch().getProcessingUrl()).permitAll()
                         .requestMatchers("/assets/**").permitAll()
                         .requestMatchers("/captcha").permitAll()
                         .requestMatchers("/captcha/validCaptcha").permitAll()
@@ -178,6 +186,15 @@ public class EulerBootWebSecurityConfiguration {
                 .logout(logout -> logout
                         .logoutUrl(eulerBootSecurityWebEndpointProperties.getUser().getLogoutProcessingUrl()));
 
+        if (eulerBootSecurityWebEndpointProperties.getLoginMethodDispatch().isEnabled()) {
+            logger.debug("Login method dispatch enabled, configuring LoginMethodRoutingFilter.");
+            http.with(new org.eulerframework.security.config.annotation.web.configurers.login.LoginMethodRoutingConfigurer(), routing -> routing
+                    .loginMethodProcessingUrl(eulerBootSecurityWebEndpointProperties.getLoginMethodDispatch().getProcessingUrl())
+                    .loginPageUrl(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage())
+                    .methodParameter(eulerBootSecurityWebEndpointProperties.getLoginMethodDispatch().getMethodParameter())
+                    .contributor(loginMethodContributor));
+        }
+
         if (eulerBootSecurityWebAuthnProperties.isEnabled()) {
             if (wenAuthnPresent.getIfAvailable() == null) {
                 throw new IllegalStateException("WebAuthn is enabled but the required dependency is missing. " +
@@ -197,13 +214,15 @@ public class EulerBootWebSecurityConfiguration {
             // are non-optional transitive dependencies of this autoconfigure module. No
             // classpath probe is needed here; the property switch alone gates activation.
             logger.debug("App Attest enabled, configuring App Attest registration endpoints.");
-            http.with(new AppAttestSecurityConfigurer(), Customizer.withDefaults());
+            http.with(new AppAttestSecurityConfigurer(), appAttest -> appAttest
+                    .jitProvisioning(jitProvisioningPolicyResolver
+                            .resolve(JitProvisioningPolicyResolver.IDENTITY_TYPE_DEVICE)));
         }
 
         if (eulerBootSecurityOtpProperties.isEnabled()) {
             logger.debug("OTP module enabled, configuring OTP ticket issue endpoint.");
             OtpTestAccountSupport otpTestAccountSupport = null;
-            EulerBootSecurityOtpProperties.Test test = eulerBootSecurityOtpProperties.getTest();
+            EulerBootSecurityAuthenticationOtpProperties.Test test = eulerBootSecurityOtpProperties.getTest();
             if (test != null && test.isUsable()) {
                 otpTestAccountSupport = new OtpTestAccountSupport(test.getAccounts(), test.getFixedOtp());
                 logger.warn("OTP test-account short-circuit is ENABLED ({} account(s)) - DO NOT use in production.",
@@ -215,12 +234,21 @@ public class EulerBootWebSecurityConfiguration {
                     .testAccountSupport(otpTestAccountSupportFinal));
         }
 
-        boolean anyOAuth2LoginMethod = eulerBootSecurityWebProperties.getLoginMethods().values().stream()
-                .anyMatch(m -> m != null && "oauth2".equals(m.getType()));
+        boolean anyOtpLoginMethod = eulerBootSecurityProperties.getLoginMethod().values().stream()
+                .anyMatch(m -> m != null && "otp".equals(m.getMethodType()));
+        if (anyOtpLoginMethod && !eulerBootSecurityOtpProperties.isEnabled()) {
+            throw new IllegalStateException("At least one entry under " +
+                    "euler.security.login-method.* declares method-type=otp " +
+                    "but the OTP mechanism is disabled. Please set " +
+                    "euler.security.authentication.otp.enabled=true or remove the login method.");
+        }
+
+        boolean anyOAuth2LoginMethod = eulerBootSecurityProperties.getLoginMethod().values().stream()
+                .anyMatch(m -> m != null && "oauth2".equals(m.getMethodType()));
         if (anyOAuth2LoginMethod) {
             if (oauth2LoginPresent.getIfAvailable() == null) {
                 throw new IllegalStateException("At least one entry under " +
-                        "euler.security.web.login-methods.* declares type=oauth2 " +
+                        "euler.security.login-method.* declares type=oauth2 " +
                         "but the required dependencies are missing. Please add the " +
                         "org.eulerframework:euler-security-oauth2-client dependency and " +
                         "org.springframework.boot:spring-boot-starter-oauth2-client to your project.");

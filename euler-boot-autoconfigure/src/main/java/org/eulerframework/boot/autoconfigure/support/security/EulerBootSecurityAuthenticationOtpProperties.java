@@ -29,25 +29,26 @@ import java.util.regex.Pattern;
  * <pre>
  * euler:
  *   security:
- *     otp:
- *       enabled: false
- *       issue-endpoint-uri: /otp/tickets
- *       storage: in-memory          # in-memory | jdbc | redis
- *       policy:
- *         otp-length: 6
- *         expires-in: 5m
- *         retry-after: 60s
- *         max-failures: 5
- *       test:
- *         enabled: false            # test-account short-circuit; default OFF
- *         fixed-otp: "000000"       # 6-digit fixed OTP handed out for test accounts
- *         accounts:                 # any channel-addressable string (phone, email, ...)
- *           - +8613800000000
- *           - test@example.com
+ *     authentication:
+ *       otp:
+ *         enabled: false
+ *         issue-endpoint-uri: /otp/tickets
+ *         storage: in-memory          # in-memory | jdbc | redis
+ *         policy:
+ *           otp-length: 6
+ *           expires-in: 5m
+ *           retry-after: 60s
+ *           max-failures: 5
+ *         test:
+ *           enabled: false            # test-account short-circuit; default OFF
+ *           fixed-otp: "000000"       # 6-digit fixed OTP handed out for test accounts
+ *           accounts:                 # any channel-addressable string (phone, email, ...)
+ *             - +8613800000000
+ *             - test@example.com
  * </pre>
  */
-@ConfigurationProperties(prefix = "euler.security.otp")
-public class EulerBootSecurityOtpProperties {
+@ConfigurationProperties(prefix = "euler.security.authentication.otp")
+public class EulerBootSecurityAuthenticationOtpProperties {
 
     /**
      * Whether the OTP module is enabled. Default is {@code false}.

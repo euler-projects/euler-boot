@@ -1,8 +1,8 @@
 package org.eulerframework.boot.autoconfigure.support.security;
 
-import org.eulerframework.boot.autoconfigure.support.security.oauth2.server.EulerBootAuthorizationServerProperties;
 import org.eulerframework.security.authentication.wechat.WechatAuthorizationCodeAuthenticationProvider;
 import org.eulerframework.security.core.userdetails.EulerWechatUserDetailsService;
+import org.eulerframework.security.provisioning.JitProvisioningPolicyResolver;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -33,22 +33,24 @@ public class InitializeWechatUserDetailsBeanManagerConfigurer extends GlobalAuth
                 return;
             }
 
-            EulerBootAuthorizationServerProperties properties = InitializeWechatUserDetailsBeanManagerConfigurer.this.context
-                    .getBean(EulerBootAuthorizationServerProperties.class);
+            EulerBootSecurityAuthenticationWechatProperties properties = InitializeWechatUserDetailsBeanManagerConfigurer.this.context
+                    .getBean(EulerBootSecurityAuthenticationWechatProperties.class);
 
-            if (!properties.getWechatLogin().isEnabled()) {
+            if (!properties.isEnabled()) {
                 return;
             }
 
             EulerWechatUserDetailsService wechatUserDetailsService = InitializeWechatUserDetailsBeanManagerConfigurer.this.context
                     .getBean(beanNames[0], EulerWechatUserDetailsService.class);
             WechatAuthorizationCodeAuthenticationProvider provider = new WechatAuthorizationCodeAuthenticationProvider(
-                    properties.getWechatLogin().getCode2SessionEndpoint(),
-                    properties.getWechatLogin().getAppid(),
-                    properties.getWechatLogin().getSecret()
+                    properties.getCode2SessionEndpoint(),
+                    properties.getAppid(),
+                    properties.getSecret()
             );
             provider.setWechatUserDetailsService(wechatUserDetailsService);
-            provider.setAutoCreateUserIfNotExists(properties.getWechatLogin().isAutoCreateUserIfNotExists());
+            provider.setJitProvisioning(InitializeWechatUserDetailsBeanManagerConfigurer.this.context
+                    .getBean(JitProvisioningPolicyResolver.class)
+                    .resolve(JitProvisioningPolicyResolver.IDENTITY_TYPE_WECHAT));
             auth.authenticationProvider(provider);
         }
     }

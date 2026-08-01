@@ -30,22 +30,23 @@ import java.util.Map;
  * <pre>
  * euler:
  *   security:
- *     app-attest:
- *       enabled: true
- *       apps:
- *         myapp:
- *           team-id: ABCDE12345
- *           bundle-id: com.example.myapp
- *         myapp-dev:
- *           team-id: ABCDE12345
- *           bundle-id: com.example.myapp.dev
- *           oauth2-enabled: true
- *           oauth2-client-type: static
- *       development-environment: false
+ *     authentication:
+ *       app-attest:
+ *         enabled: true
+ *         apps:
+ *           myapp:
+ *             team-id: ABCDE12345
+ *             bundle-id: com.example.myapp
+ *           myapp-dev:
+ *             team-id: ABCDE12345
+ *             bundle-id: com.example.myapp.dev
+ *             oauth2-enabled: true
+ *             oauth2-client-type: static
+ *         development-environment: false
  * </pre>
  */
-@ConfigurationProperties(prefix = "euler.security.app-attest")
-public class EulerBootSecurityAppAttestProperties {
+@ConfigurationProperties(prefix = "euler.security.authentication.app-attest")
+public class EulerBootSecurityAuthenticationAppAttestProperties {
 
     /**
      * Whether device attestation is enabled. Default is {@code false}.

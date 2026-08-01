@@ -16,14 +16,15 @@
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.client;
 
 import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootSecurityWebAutoConfiguration;
-import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootSecurityWebProperties;
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityProperties;
+import org.eulerframework.boot.autoconfigure.support.security.servlet.LoginMethodPropertiesMapper;
 import org.eulerframework.common.util.collections.MapUtils;
 import org.eulerframework.security.core.EulerUserService;
 import org.eulerframework.security.core.identity.UserIdentityService;
 import org.eulerframework.security.oauth2.client.authentication.OAuth2LoginPrincipalPromotingSuccessHandler;
-import org.eulerframework.security.oauth2.client.authentication.PerRegistrationLoginPolicy;
-import org.eulerframework.security.oauth2.client.web.OAuth2LoginMethodTypeHandler;
-import org.eulerframework.security.web.endpoint.user.login.LoginMethod;
+import org.eulerframework.security.oauth2.client.web.OAuth2LoginMethodHandler;
+import org.eulerframework.security.provisioning.JitProvisioningPolicyResolver;
+import org.eulerframework.security.web.endpoint.user.login.RegisteredLoginMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -36,25 +37,26 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Autoconfiguration for OAuth2 client-side beans backing the unified
- * {@code euler.security.web.login-methods.<name>.type: oauth2}
+ * {@code euler.security.login-method.<name>.type: oauth2}
  * declaration:
  *
  * <ul>
- *   <li>{@link OAuth2LoginMethodTypeHandler} &mdash; turns each
- *       {@code type: oauth2} config entry into a
- *       {@code LoginMethodView} by resolving the referenced
+ *   <li>{@link OAuth2LoginMethodHandler} &mdash; turns each
+ *       {@code type: oauth2} config entry into an available login
+ *       method by resolving the referenced
  *       {@code spring.security.oauth2.client.registration.<key>} entry.</li>
  *   <li>{@link OAuth2LoginPrincipalPromotingSuccessHandler} &mdash; the
  *       success handler that promotes the freshly authenticated OIDC
  *       principal into a local {@code EulerUserDetails}, driven by a
  *       per-registration policy assembled from the same
- *       {@code login-methods} entries.</li>
+ *       {@code login-method} entries.</li>
  * </ul>
  *
  * <p>Ordered after Spring Boot's own {@code OAuth2ClientAutoConfiguration}
@@ -63,8 +65,8 @@ import java.util.Map;
  * evaluated.
  *
  * <p>The generic {@code LoginMethodContributor} dispatcher that iterates
- * {@code login-methods} entries and delegates to
- * {@link org.eulerframework.security.web.endpoint.user.login.LoginMethodTypeHandler}s
+ * {@code login-method} entries and delegates to
+ * {@link org.eulerframework.security.web.endpoint.user.login.LoginMethodHandler}s
  * is registered separately in
  * {@code EulerBootSecurityWebAutoConfiguration} - login-method
  * dispatching is a servlet-web concern, this class is OAuth2-only.
@@ -89,82 +91,77 @@ public class EulerBootOAuth2ClientAutoConfiguration {
             LoggerFactory.getLogger(EulerBootOAuth2ClientAutoConfiguration.class);
 
     @Bean
-    @ConditionalOnMissingBean(OAuth2LoginMethodTypeHandler.class)
-    public OAuth2LoginMethodTypeHandler oauth2LoginMethodTypeHandler(
+    @ConditionalOnMissingBean(OAuth2LoginMethodHandler.class)
+    public OAuth2LoginMethodHandler oauth2LoginMethodHandler(
             ClientRegistrationRepository clientRegistrationRepository) {
-        return new OAuth2LoginMethodTypeHandler(clientRegistrationRepository);
+        return new OAuth2LoginMethodHandler(clientRegistrationRepository);
     }
 
     /**
-     * Success handler that consumes the per-registration login policy
+     * Success handler that promotes the federated principal to a local
+     * user, using the {@code registrationId -> identityType} mapping
      * assembled from
-     * {@code euler.security.web.login-methods.*} entries whose
-     * {@code type == oauth2}.
+     * {@code euler.security.login-method.*} entries whose
+     * {@code method-type == oauth2} and the identity-type keyed
+     * {@link JitProvisioningPolicyResolver}.
      *
      * <p>Registrations declared under
      * {@code spring.security.oauth2.client.registration.*} but not
-     * mentioned in {@code login-methods} receive no policy entry; the
-     * success handler falls back to {@code autoCreateUser=false} with
-     * {@code identityType=registrationId}, so a stray non-login
-     * registration accessed via {@code /oauth2/authorization/...} will
-     * only sign in already-known users.
+     * mentioned in {@code login-method} receive no mapping entry, so a
+     * stray non-login registration accessed via
+     * {@code /oauth2/authorization/...} will only sign in already-known
+     * users.
      */
     @Bean
     @ConditionalOnMissingBean(OAuth2LoginPrincipalPromotingSuccessHandler.class)
     public OAuth2LoginPrincipalPromotingSuccessHandler oauth2LoginPrincipalPromotingSuccessHandler(
             EulerUserService userService,
             UserIdentityService userIdentityService,
-            EulerBootSecurityWebProperties webProperties) {
+            EulerBootSecurityProperties securityProperties,
+            JitProvisioningPolicyResolver jitProvisioningPolicyResolver) {
         OAuth2LoginPrincipalPromotingSuccessHandler handler =
                 new OAuth2LoginPrincipalPromotingSuccessHandler(userService, userIdentityService);
-        handler.setPoliciesByRegistrationId(buildPolicies(webProperties.getLoginMethods()));
+        handler.setIdentityTypesByRegistrationId(buildIdentityTypes(
+                new LoginMethodPropertiesMapper(securityProperties).asRegisteredLoginMethods()));
+        handler.setJitProvisioningPolicyResolver(jitProvisioningPolicyResolver);
         return handler;
     }
 
     /**
-     * Translates every {@code type=oauth2} login-method entry into a
-     * {@code registrationId -> PerRegistrationLoginPolicy} mapping.
-     * The registration ID resolves from
-     * {@code properties.oauth-client-registration-id} and the identity
-     * type from the top-level {@code identity-type} field, each
-     * defaulting to the login-method key.
+     * Translates every {@code method-type=oauth2} registered login
+     * method into a {@code registrationId -> identityType} mapping.
+     * <p>identity-type is mandatory for oauth2 entries (fail fast).
+     * Registration ID resolves as: explicit
+     * {@code oauth-client-registration-id} ?? provider (provider ??
+     * identity-type). No fallback to the login-method key.
      */
-    private static Map<String, PerRegistrationLoginPolicy> buildPolicies(
-            Map<String, LoginMethod> loginMethods) {
+    private static Map<String, String> buildIdentityTypes(
+            Collection<RegisteredLoginMethod> loginMethods) {
         if (loginMethods == null || loginMethods.isEmpty()) {
             return Map.of();
         }
-        Map<String, PerRegistrationLoginPolicy> policies = new LinkedHashMap<>();
-        for (Map.Entry<String, LoginMethod> entry : loginMethods.entrySet()) {
-            String name = entry.getKey();
-            LoginMethod method = entry.getValue();
-            if (method == null || !OAuth2LoginMethodTypeHandler.TYPE.equals(method.getType())) {
+        Map<String, String> identityTypes = new LinkedHashMap<>();
+        for (RegisteredLoginMethod method : loginMethods) {
+            if (method == null || !OAuth2LoginMethodHandler.TYPE.equals(method.getType())) {
                 continue;
-            }
-            String registrationId = MapUtils.getString(method.getProperties(),
-                    OAuth2LoginMethodTypeHandler.PROP_OAUTH_CLIENT_REGISTRATION_ID);
-            if (registrationId == null || registrationId.isEmpty()) {
-                registrationId = name;
             }
             String identityType = method.getIdentityType();
             if (identityType == null || identityType.isEmpty()) {
-                identityType = name;
+                throw new IllegalStateException("Login method '" + method.getId()
+                        + "' (type=oauth2) requires identity-type but none is declared.");
             }
-            boolean autoCreateUser = method.isAutoCreateUser();
-            String[] declaredAuthorities = method.getDefaultAuthorities();
-            List<String> defaultAuthorities = declaredAuthorities == null
-                    ? List.of() : List.of(declaredAuthorities);
-            if (autoCreateUser && defaultAuthorities.isEmpty()) {
-                // Refuse to auto-create with an empty authority list:
-                // an unauthenticated ghost row would only cause
-                // harder-to-diagnose failures later.
-                logger.warn("Login method '{}' has auto-create-user=true but no default-authorities; "
-                        + "auto-creation is disabled for this registration.", name);
-                autoCreateUser = false;
+            String provider = MapUtils.getString(method.getProperties(),
+                    OAuth2LoginMethodHandler.PROP_PROVIDER);
+            if (provider == null || provider.isEmpty()) {
+                provider = identityType;
             }
-            policies.put(registrationId,
-                    new PerRegistrationLoginPolicy(autoCreateUser, defaultAuthorities, identityType));
+            String registrationId = MapUtils.getString(method.getProperties(),
+                    OAuth2LoginMethodHandler.PROP_OAUTH_CLIENT_REGISTRATION_ID);
+            if (registrationId == null || registrationId.isEmpty()) {
+                registrationId = provider;
+            }
+            identityTypes.put(registrationId, identityType);
         }
-        return Map.copyOf(policies);
+        return Map.copyOf(identityTypes);
     }
 }

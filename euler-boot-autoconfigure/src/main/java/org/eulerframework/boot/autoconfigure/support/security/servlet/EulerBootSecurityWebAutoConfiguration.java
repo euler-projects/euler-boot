@@ -15,11 +15,15 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAuthenticationWebauthnProperties;
 import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAutoConfiguration;
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityProperties;
 import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.eulerframework.security.web.endpoint.user.login.LoginMethodConfigDrivenContributor;
 import org.eulerframework.security.web.endpoint.user.login.LoginMethodContributor;
-import org.eulerframework.security.web.endpoint.user.login.LoginMethodTypeHandler;
+import org.eulerframework.security.web.endpoint.user.login.LoginMethodHandler;
+import org.eulerframework.security.web.endpoint.user.login.OtpLoginMethodHandler;
+import org.eulerframework.security.web.endpoint.user.login.PasswordLoginMethodHandler;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -48,8 +52,9 @@ import java.util.List;
         }
 )
 @EnableConfigurationProperties({
+        EulerBootSecurityProperties.class,
         EulerBootSecurityWebProperties.class,
-        EulerBootSecurityWebAuthnProperties.class,
+        EulerBootSecurityAuthenticationWebauthnProperties.class,
         EulerBootSecurityWebEndpointProperties.class})
 @ConditionalOnClass(EulerUserDetails.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
@@ -60,27 +65,37 @@ import java.util.List;
 public class EulerBootSecurityWebAutoConfiguration {
 
     /**
-     * Generic dispatcher that turns
-     * {@code euler.security.web.login-methods.*} entries into
-     * {@link org.eulerframework.security.web.endpoint.user.login.LoginMethodView}s
-     * on the shared login page by delegating each entry to the
-     * {@link LoginMethodTypeHandler} whose {@link LoginMethodTypeHandler#type()}
-     * matches. The per-type handler beans themselves are contributed
-     * by their respective feature modules (e.g.
-     * {@code EulerBootOAuth2ClientAutoConfiguration} for
-     * {@code type: oauth2}); this bean is the cross-type glue.
-     *
-     * <p>Registered here rather than in per-feature autoconfigs because
-     * the dispatcher is a servlet-web concern (it feeds the login
-     * page's {@code loginMethods} model attribute) and remains useful
-     * even when no feature-specific handler is present &mdash; the
-     * resulting list is simply empty.
+     * Generic contributor that turns the declared
+     * {@code euler.security.login-method.*} entries into available
+     * login methods by delegating each registration to the
+     * {@link LoginMethodHandler} whose {@link LoginMethodHandler#type()}
+     * matches.
      */
     @Bean
     @ConditionalOnMissingBean(name = "loginMethodConfigDrivenContributor")
-    public LoginMethodContributor loginMethodConfigDrivenContributor(
-            List<LoginMethodTypeHandler> handlers,
-            EulerBootSecurityWebProperties webProperties) {
-        return new LoginMethodConfigDrivenContributor(handlers, webProperties::getLoginMethods);
+    public LoginMethodConfigDrivenContributor loginMethodConfigDrivenContributor(
+            List<LoginMethodHandler> handlers,
+            EulerBootSecurityProperties securityProperties) {
+        LoginMethodPropertiesMapper mapper = new LoginMethodPropertiesMapper(securityProperties);
+        return new LoginMethodConfigDrivenContributor(handlers, mapper::asRegisteredLoginMethods);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(PasswordLoginMethodHandler.class)
+    public PasswordLoginMethodHandler passwordLoginMethodHandler(
+            EulerBootSecurityWebEndpointProperties endpointProperties) {
+        return new PasswordLoginMethodHandler(
+                endpointProperties.getUser().getLoginProcessingUrl(),
+                endpointProperties.getUser().getLoginPage(),
+                endpointProperties.getLoginMethodDispatch().getMethodParameter());
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(OtpLoginMethodHandler.class)
+    public OtpLoginMethodHandler otpLoginMethodHandler(
+            EulerBootSecurityWebEndpointProperties endpointProperties) {
+        return new OtpLoginMethodHandler(
+                endpointProperties.getUser().getLoginPage(),
+                endpointProperties.getLoginMethodDispatch().getMethodParameter());
     }
 }

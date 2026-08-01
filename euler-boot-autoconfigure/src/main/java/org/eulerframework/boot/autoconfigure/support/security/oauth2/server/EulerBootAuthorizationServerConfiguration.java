@@ -15,10 +15,13 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
-import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityOtpProperties;
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAuthenticationAppAttestProperties;
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAuthenticationOtpProperties;
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAuthenticationWechatProperties;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.security.core.identity.UserIdentityService;
 import org.eulerframework.security.authentication.otp.OtpTicketService;
+import org.eulerframework.security.provisioning.JitProvisioningPolicyResolver;
 import org.eulerframework.security.config.annotation.web.configurers.identity.UserIdentitySecurityConfigurer;
 import org.eulerframework.security.config.annotation.web.configurers.user.UserSecurityConfigurer;
 import org.eulerframework.security.core.EulerUserService;
@@ -82,12 +85,15 @@ public class EulerBootAuthorizationServerConfiguration {
             @Qualifier(SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
             LoginPageAuthenticationEntryPoint loginPageEntryPoint,
             EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties,
-            EulerBootSecurityOtpProperties eulerBootSecurityOtpProperties,
+            EulerBootSecurityAuthenticationAppAttestProperties eulerBootSecurityAppAttestProperties,
+            EulerBootSecurityAuthenticationOtpProperties eulerBootSecurityOtpProperties,
+            EulerBootSecurityAuthenticationWechatProperties eulerBootSecurityWechatLoginProperties,
             ObjectProvider<OtpTicketService> otpTicketServiceProvider,
             ObjectProvider<EulerUserService> eulerUserServiceProvider,
             ObjectProvider<UserIdentityService> userIdentityServiceProvider,
             ObjectProvider<EulerUserDetailsManager> userDetailsManagerProvider,
-            ObjectProvider<EulerDeviceUserDetailsService> deviceUserDetailsServiceProvider) {
+            ObjectProvider<EulerDeviceUserDetailsService> deviceUserDetailsServiceProvider,
+            JitProvisioningPolicyResolver jitProvisioningPolicyResolver) {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
         EulerOAuth2AuthorizationServerConfigurer eulerOAuth2AuthorizationServerConfigurer = new EulerOAuth2AuthorizationServerConfigurer();
 
@@ -143,13 +149,20 @@ public class EulerBootAuthorizationServerConfiguration {
 
         // enable resource owner password credentials grant
         EulerAuthorizationServerConfiguration.configPasswordAuthentication(http, authenticationConfiguration);
-        EulerAuthorizationServerConfiguration.configClientAttestationAuthentication(http, authenticationConfiguration);
+
+        // Attestation-based client authentication and the app_assertion
+        // grant are App Attest machinery: both follow the App Attest
+        // mechanism switch.
+        if (eulerBootSecurityAppAttestProperties.isEnabled()) {
+            EulerAuthorizationServerConfiguration.configClientAttestationAuthentication(http, authenticationConfiguration,
+                    jitProvisioningPolicyResolver.resolve(JitProvisioningPolicyResolver.IDENTITY_TYPE_DEVICE));
+        }
 
         if (eulerBootAuthorizationServerProperties.getDynamicClientRegistration().isEnabled()) {
             EulerAuthorizationServerConfiguration.configClientRegistrationEndpoint(http, authenticationConfiguration);
         }
 
-        if (eulerBootAuthorizationServerProperties.getWechatLogin().isEnabled()) {
+        if (eulerBootSecurityWechatLoginProperties.isEnabled()) {
             EulerAuthorizationServerConfiguration.configWechatAuthentication(http, authenticationConfiguration);
         }
 
@@ -173,6 +186,7 @@ public class EulerBootAuthorizationServerConfiguration {
                     deviceUserDetailsServiceProvider.getIfAvailable();
             EulerAuthorizationServerConfiguration.configOtpAuthentication(http, otpTicketService,
                     userIdentityService, eulerUserService,
+                    jitProvisioningPolicyResolver,
                     deviceUserDetailsService);
         }
 

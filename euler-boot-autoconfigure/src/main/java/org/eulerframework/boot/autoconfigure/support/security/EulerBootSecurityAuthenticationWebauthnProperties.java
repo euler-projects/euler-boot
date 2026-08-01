@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.eulerframework.boot.autoconfigure.support.security.servlet;
+package org.eulerframework.boot.autoconfigure.support.security;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "euler.security.web.authn")
-public class EulerBootSecurityWebAuthnProperties {
+@ConfigurationProperties(prefix = "euler.security.authentication.webauthn")
+public class EulerBootSecurityAuthenticationWebauthnProperties {
     private boolean enabled = false;
     private String rpId;
     private String[] allowedOrigins;
