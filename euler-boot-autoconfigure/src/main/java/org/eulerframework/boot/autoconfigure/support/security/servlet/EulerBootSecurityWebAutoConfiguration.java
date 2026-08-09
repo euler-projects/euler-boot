@@ -19,20 +19,11 @@ import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityA
 import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAutoConfiguration;
 import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityProperties;
 import org.eulerframework.security.core.userdetails.EulerUserDetails;
-import org.eulerframework.security.web.endpoint.user.login.LoginMethodConfigDrivenContributor;
-import org.eulerframework.security.web.endpoint.user.login.LoginMethodContributor;
-import org.eulerframework.security.web.endpoint.user.login.LoginMethodHandler;
-import org.eulerframework.security.web.endpoint.user.login.OtpLoginMethodHandler;
-import org.eulerframework.security.web.endpoint.user.login.PasswordLoginMethodHandler;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-
-import java.util.List;
 
 @AutoConfiguration(
         before = {
@@ -63,39 +54,4 @@ import java.util.List;
         EulerUserDetailsServiceConfiguration.class
 })
 public class EulerBootSecurityWebAutoConfiguration {
-
-    /**
-     * Generic contributor that turns the declared
-     * {@code euler.security.login-method.*} entries into available
-     * login methods by delegating each registration to the
-     * {@link LoginMethodHandler} whose {@link LoginMethodHandler#type()}
-     * matches.
-     */
-    @Bean
-    @ConditionalOnMissingBean(name = "loginMethodConfigDrivenContributor")
-    public LoginMethodConfigDrivenContributor loginMethodConfigDrivenContributor(
-            List<LoginMethodHandler> handlers,
-            EulerBootSecurityProperties securityProperties) {
-        LoginMethodPropertiesMapper mapper = new LoginMethodPropertiesMapper(securityProperties);
-        return new LoginMethodConfigDrivenContributor(handlers, mapper::asRegisteredLoginMethods);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(PasswordLoginMethodHandler.class)
-    public PasswordLoginMethodHandler passwordLoginMethodHandler(
-            EulerBootSecurityWebEndpointProperties endpointProperties) {
-        return new PasswordLoginMethodHandler(
-                endpointProperties.getUser().getLoginProcessingUrl(),
-                endpointProperties.getUser().getLoginPage(),
-                endpointProperties.getLoginMethodDispatch().getMethodParameter());
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(OtpLoginMethodHandler.class)
-    public OtpLoginMethodHandler otpLoginMethodHandler(
-            EulerBootSecurityWebEndpointProperties endpointProperties) {
-        return new OtpLoginMethodHandler(
-                endpointProperties.getUser().getLoginPage(),
-                endpointProperties.getLoginMethodDispatch().getMethodParameter());
-    }
 }

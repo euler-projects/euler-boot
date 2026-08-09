@@ -16,15 +16,15 @@
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.client;
 
 import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootSecurityWebAutoConfiguration;
-import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityProperties;
-import org.eulerframework.boot.autoconfigure.support.security.servlet.LoginMethodPropertiesMapper;
-import org.eulerframework.common.util.collections.MapUtils;
 import org.eulerframework.security.core.EulerUserService;
 import org.eulerframework.security.core.identity.UserIdentityService;
 import org.eulerframework.security.oauth2.client.authentication.OAuth2LoginPrincipalPromotingSuccessHandler;
 import org.eulerframework.security.oauth2.client.web.OAuth2LoginMethodHandler;
 import org.eulerframework.security.provisioning.JitProvisioningPolicyResolver;
-import org.eulerframework.security.web.endpoint.user.login.RegisteredLoginMethod;
+import org.eulerframework.security.web.login.LoginMethodHandler;
+import org.eulerframework.security.web.login.RegisteredLoginMethod;
+import org.eulerframework.security.web.login.RegisteredOAuth2LoginMethod;
+import org.eulerframework.security.web.login.RegisteredLoginMethodRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -39,37 +39,27 @@ import org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationF
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
- * Autoconfiguration for OAuth2 client-side beans backing the unified
- * {@code euler.security.login-method.<name>.type: oauth2}
- * declaration:
- *
- * <ul>
- *   <li>{@link OAuth2LoginMethodHandler} &mdash; turns each
- *       {@code type: oauth2} config entry into an available login
- *       method by resolving the referenced
- *       {@code spring.security.oauth2.client.registration.<key>} entry.</li>
- *   <li>{@link OAuth2LoginPrincipalPromotingSuccessHandler} &mdash; the
- *       success handler that promotes the freshly authenticated OIDC
- *       principal into a local {@code EulerUserDetails}, driven by a
- *       per-registration policy assembled from the same
- *       {@code login-method} entries.</li>
- * </ul>
+ * Autoconfiguration for the OAuth2 client-side bean backing the
+ * {@code euler.security.login-method.oauth2.<method-id>} declarations:
+ * {@link OAuth2LoginPrincipalPromotingSuccessHandler}, the success
+ * handler that promotes the freshly authenticated OIDC principal into a
+ * local {@code EulerUserDetails}, driven by the identity types those
+ * same declarations establish.
  *
  * <p>Ordered after Spring Boot's own {@code OAuth2ClientAutoConfiguration}
  * so that {@link ClientRegistrationRepository} (if any) is already in
  * the context by the time the {@link ConditionalOnBean} check is
  * evaluated.
  *
- * <p>The generic {@code LoginMethodContributor} dispatcher that iterates
- * {@code login-method} entries and delegates to
- * {@link org.eulerframework.security.web.endpoint.user.login.LoginMethodHandler}s
- * is registered separately in
- * {@code EulerBootSecurityWebAutoConfiguration} - login-method
- * dispatching is a servlet-web concern, this class is OAuth2-only.
+ * <p>The {@code oauth2} login method type itself &mdash; its
+ * {@link LoginMethodHandler}, its settings class and the registrations
+ * it contributes &mdash; is configured by
+ * {@code EulerSecurityLoginMethodOAuth2Configuration} alongside the
+ * other types. This class is confined to what only makes sense once an
+ * OAuth2 sign-in has actually succeeded.
  */
 @AutoConfiguration(
         before = {
@@ -90,19 +80,12 @@ public class EulerBootOAuth2ClientAutoConfiguration {
     private static final Logger logger =
             LoggerFactory.getLogger(EulerBootOAuth2ClientAutoConfiguration.class);
 
-    @Bean
-    @ConditionalOnMissingBean(OAuth2LoginMethodHandler.class)
-    public OAuth2LoginMethodHandler oauth2LoginMethodHandler(
-            ClientRegistrationRepository clientRegistrationRepository) {
-        return new OAuth2LoginMethodHandler(clientRegistrationRepository);
-    }
-
     /**
      * Success handler that promotes the federated principal to a local
      * user, using the {@code registrationId -> identityType} mapping
-     * assembled from
-     * {@code euler.security.login-method.*} entries whose
-     * {@code method-type == oauth2} and the identity-type keyed
+     * assembled from the
+     * {@code euler.security.login-method.oauth2.*} entries and the
+     * identity-type keyed
      * {@link JitProvisioningPolicyResolver}.
      *
      * <p>Registrations declared under
@@ -117,23 +100,20 @@ public class EulerBootOAuth2ClientAutoConfiguration {
     public OAuth2LoginPrincipalPromotingSuccessHandler oauth2LoginPrincipalPromotingSuccessHandler(
             EulerUserService userService,
             UserIdentityService userIdentityService,
-            EulerBootSecurityProperties securityProperties,
+            RegisteredLoginMethodRepository registeredLoginMethodRepository,
             JitProvisioningPolicyResolver jitProvisioningPolicyResolver) {
         OAuth2LoginPrincipalPromotingSuccessHandler handler =
                 new OAuth2LoginPrincipalPromotingSuccessHandler(userService, userIdentityService);
-        handler.setIdentityTypesByRegistrationId(buildIdentityTypes(
-                new LoginMethodPropertiesMapper(securityProperties).asRegisteredLoginMethods()));
+        handler.setIdentityTypesByRegistrationId(buildIdentityTypes(registeredLoginMethodRepository.findAll()));
         handler.setJitProvisioningPolicyResolver(jitProvisioningPolicyResolver);
         return handler;
     }
 
     /**
-     * Translates every {@code method-type=oauth2} registered login
-     * method into a {@code registrationId -> identityType} mapping.
+     * Translates every registered {@code oauth2} login method into a
+     * {@code registrationId -> identityType} mapping, resolving the
+     * registration id exactly as the handler serving those methods does.
      * <p>identity-type is mandatory for oauth2 entries (fail fast).
-     * Registration ID resolves as: explicit
-     * {@code oauth-client-registration-id} ?? provider (provider ??
-     * identity-type). No fallback to the login-method key.
      */
     private static Map<String, String> buildIdentityTypes(
             Collection<RegisteredLoginMethod> loginMethods) {
@@ -142,25 +122,17 @@ public class EulerBootOAuth2ClientAutoConfiguration {
         }
         Map<String, String> identityTypes = new LinkedHashMap<>();
         for (RegisteredLoginMethod method : loginMethods) {
-            if (method == null || !OAuth2LoginMethodHandler.TYPE.equals(method.getType())) {
+            if (!(method instanceof RegisteredOAuth2LoginMethod oauth2Method)) {
                 continue;
             }
-            String identityType = method.getIdentityType();
+            String identityType = oauth2Method.getIdentityType();
             if (identityType == null || identityType.isEmpty()) {
-                throw new IllegalStateException("Login method '" + method.getId()
+                throw new IllegalStateException("Login method '" + oauth2Method.getId()
                         + "' (type=oauth2) requires identity-type but none is declared.");
             }
-            String provider = MapUtils.getString(method.getProperties(),
-                    OAuth2LoginMethodHandler.PROP_PROVIDER);
-            if (provider == null || provider.isEmpty()) {
-                provider = identityType;
-            }
-            String registrationId = MapUtils.getString(method.getProperties(),
-                    OAuth2LoginMethodHandler.PROP_OAUTH_CLIENT_REGISTRATION_ID);
-            if (registrationId == null || registrationId.isEmpty()) {
-                registrationId = provider;
-            }
-            identityTypes.put(registrationId, identityType);
+            String provider = OAuth2LoginMethodHandler.resolveProvider(oauth2Method);
+            identityTypes.put(OAuth2LoginMethodHandler.resolveRegistrationId(oauth2Method, provider),
+                    identityType);
         }
         return Map.copyOf(identityTypes);
     }
