@@ -20,7 +20,7 @@ import org.eulerframework.security.core.EulerUserService;
 import org.eulerframework.security.core.identity.UserIdentityService;
 import org.eulerframework.security.oauth2.client.authentication.OAuth2LoginPrincipalPromotingSuccessHandler;
 import org.eulerframework.security.oauth2.client.web.OAuth2LoginMethodHandler;
-import org.eulerframework.security.provisioning.JitProvisioningPolicyResolver;
+import org.eulerframework.security.provisioning.jit.JitProvisioningPolicyResolver;
 import org.eulerframework.security.web.login.LoginMethodHandler;
 import org.eulerframework.security.web.login.RegisteredLoginMethod;
 import org.eulerframework.security.web.login.RegisteredOAuth2LoginMethod;

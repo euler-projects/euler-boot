@@ -21,10 +21,9 @@ import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityA
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.security.core.identity.UserIdentityService;
 import org.eulerframework.security.authentication.otp.OtpTicketService;
-import org.eulerframework.security.provisioning.JitProvisioningPolicyResolver;
+import org.eulerframework.security.provisioning.jit.JitProvisioningPolicyResolver;
 import org.eulerframework.security.config.annotation.web.configurers.identity.UserIdentitySecurityConfigurer;
 import org.eulerframework.security.config.annotation.web.configurers.user.UserSecurityConfigurer;
-import org.eulerframework.security.core.EulerUserService;
 import org.eulerframework.security.core.userdetails.EulerDeviceUserDetailsService;
 import org.eulerframework.security.provisioning.EulerUserDetailsManager;
 import org.eulerframework.security.jackson.EulerSecurityJsonMapperFactory;
@@ -89,7 +88,6 @@ public class EulerBootAuthorizationServerConfiguration {
             EulerBootSecurityAuthenticationOtpProperties eulerBootSecurityOtpProperties,
             EulerBootSecurityAuthenticationWechatProperties eulerBootSecurityWechatLoginProperties,
             ObjectProvider<OtpTicketService> otpTicketServiceProvider,
-            ObjectProvider<EulerUserService> eulerUserServiceProvider,
             ObjectProvider<UserIdentityService> userIdentityServiceProvider,
             ObjectProvider<EulerUserDetailsManager> userDetailsManagerProvider,
             ObjectProvider<EulerDeviceUserDetailsService> deviceUserDetailsServiceProvider,
@@ -168,25 +166,23 @@ public class EulerBootAuthorizationServerConfiguration {
 
         if (eulerBootSecurityOtpProperties.isEnabled()) {
             OtpTicketService otpTicketService = otpTicketServiceProvider.getIfAvailable();
-            EulerUserService eulerUserService = eulerUserServiceProvider.getIfAvailable();
             if (otpTicketService == null
-                    || userIdentityService == null
-                    || eulerUserService == null) {
+                    || userIdentityService == null) {
                 throw new IllegalStateException(
                         "OTP grant is enabled but required beans are missing: "
                                 + "OtpTicketService=" + (otpTicketService != null)
-                                + ", UserIdentityService=" + (userIdentityService != null)
-                                + ", EulerUserService=" + (eulerUserService != null));
+                                + ", UserIdentityService=" + (userIdentityService != null));
             }
-            // When an EulerDeviceUserDetailsService bean is present,
-            // OTP requests carrying a verified App Attest device receive
+            // User-level authentication is delegated to the shared
+            // AuthenticationManager, which carries the framework's
+            // one-time-password authentication provider. When an
+            // EulerDeviceUserDetailsService bean is present, OTP requests
+            // carrying a verified App Attest device additionally receive
             // device-to-user consistency enforcement and first-sighting
             // auto-binding.
             EulerDeviceUserDetailsService deviceUserDetailsService =
                     deviceUserDetailsServiceProvider.getIfAvailable();
-            EulerAuthorizationServerConfiguration.configOtpAuthentication(http, otpTicketService,
-                    userIdentityService, eulerUserService,
-                    jitProvisioningPolicyResolver,
+            EulerAuthorizationServerConfiguration.configOtpAuthentication(http, authenticationConfiguration,
                     deviceUserDetailsService);
         }
 

@@ -34,7 +34,7 @@ import org.eulerframework.security.authentication.otp.StdoutOtpChannel;
 import org.eulerframework.security.oauth2.server.authorization.client.AppAttestOAuth2ClientProvisioningListener;
 import org.eulerframework.security.core.context.UserContext;
 import org.eulerframework.security.core.context.UserDetailsPrincipalUserContext;
-import org.eulerframework.security.provisioning.JitProvisioningPolicyResolver;
+import org.eulerframework.security.provisioning.jit.JitProvisioningPolicyResolver;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -92,6 +92,12 @@ public class EulerBootSecurityAutoConfiguration {
     @ConditionalOnProperty(prefix = "euler.security.authentication.wechat", name = "enabled")
     static public InitializeWechatUserDetailsBeanManagerConfigurer initializeWechatLoginBeanManagerConfigurer(ApplicationContext context) {
         return new InitializeWechatUserDetailsBeanManagerConfigurer(context);
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix = "euler.security.authentication.otp", name = "enabled", havingValue = "true")
+    static public InitializeOneTimePasswordAuthenticationProviderManagerConfigurer initializeOneTimePasswordLoginBeanManagerConfigurer(ApplicationContext context) {
+        return new InitializeOneTimePasswordAuthenticationProviderManagerConfigurer(context);
     }
 
     /**

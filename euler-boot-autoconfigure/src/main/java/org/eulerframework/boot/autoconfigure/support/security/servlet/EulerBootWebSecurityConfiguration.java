@@ -24,9 +24,9 @@ import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilte
 import org.eulerframework.security.config.annotation.web.configurers.appattest.AppAttestSecurityConfigurer;
 import org.eulerframework.security.authentication.otp.OtpTestAccountSupport;
 import org.eulerframework.security.config.annotation.web.configurers.oauth2.OAuth2LoginSecurityConfigurer;
-import org.eulerframework.security.config.annotation.web.configurers.otp.OtpSecurityConfigurer;
+import org.eulerframework.security.config.annotation.web.configurers.otp.OneTimePasswordLoginConfigurer;
 import org.eulerframework.security.oauth2.client.authentication.OAuth2LoginPrincipalPromotingSuccessHandler;
-import org.eulerframework.security.provisioning.JitProvisioningPolicyResolver;
+import org.eulerframework.security.provisioning.jit.JitProvisioningPolicyResolver;
 import org.eulerframework.security.web.login.DefaultLoginMethodService;
 import org.eulerframework.security.core.captcha.view.DefaultSmsCaptchaView;
 import org.eulerframework.security.core.captcha.view.SmsCaptchaView;
@@ -70,6 +70,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -154,18 +155,26 @@ public class EulerBootWebSecurityConfiguration {
         SimpleUrlAuthenticationSuccessHandler successHandler = new SimpleUrlAuthenticationSuccessHandler();
         successHandler.setTargetUrlParameter(eulerBootSecurityWebEndpointProperties.getUser().getLoginSuccessRedirectParameter());
 
+        boolean otpLoginEnabled = eulerBootSecurityOtpProperties.isEnabled();
+        String otpLoginEndpointUri = eulerBootSecurityOtpProperties.getLoginEndpointUri();
+
         http
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(eulerBootSecurityWebEndpointProperties.getSignup().getSignupPage()).permitAll()
-                        .requestMatchers(eulerBootSecurityWebEndpointProperties.getSignup().getSignupProcessingUrl()).permitAll()
-                        .requestMatchers(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage()).permitAll()
-                        .requestMatchers(eulerBootSecurityWebEndpointProperties.getLoginMethodDispatch().getProcessingUrl()).permitAll()
-                        .requestMatchers("/assets/**").permitAll()
-                        .requestMatchers("/captcha").permitAll()
-                        .requestMatchers("/captcha/validCaptcha").permitAll()
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers("/favicon.ico").permitAll()
-                        .anyRequest().authenticated())
+                .authorizeHttpRequests(authorize -> {
+                    authorize
+                            .requestMatchers(eulerBootSecurityWebEndpointProperties.getSignup().getSignupPage()).permitAll()
+                            .requestMatchers(eulerBootSecurityWebEndpointProperties.getSignup().getSignupProcessingUrl()).permitAll()
+                            .requestMatchers(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage()).permitAll()
+                            .requestMatchers(eulerBootSecurityWebEndpointProperties.getLoginMethodDispatch().getProcessingUrl()).permitAll()
+                            .requestMatchers("/assets/**").permitAll()
+                            .requestMatchers("/captcha").permitAll()
+                            .requestMatchers("/captcha/validCaptcha").permitAll()
+                            .requestMatchers("/error").permitAll()
+                            .requestMatchers("/favicon.ico").permitAll();
+                    if (otpLoginEnabled) {
+                        authorize.requestMatchers(otpLoginEndpointUri).permitAll();
+                    }
+                    authorize.anyRequest().authenticated();
+                })
                 .requestCache(RequestCacheConfigurer::disable)
                 .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository))
                 .formLogin(formLogin -> formLogin
@@ -221,8 +230,8 @@ public class EulerBootWebSecurityConfiguration {
                             .resolve(JitProvisioningPolicyResolver.IDENTITY_TYPE_DEVICE)));
         }
 
-        if (eulerBootSecurityOtpProperties.isEnabled()) {
-            logger.debug("OTP module enabled, configuring OTP ticket issue endpoint.");
+        if (otpLoginEnabled) {
+            logger.debug("OTP module enabled, configuring one-time-password login.");
             OtpTestAccountSupport otpTestAccountSupport = null;
             EulerBootSecurityAuthenticationOtpProperties.Test test = eulerBootSecurityOtpProperties.getTest();
             if (test != null && test.isUsable()) {
@@ -231,13 +240,19 @@ public class EulerBootWebSecurityConfiguration {
                         otpTestAccountSupport.getAccounts().size());
             }
             OtpTestAccountSupport otpTestAccountSupportFinal = otpTestAccountSupport;
-            http.with(new OtpSecurityConfigurer(), otp -> otp
+            SimpleUrlAuthenticationFailureHandler otpFailureHandler = new SimpleUrlAuthenticationFailureHandler(
+                    eulerBootSecurityWebEndpointProperties.getUser().getLoginPage());
+            http.with(new OneTimePasswordLoginConfigurer(), otp -> otp
+                    .loginPage(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage())
+                    .loginProcessingUrl(otpLoginEndpointUri)
+                    .successHandler(successHandler)
+                    .failureHandler(otpFailureHandler)
                     .issueEndpointUri(eulerBootSecurityOtpProperties.getIssueEndpointUri())
                     .testAccountSupport(otpTestAccountSupportFinal));
         }
 
         boolean anyOtpLoginMethod = !eulerSecurityLoginMethodOtpProperties.getOtp().isEmpty();
-        if (anyOtpLoginMethod && !eulerBootSecurityOtpProperties.isEnabled()) {
+        if (anyOtpLoginMethod && !otpLoginEnabled) {
             throw new IllegalStateException("At least one entry is declared under " +
                     "euler.security.login-method.otp " +
                     "but the OTP mechanism is disabled. Please set " +

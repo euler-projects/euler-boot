@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
  *       otp:
  *         enabled: false
  *         issue-endpoint-uri: /otp/tickets
+ *         login-endpoint-uri: /login/otp
  *         storage: in-memory          # in-memory | jdbc | redis
  *         policy:
  *           otp-length: 6
@@ -59,6 +60,13 @@ public class EulerBootSecurityAuthenticationOtpProperties {
      * URI of the OTP ticket issue endpoint. Default is {@code /otp/tickets}.
      */
     private String issueEndpointUri = "/otp/tickets";
+
+    /**
+     * URI of the one-time-password login processing endpoint (form
+     * submission carrying {@code otp_ticket} + {@code otp}). Default is
+     * {@code /login/otp}.
+     */
+    private String loginEndpointUri = "/login/otp";
 
     /**
      * Storage backend for {@link org.eulerframework.security.authentication.otp.OtpTicketService OtpTicketService}.
@@ -94,6 +102,14 @@ public class EulerBootSecurityAuthenticationOtpProperties {
 
     public void setIssueEndpointUri(String issueEndpointUri) {
         this.issueEndpointUri = issueEndpointUri;
+    }
+
+    public String getLoginEndpointUri() {
+        return loginEndpointUri;
+    }
+
+    public void setLoginEndpointUri(String loginEndpointUri) {
+        this.loginEndpointUri = loginEndpointUri;
     }
 
     public Storage getStorage() {

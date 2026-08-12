@@ -15,8 +15,8 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security;
 
-import org.eulerframework.security.provisioning.JitProvisioningPolicy;
-import org.eulerframework.security.provisioning.JitProvisioningPolicyResolver;
+import org.eulerframework.security.provisioning.jit.JitProvisioningPolicy;
+import org.eulerframework.security.provisioning.jit.JitProvisioningPolicyResolver;
 
 import java.util.LinkedHashMap;
 import java.util.List;

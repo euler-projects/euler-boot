@@ -15,6 +15,7 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.login.otp;
 
+import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAuthenticationOtpProperties;
 import org.eulerframework.boot.autoconfigure.support.security.login.BaseLoginMethodConfiguration;
 import org.eulerframework.boot.autoconfigure.support.security.login.LoginMethodConfiguration;
 import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootSecurityWebEndpointProperties;
@@ -42,10 +43,12 @@ public class EulerSecurityLoginMethodOtpConfiguration implements LoginMethodConf
     @Bean
     @ConditionalOnMissingBean(OtpLoginMethodHandler.class)
     public OtpLoginMethodHandler otpLoginMethodHandler(
-            EulerBootSecurityWebEndpointProperties endpointProperties) {
+            EulerBootSecurityWebEndpointProperties endpointProperties,
+            EulerBootSecurityAuthenticationOtpProperties otpProperties) {
         return new OtpLoginMethodHandler(
                 endpointProperties.getUser().getLoginPage(),
-                endpointProperties.getLoginMethodDispatch().getMethodParameter());
+                endpointProperties.getLoginMethodDispatch().getMethodParameter(),
+                otpProperties.getLoginEndpointUri());
     }
 
     @Override
