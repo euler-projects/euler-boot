@@ -23,6 +23,8 @@ import org.eulerframework.boot.autoconfigure.support.security.login.password.Eul
 import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilterUtils;
 import org.eulerframework.security.config.annotation.web.configurers.appattest.AppAttestSecurityConfigurer;
 import org.eulerframework.security.authentication.otp.OtpTestAccountSupport;
+import org.eulerframework.security.config.annotation.web.configurers.login.LoginMethodDispatchConfigurer;
+import org.eulerframework.security.config.annotation.web.configurers.login.LoginMethodsConfigurer;
 import org.eulerframework.security.config.annotation.web.configurers.oauth2.OAuth2LoginSecurityConfigurer;
 import org.eulerframework.security.config.annotation.web.configurers.otp.OneTimePasswordLoginConfigurer;
 import org.eulerframework.security.oauth2.client.authentication.OAuth2LoginPrincipalPromotingSuccessHandler;
@@ -31,6 +33,8 @@ import org.eulerframework.security.web.login.DefaultLoginMethodService;
 import org.eulerframework.security.core.captcha.view.DefaultSmsCaptchaView;
 import org.eulerframework.security.core.captcha.view.SmsCaptchaView;
 import org.eulerframework.security.web.access.EulerAccessDeniedHandler;
+import org.eulerframework.security.web.authentication.JsonLoginFailureHandler;
+import org.eulerframework.security.web.authentication.JsonLoginRedirectStrategy;
 import org.eulerframework.security.web.authentication.LoginPageAuthenticationEntryPoint;
 import org.eulerframework.security.web.endpoint.*;
 import org.eulerframework.security.web.endpoint.csrf.EulerSecurityCsrfTokenEndpoint;
@@ -69,6 +73,7 @@ import org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationF
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -136,7 +141,7 @@ public class EulerBootWebSecurityConfiguration {
             EulerSecurityLoginMethodOAuth2Properties eulerSecurityLoginMethodOAuth2Properties,
             EulerBootSecurityWebProperties eulerBootSecurityWebProperties,
             EulerBootSecurityAuthenticationWebauthnProperties eulerBootSecurityWebAuthnProperties,
-            EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties,
+            EulerBootSecurityWebEndpointProperties eulerSecurityWebEndpointProperties,
             EulerBootSecurityAuthenticationAppAttestProperties eulerBootSecurityAppAttestProperties,
             EulerBootSecurityAuthenticationOtpProperties eulerBootSecurityOtpProperties,
             DefaultLoginMethodService loginMethodService,
@@ -152,35 +157,60 @@ public class EulerBootWebSecurityConfiguration {
 //        DefaultLogoutPageGeneratingFilter defaultLogoutPageGeneratingFilter = new DefaultLogoutPageGeneratingFilter();
 //        defaultLogoutPageGeneratingFilter.setResolveHiddenInputs(this::hiddenInputs);
 
-        SimpleUrlAuthenticationSuccessHandler successHandler = new SimpleUrlAuthenticationSuccessHandler();
-        successHandler.setTargetUrlParameter(eulerBootSecurityWebEndpointProperties.getUser().getLoginSuccessRedirectParameter());
+        SimpleUrlAuthenticationSuccessHandler loginSuccessHandler = new SimpleUrlAuthenticationSuccessHandler();
+        loginSuccessHandler.setTargetUrlParameter(eulerSecurityWebEndpointProperties.getUser().getLoginSuccessRedirectParameter());
+        // Let an XHR / fetch client that sends Accept: application/json receive a
+        // 200 + {redirect_url} envelope instead of a 302, so a fully independent
+        // front-end login page can drive the post-login navigation itself. The
+        // strategy changes only how the final target URL is emitted; Spring's
+        // target-URL resolution (the redirect_url parameter and the default target)
+        // is reused verbatim. The server-rendered login page keeps its redirect
+        // behaviour because a browser form post does not send Accept:
+        // application/json. Shared by the form-login and OTP success paths below.
+        loginSuccessHandler.setRedirectStrategy(new JsonLoginRedirectStrategy());
 
-        boolean otpLoginEnabled = eulerBootSecurityOtpProperties.isEnabled();
+        // Failure counterpart shared by the form-login and OTP paths below: a
+        // JSON client gets the mapped HTTP status + {error, timestamp} envelope,
+        // everyone else is redirected to the login page with ?error exactly as
+        // Spring's form-login default does. Both paths build an identical
+        // handler, so a single instance is reused;
+        // SimpleUrlAuthenticationFailureHandler is stateless and thread-safe
+        // across filters.
+        AuthenticationFailureHandler loginFailureHandler = new JsonLoginFailureHandler(
+                new SimpleUrlAuthenticationFailureHandler(
+                        eulerSecurityWebEndpointProperties.getUser().getLoginPage() + "?error"));
+
         String otpLoginEndpointUri = eulerBootSecurityOtpProperties.getLoginEndpointUri();
 
         http
                 .authorizeHttpRequests(authorize -> {
                     authorize
-                            .requestMatchers(eulerBootSecurityWebEndpointProperties.getSignup().getSignupPage()).permitAll()
-                            .requestMatchers(eulerBootSecurityWebEndpointProperties.getSignup().getSignupProcessingUrl()).permitAll()
-                            .requestMatchers(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage()).permitAll()
-                            .requestMatchers(eulerBootSecurityWebEndpointProperties.getLoginMethodDispatch().getProcessingUrl()).permitAll()
                             .requestMatchers("/assets/**").permitAll()
-                            .requestMatchers("/captcha").permitAll()
-                            .requestMatchers("/captcha/validCaptcha").permitAll()
                             .requestMatchers("/error").permitAll()
                             .requestMatchers("/favicon.ico").permitAll();
-                    if (otpLoginEnabled) {
-                        authorize.requestMatchers(otpLoginEndpointUri).permitAll();
+                    if (eulerSecurityWebEndpointProperties.getUser().isEnabled()) {
+                        authorize
+                                .requestMatchers(eulerSecurityWebEndpointProperties.getUser().getLoginPage()).permitAll();
+                    }
+
+                    if (eulerSecurityWebEndpointProperties.getSignup().isEnabled()) {
+                        authorize
+                                .requestMatchers(eulerSecurityWebEndpointProperties.getSignup().getSignupPage()).permitAll()
+                                .requestMatchers(eulerSecurityWebEndpointProperties.getSignup().getSignupProcessingUrl()).permitAll();
+                    }
+                    if (eulerSecurityWebEndpointProperties.getCsrf().isEnabled()) {
+                        authorize
+                                .requestMatchers(eulerSecurityWebEndpointProperties.getCsrf().getFetchingUrl()).permitAll();
                     }
                     authorize.anyRequest().authenticated();
                 })
                 .requestCache(RequestCacheConfigurer::disable)
                 .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository))
                 .formLogin(formLogin -> formLogin
-                        .loginPage(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage())
-                        .loginProcessingUrl(eulerBootSecurityWebEndpointProperties.getUser().getLoginProcessingUrl())
-                        .successHandler(successHandler)
+                        .loginPage(eulerSecurityWebEndpointProperties.getUser().getLoginPage())
+                        .loginProcessingUrl(eulerSecurityWebEndpointProperties.getUser().getLoginProcessingUrl())
+                        .successHandler(loginSuccessHandler)
+                        .failureHandler(loginFailureHandler)
                         .addObjectPostProcessor(new ObjectPostProcessor<AuthenticationEntryPoint>() {
                             @Override
                             @SuppressWarnings("unchecked")
@@ -195,14 +225,21 @@ public class EulerBootWebSecurityConfiguration {
                             }
                         }))
                 .logout(logout -> logout
-                        .logoutUrl(eulerBootSecurityWebEndpointProperties.getUser().getLogoutProcessingUrl()));
+                        .logoutUrl(eulerSecurityWebEndpointProperties.getUser().getLogoutProcessingUrl()));
 
-        if (eulerBootSecurityWebEndpointProperties.getLoginMethodDispatch().isEnabled()) {
-            logger.debug("Login method dispatch enabled, configuring LoginMethodRoutingFilter.");
-            http.with(new org.eulerframework.security.config.annotation.web.configurers.login.LoginMethodRoutingConfigurer(), routing -> routing
-                    .loginMethodProcessingUrl(eulerBootSecurityWebEndpointProperties.getLoginMethodDispatch().getProcessingUrl())
-                    .loginPageUrl(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage())
-                    .methodParameter(eulerBootSecurityWebEndpointProperties.getLoginMethodDispatch().getMethodParameter())
+        if (eulerSecurityWebEndpointProperties.getLoginMethods().getDispatch().isEnabled()) {
+            logger.debug("Login method dispatch enabled, configuring LoginMethodDispatchFilter.");
+            http.with(new LoginMethodDispatchConfigurer(), dispatch -> dispatch
+                    .loginMethodProcessingUrl(eulerSecurityWebEndpointProperties.getLoginMethods().getDispatch().getProcessingUrl())
+                    .loginPageUrl(eulerSecurityWebEndpointProperties.getUser().getLoginPage())
+                    .methodParameter(eulerSecurityWebEndpointProperties.getLoginMethods().getDispatch().getMethodParameter())
+                    .loginMethodService(loginMethodService));
+        }
+
+        if (eulerSecurityWebEndpointProperties.getLoginMethods().getDiscovery().isEnabled()) {
+            logger.debug("Login method discovery endpoint enabled, configuring LoginMethodsEndpointFilter.");
+            http.with(new LoginMethodsConfigurer(), list -> list
+                    .loginMethodsEndpointUri(eulerSecurityWebEndpointProperties.getLoginMethods().getDiscovery().getFetchingUrl())
                     .loginMethodService(loginMethodService));
         }
 
@@ -230,7 +267,7 @@ public class EulerBootWebSecurityConfiguration {
                             .resolve(JitProvisioningPolicyResolver.IDENTITY_TYPE_DEVICE)));
         }
 
-        if (otpLoginEnabled) {
+        if (eulerBootSecurityOtpProperties.isEnabled()) {
             logger.debug("OTP module enabled, configuring one-time-password login.");
             OtpTestAccountSupport otpTestAccountSupport = null;
             EulerBootSecurityAuthenticationOtpProperties.Test test = eulerBootSecurityOtpProperties.getTest();
@@ -240,19 +277,17 @@ public class EulerBootWebSecurityConfiguration {
                         otpTestAccountSupport.getAccounts().size());
             }
             OtpTestAccountSupport otpTestAccountSupportFinal = otpTestAccountSupport;
-            SimpleUrlAuthenticationFailureHandler otpFailureHandler = new SimpleUrlAuthenticationFailureHandler(
-                    eulerBootSecurityWebEndpointProperties.getUser().getLoginPage());
             http.with(new OneTimePasswordLoginConfigurer(), otp -> otp
-                    .loginPage(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage())
+                    .loginPage(eulerSecurityWebEndpointProperties.getUser().getLoginPage())
                     .loginProcessingUrl(otpLoginEndpointUri)
-                    .successHandler(successHandler)
-                    .failureHandler(otpFailureHandler)
+                    .successHandler(loginSuccessHandler)
+                    .failureHandler(loginFailureHandler)
                     .issueEndpointUri(eulerBootSecurityOtpProperties.getIssueEndpointUri())
                     .testAccountSupport(otpTestAccountSupportFinal));
         }
 
         boolean anyOtpLoginMethod = !eulerSecurityLoginMethodOtpProperties.getOtp().isEmpty();
-        if (anyOtpLoginMethod && !otpLoginEnabled) {
+        if (anyOtpLoginMethod && !eulerBootSecurityOtpProperties.isEnabled()) {
             throw new IllegalStateException("At least one entry is declared under " +
                     "euler.security.login-method.otp " +
                     "but the OTP mechanism is disabled. Please set " +
@@ -270,9 +305,9 @@ public class EulerBootWebSecurityConfiguration {
             }
             logger.debug("At least one type=oauth2 login-method declared; configuring oauth2Login() branch.");
             http.with(new OAuth2LoginSecurityConfigurer(), oauth2 -> oauth2
-                    .loginPage(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage())
+                    .loginPage(eulerSecurityWebEndpointProperties.getUser().getLoginPage())
                     .targetUrlParameter(
-                            eulerBootSecurityWebEndpointProperties.getUser().getLoginSuccessRedirectParameter()));
+                            eulerSecurityWebEndpointProperties.getUser().getLoginSuccessRedirectParameter()));
         }
 
         this.configAccessDeniedHandler(http);
@@ -335,8 +370,17 @@ public class EulerBootWebSecurityConfiguration {
             matchIfMissing = EulerSecurityEndpoints.USER_ENABLED)
     static class EulerSecurityUserEndpointConfiguration {
         @Bean
-        public EulerSecurityUserPageController eulerSecurityUserPageController(PageRender pageRender, LoginMethodService loginMethodService) {
-            return new EulerSecurityUserPageController(pageRender, loginMethodService);
+        public EulerSecurityUserPageController eulerSecurityUserPageController(
+                PageRender pageRender, LoginMethodService loginMethodService,
+                EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties) {
+            EulerSecurityUserPageController controller =
+                    new EulerSecurityUserPageController(pageRender, loginMethodService);
+            // The bound list is what lets a YAML sequence reach the page:
+            // binding a sequence yields indexed keys the controller's own
+            // @Value fallback cannot read.
+            controller.setLoginPageMethods(
+                    eulerBootSecurityWebEndpointProperties.getUser().getLoginPageMethods());
+            return controller;
         }
     }
 

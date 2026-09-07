@@ -47,7 +47,7 @@ public class EulerSecurityLoginMethodOtpConfiguration implements LoginMethodConf
             EulerBootSecurityAuthenticationOtpProperties otpProperties) {
         return new OtpLoginMethodHandler(
                 endpointProperties.getUser().getLoginPage(),
-                endpointProperties.getLoginMethodDispatch().getMethodParameter(),
+                endpointProperties.getLoginMethods().getDispatch().getMethodParameter(),
                 otpProperties.getLoginEndpointUri());
     }
 

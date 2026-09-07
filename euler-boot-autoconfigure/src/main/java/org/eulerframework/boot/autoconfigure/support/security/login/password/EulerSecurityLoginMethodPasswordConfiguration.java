@@ -47,7 +47,7 @@ public class EulerSecurityLoginMethodPasswordConfiguration implements LoginMetho
         return new PasswordLoginMethodHandler(
                 endpointProperties.getUser().getLoginProcessingUrl(),
                 endpointProperties.getUser().getLoginPage(),
-                endpointProperties.getLoginMethodDispatch().getMethodParameter());
+                endpointProperties.getLoginMethods().getDispatch().getMethodParameter());
     }
 
     @Override

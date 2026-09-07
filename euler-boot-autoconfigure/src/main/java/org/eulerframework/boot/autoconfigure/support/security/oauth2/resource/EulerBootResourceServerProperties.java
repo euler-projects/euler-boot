@@ -22,6 +22,17 @@ public class EulerBootResourceServerProperties {
     private String[] urlPatterns;
     private String[] ignoredUrlPatterns;
 
+    /**
+     * Whether these chains honour an existing HTTP session as a credential
+     * alongside Bearer tokens. On, a session established by the default web
+     * chain authenticates requests here and owes a CSRF token, while Bearer
+     * callers stay CSRF-exempt. Off (the default), the chains refuse to
+     * restore any session-derived SecurityContext and disable CSRF,
+     * reducing to strict Bearer-only even when a session-creating chain
+     * is present in the same deployment.
+     */
+    private boolean sessionAware = false;
+
     public String[] getUrlPatterns() {
         return urlPatterns;
     }
@@ -36,5 +47,13 @@ public class EulerBootResourceServerProperties {
 
     public void setIgnoredUrlPatterns(String[] ignoredUrlPatterns) {
         this.ignoredUrlPatterns = ignoredUrlPatterns;
+    }
+
+    public boolean isSessionAware() {
+        return sessionAware;
+    }
+
+    public void setSessionAware(boolean sessionAware) {
+        this.sessionAware = sessionAware;
     }
 }
