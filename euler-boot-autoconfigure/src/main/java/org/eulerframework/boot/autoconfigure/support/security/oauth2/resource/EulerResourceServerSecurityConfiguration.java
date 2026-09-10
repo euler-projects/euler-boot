@@ -48,12 +48,12 @@ import java.util.Set;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
-class EulerBootResourceServerConfiguration {
+class EulerResourceServerSecurityConfiguration {
     static void applyCommonConfiguration(
             HttpSecurity http,
-            EulerBootResourceServerProperties eulerBootResourceServerProperties) throws Exception {
-        String[] urlPatterns = eulerBootResourceServerProperties.getUrlPatterns();
-        String[] ignoredUrlPatterns = eulerBootResourceServerProperties.getIgnoredUrlPatterns();
+            EulerResourceServerProperties eulerResourceServerProperties) throws Exception {
+        String[] urlPatterns = eulerResourceServerProperties.getUrlPatterns();
+        String[] ignoredUrlPatterns = eulerResourceServerProperties.getIgnoredUrlPatterns();
         SecurityFilterUtils.configSecurityMatcher(http, urlPatterns, ignoredUrlPatterns);
 
         http.authorizeHttpRequests((requests) -> requests.anyRequest().authenticated());
@@ -95,7 +95,7 @@ class EulerBootResourceServerConfiguration {
      * authenticate exclusively from the Bearer token they resolve.
      */
     private static void applySessionAwareness(
-            HttpSecurity http, EulerBootResourceServerProperties properties) throws Exception {
+            HttpSecurity http, EulerResourceServerProperties properties) throws Exception {
         if (properties.isSessionAware()) {
             return;
         }
@@ -176,11 +176,11 @@ class EulerBootResourceServerConfiguration {
         SecurityFilterChain resourceServerSecurityFilterChain(
                 HttpSecurity http,
                 ObjectProvider<CsrfTokenRepository> csrfTokenRepositories,
-                EulerBootResourceServerProperties eulerBootResourceServerProperties) throws Exception {
-            EulerBootResourceServerConfiguration.applyCommonConfiguration(http, eulerBootResourceServerProperties);
-            EulerBootResourceServerConfiguration.applySessionAwareness(http, eulerBootResourceServerProperties);
-            EulerBootResourceServerConfiguration.applyCsrf(http, csrfTokenRepositories.getIfAvailable(),
-                    eulerBootResourceServerProperties.isSessionAware());
+                EulerResourceServerProperties eulerResourceServerProperties) throws Exception {
+            EulerResourceServerSecurityConfiguration.applyCommonConfiguration(http, eulerResourceServerProperties);
+            EulerResourceServerSecurityConfiguration.applySessionAwareness(http, eulerResourceServerProperties);
+            EulerResourceServerSecurityConfiguration.applyCsrf(http, csrfTokenRepositories.getIfAvailable(),
+                    eulerResourceServerProperties.isSessionAware());
             http.oauth2ResourceServer(resourceServer -> resourceServer.jwt(withDefaults()));
             return http.build();
         }
@@ -197,11 +197,11 @@ class EulerBootResourceServerConfiguration {
         SecurityFilterChain resourceServerSecurityFilterChain(
                 HttpSecurity http,
                 ObjectProvider<CsrfTokenRepository> csrfTokenRepositories,
-                EulerBootResourceServerProperties eulerBootResourceServerProperties) throws Exception {
-            EulerBootResourceServerConfiguration.applyCommonConfiguration(http, eulerBootResourceServerProperties);
-            EulerBootResourceServerConfiguration.applySessionAwareness(http, eulerBootResourceServerProperties);
-            EulerBootResourceServerConfiguration.applyCsrf(http, csrfTokenRepositories.getIfAvailable(),
-                    eulerBootResourceServerProperties.isSessionAware());
+                EulerResourceServerProperties eulerResourceServerProperties) throws Exception {
+            EulerResourceServerSecurityConfiguration.applyCommonConfiguration(http, eulerResourceServerProperties);
+            EulerResourceServerSecurityConfiguration.applySessionAwareness(http, eulerResourceServerProperties);
+            EulerResourceServerSecurityConfiguration.applyCsrf(http, csrfTokenRepositories.getIfAvailable(),
+                    eulerResourceServerProperties.isSessionAware());
             http.oauth2ResourceServer(resourceServer -> resourceServer.jwt(withDefaults()));
             return http.build();
         }
@@ -218,11 +218,11 @@ class EulerBootResourceServerConfiguration {
         SecurityFilterChain resourceServerSecurityFilterChain(
                 HttpSecurity http,
                 ObjectProvider<CsrfTokenRepository> csrfTokenRepositories,
-                EulerBootResourceServerProperties eulerBootResourceServerProperties) throws Exception {
-            EulerBootResourceServerConfiguration.applyCommonConfiguration(http, eulerBootResourceServerProperties);
-            EulerBootResourceServerConfiguration.applySessionAwareness(http, eulerBootResourceServerProperties);
-            EulerBootResourceServerConfiguration.applyCsrf(http, csrfTokenRepositories.getIfAvailable(),
-                    eulerBootResourceServerProperties.isSessionAware());
+                EulerResourceServerProperties eulerResourceServerProperties) throws Exception {
+            EulerResourceServerSecurityConfiguration.applyCommonConfiguration(http, eulerResourceServerProperties);
+            EulerResourceServerSecurityConfiguration.applySessionAwareness(http, eulerResourceServerProperties);
+            EulerResourceServerSecurityConfiguration.applyCsrf(http, csrfTokenRepositories.getIfAvailable(),
+                    eulerResourceServerProperties.isSessionAware());
             http.oauth2ResourceServer(resourceServer -> resourceServer.opaqueToken(withDefaults()));
             return http.build();
         }
@@ -272,11 +272,11 @@ class EulerBootResourceServerConfiguration {
                 HttpSecurity http,
                 OAuth2AuthorizationService authorizationService,
                 ObjectProvider<CsrfTokenRepository> csrfTokenRepositories,
-                EulerBootResourceServerProperties eulerBootResourceServerProperties) throws Exception {
-            EulerBootResourceServerConfiguration.applyCommonConfiguration(http, eulerBootResourceServerProperties);
-            EulerBootResourceServerConfiguration.applySessionAwareness(http, eulerBootResourceServerProperties);
-            EulerBootResourceServerConfiguration.applyCsrf(http, csrfTokenRepositories.getIfAvailable(),
-                    eulerBootResourceServerProperties.isSessionAware());
+                EulerResourceServerProperties eulerResourceServerProperties) throws Exception {
+            EulerResourceServerSecurityConfiguration.applyCommonConfiguration(http, eulerResourceServerProperties);
+            EulerResourceServerSecurityConfiguration.applySessionAwareness(http, eulerResourceServerProperties);
+            EulerResourceServerSecurityConfiguration.applyCsrf(http, csrfTokenRepositories.getIfAvailable(),
+                    eulerResourceServerProperties.isSessionAware());
             AuthenticationManager authenticationManager = new OAuth2NativeTokenAuthenticationManager(authorizationService);
             http.oauth2ResourceServer(resourceServer -> resourceServer
                     .authenticationManagerResolver(request -> authenticationManager));

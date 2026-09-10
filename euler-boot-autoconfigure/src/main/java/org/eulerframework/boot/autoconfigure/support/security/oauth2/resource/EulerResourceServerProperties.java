@@ -13,27 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.eulerframework.boot.autoconfigure.support.security.servlet;
+package org.eulerframework.boot.autoconfigure.support.security.oauth2.resource;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "euler.security.web")
-public class EulerBootSecurityWebProperties {
-
-    /**
-     * URL patterns the Euler security filter chain applies to.
-     */
+@ConfigurationProperties(prefix = "euler.security.oauth2.resourceserver")
+public class EulerResourceServerProperties {
     private String[] urlPatterns;
-
-    /**
-     * URL patterns excluded from the Euler security filter chain.
-     */
     private String[] ignoredUrlPatterns;
 
     /**
-     * Whether Euler web security is enabled.
+     * Whether these chains honour an existing HTTP session as a credential
+     * alongside Bearer tokens. On, a session established by the default web
+     * chain authenticates requests here and owes a CSRF token, while Bearer
+     * callers stay CSRF-exempt. Off (the default), the chains refuse to
+     * restore any session-derived SecurityContext and disable CSRF,
+     * reducing to strict Bearer-only even when a session-creating chain
+     * is present in the same deployment.
      */
-    private boolean enabled = false;
+    private boolean sessionAware = false;
 
     public String[] getUrlPatterns() {
         return urlPatterns;
@@ -51,11 +49,11 @@ public class EulerBootSecurityWebProperties {
         this.ignoredUrlPatterns = ignoredUrlPatterns;
     }
 
-    public boolean isEnabled() {
-        return enabled;
+    public boolean isSessionAware() {
+        return sessionAware;
     }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
+    public void setSessionAware(boolean sessionAware) {
+        this.sessionAware = sessionAware;
     }
 }

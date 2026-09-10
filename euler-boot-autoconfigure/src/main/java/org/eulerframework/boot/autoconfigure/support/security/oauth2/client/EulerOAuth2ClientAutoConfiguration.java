@@ -15,7 +15,7 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.client;
 
-import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootSecurityWebAutoConfiguration;
+import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerSecurityWebAutoConfiguration;
 import org.eulerframework.security.core.EulerUserService;
 import org.eulerframework.security.core.identity.UserIdentityService;
 import org.eulerframework.security.oauth2.client.authentication.OAuth2LoginPrincipalPromotingSuccessHandler;
@@ -63,7 +63,7 @@ import java.util.Map;
  */
 @AutoConfiguration(
         before = {
-                EulerBootSecurityWebAutoConfiguration.class
+                EulerSecurityWebAutoConfiguration.class
         },
         after = {
                 // Wait for Spring Boot to publish the default
@@ -75,10 +75,10 @@ import java.util.Map;
 @ConditionalOnClass(OAuth2LoginAuthenticationFilter.class)
 @ConditionalOnBean(ClientRegistrationRepository.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-public class EulerBootOAuth2ClientAutoConfiguration {
+public class EulerOAuth2ClientAutoConfiguration {
 
     private static final Logger logger =
-            LoggerFactory.getLogger(EulerBootOAuth2ClientAutoConfiguration.class);
+            LoggerFactory.getLogger(EulerOAuth2ClientAutoConfiguration.class);
 
     /**
      * Success handler that promotes the federated principal to a local

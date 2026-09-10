@@ -53,10 +53,10 @@ import java.util.Map;
  * algorithm is used for new writes; {@code noop} is always available and
  * needs no entry under {@code keys}.
  *
- * @see EulerBootDataJpaEncryptionAutoConfiguration
+ * @see EulerDataJpaEncryptionAutoConfiguration
  */
 @ConfigurationProperties(prefix = "euler.data.jpa.encryption")
-public class EulerBootDataJpaEncryptionProperties {
+public class EulerDataJpaEncryptionProperties {
 
     /**
      * Algorithm identifier used for writes. MUST be either {@code "noop"}

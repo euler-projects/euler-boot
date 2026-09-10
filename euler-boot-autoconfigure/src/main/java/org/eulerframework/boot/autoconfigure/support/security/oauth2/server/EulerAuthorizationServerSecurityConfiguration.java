@@ -15,9 +15,9 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
-import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAuthenticationAppAttestProperties;
-import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAuthenticationOtpProperties;
-import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAuthenticationWechatProperties;
+import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityAuthenticationAppAttestProperties;
+import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityAuthenticationOtpProperties;
+import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityAuthenticationWechatProperties;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.security.core.identity.UserIdentityService;
 import org.eulerframework.security.authentication.otp.OtpTicketService;
@@ -73,7 +73,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(EulerAuthorizationServerConfiguration.class)
-public class EulerBootAuthorizationServerConfiguration {
+public class EulerAuthorizationServerSecurityConfiguration {
 
     @Bean(SecurityFilterChainBeanNames.AUTHORIZATION_SERVER_SECURITY_FILTER_CHAIN)
     @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.AUTHORIZATION_SERVER_SECURITY_FILTER_CHAIN)
@@ -83,10 +83,10 @@ public class EulerBootAuthorizationServerConfiguration {
             AuthenticationConfiguration authenticationConfiguration,
             @Qualifier(SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
             LoginPageAuthenticationEntryPoint loginPageEntryPoint,
-            EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties,
-            EulerBootSecurityAuthenticationAppAttestProperties eulerBootSecurityAppAttestProperties,
-            EulerBootSecurityAuthenticationOtpProperties eulerBootSecurityOtpProperties,
-            EulerBootSecurityAuthenticationWechatProperties eulerBootSecurityWechatLoginProperties,
+            EulerAuthorizationServerProperties eulerAuthorizationServerProperties,
+            EulerSecurityAuthenticationAppAttestProperties eulerSecurityAppAttestProperties,
+            EulerSecurityAuthenticationOtpProperties eulerSecurityOtpProperties,
+            EulerSecurityAuthenticationWechatProperties eulerSecurityWechatLoginProperties,
             ObjectProvider<OtpTicketService> otpTicketServiceProvider,
             ObjectProvider<UserIdentityService> userIdentityServiceProvider,
             ObjectProvider<EulerUserDetailsManager> userDetailsManagerProvider,
@@ -151,20 +151,20 @@ public class EulerBootAuthorizationServerConfiguration {
         // Attestation-based client authentication and the app_assertion
         // grant are App Attest machinery: both follow the App Attest
         // mechanism switch.
-        if (eulerBootSecurityAppAttestProperties.isEnabled()) {
+        if (eulerSecurityAppAttestProperties.isEnabled()) {
             EulerAuthorizationServerConfiguration.configClientAttestationAuthentication(http, authenticationConfiguration,
                     jitProvisioningPolicyResolver.resolve(JitProvisioningPolicyResolver.IDENTITY_TYPE_DEVICE));
         }
 
-        if (eulerBootAuthorizationServerProperties.getDynamicClientRegistration().isEnabled()) {
+        if (eulerAuthorizationServerProperties.getDynamicClientRegistration().isEnabled()) {
             EulerAuthorizationServerConfiguration.configClientRegistrationEndpoint(http, authenticationConfiguration);
         }
 
-        if (eulerBootSecurityWechatLoginProperties.isEnabled()) {
+        if (eulerSecurityWechatLoginProperties.isEnabled()) {
             EulerAuthorizationServerConfiguration.configWechatAuthentication(http, authenticationConfiguration);
         }
 
-        if (eulerBootSecurityOtpProperties.isEnabled()) {
+        if (eulerSecurityOtpProperties.isEnabled()) {
             OtpTicketService otpTicketService = otpTicketServiceProvider.getIfAvailable();
             if (otpTicketService == null
                     || userIdentityService == null) {
@@ -189,9 +189,9 @@ public class EulerBootAuthorizationServerConfiguration {
         // Enable extended claims support for the UserInfo endpoints
         EulerAuthorizationServerConfiguration.enableExtendedClaims(http);
 
-        if (StringUtils.hasText(eulerBootAuthorizationServerProperties.getConsentPage())) {
+        if (StringUtils.hasText(eulerAuthorizationServerProperties.getConsentPage())) {
             http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).authorizationEndpoint(configurer ->
-                    configurer.consentPage(eulerBootAuthorizationServerProperties.getConsentPage()));
+                    configurer.consentPage(eulerAuthorizationServerProperties.getConsentPage()));
         }
 
         http
@@ -245,12 +245,12 @@ public class EulerBootAuthorizationServerConfiguration {
         public OAuth2AuthorizationService oauth2AuthorizationService(
                 StringRedisTemplate stringRedisTemplate,
                 RegisteredClientRepository registeredClientRepository,
-                EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties) {
+                EulerAuthorizationServerProperties eulerAuthorizationServerProperties) {
             EulerRedisOAuth2AuthorizationService authorizationService = new EulerRedisOAuth2AuthorizationService(
                     stringRedisTemplate,
                     registeredClientRepository,
-                    eulerBootAuthorizationServerProperties.getAuthorizationLifetime());
-            authorizationService.setKeyPrefix(eulerBootAuthorizationServerProperties.getRedisKeyPrefix());
+                    eulerAuthorizationServerProperties.getAuthorizationLifetime());
+            authorizationService.setKeyPrefix(eulerAuthorizationServerProperties.getRedisKeyPrefix());
             return authorizationService;
         }
 
@@ -259,12 +259,12 @@ public class EulerBootAuthorizationServerConfiguration {
         public OAuth2AuthorizationConsentService oauth2AuthorizationConsentService(
                 StringRedisTemplate stringRedisTemplate,
                 RegisteredClientRepository registeredClientRepository,
-                EulerBootAuthorizationServerProperties eulerBootAuthorizationServerProperties) {
+                EulerAuthorizationServerProperties eulerAuthorizationServerProperties) {
             EulerRedisOAuth2AuthorizationConsentService authorizationConsentService = new EulerRedisOAuth2AuthorizationConsentService(
                     stringRedisTemplate,
                     registeredClientRepository,
-                    eulerBootAuthorizationServerProperties.getAuthorizationLifetime());
-            authorizationConsentService.setKeyPrefix(eulerBootAuthorizationServerProperties.getRedisKeyPrefix());
+                    eulerAuthorizationServerProperties.getAuthorizationLifetime());
+            authorizationConsentService.setKeyPrefix(eulerAuthorizationServerProperties.getRedisKeyPrefix());
             return authorizationConsentService;
         }
     }

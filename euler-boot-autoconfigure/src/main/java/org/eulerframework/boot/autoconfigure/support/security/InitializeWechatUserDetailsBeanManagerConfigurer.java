@@ -33,8 +33,8 @@ public class InitializeWechatUserDetailsBeanManagerConfigurer extends GlobalAuth
                 return;
             }
 
-            EulerBootSecurityAuthenticationWechatProperties properties = InitializeWechatUserDetailsBeanManagerConfigurer.this.context
-                    .getBean(EulerBootSecurityAuthenticationWechatProperties.class);
+            EulerSecurityAuthenticationWechatProperties properties = InitializeWechatUserDetailsBeanManagerConfigurer.this.context
+                    .getBean(EulerSecurityAuthenticationWechatProperties.class);
 
             if (!properties.isEnabled()) {
                 return;

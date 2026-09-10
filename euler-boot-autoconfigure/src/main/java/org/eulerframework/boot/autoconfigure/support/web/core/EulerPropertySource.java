@@ -28,14 +28,14 @@ import org.springframework.util.Assert;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EulerBootPropertySource implements PropertySource {
+public class EulerPropertySource implements PropertySource {
     public static final String SPRING_APPLICATION_NAME = "spring.application.name";
 
-    private static final Map<String, EulerBootPropertiesGetter> CONFIG_VALUE_MAPPING = new HashMap<>();
+    private static final Map<String, EulerPropertiesGetter> CONFIG_VALUE_MAPPING = new HashMap<>();
 
     private final ConfigurableEnvironment environment;
 
-    public EulerBootPropertySource(
+    public EulerPropertySource(
             ConfigurableEnvironment environment,
             MultipartProperties multipartProperties,
             EulerApplicationProperties eulerApplicationProperties,
@@ -97,7 +97,7 @@ public class EulerBootPropertySource implements PropertySource {
     }
 
     @FunctionalInterface
-    private interface EulerBootPropertiesGetter {
+    private interface EulerPropertiesGetter {
         Object get();
     }
 }

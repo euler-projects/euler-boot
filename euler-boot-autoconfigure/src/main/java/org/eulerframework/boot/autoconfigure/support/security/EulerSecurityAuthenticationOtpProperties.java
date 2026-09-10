@@ -49,7 +49,7 @@ import java.util.regex.Pattern;
  * </pre>
  */
 @ConfigurationProperties(prefix = "euler.security.authentication.otp")
-public class EulerBootSecurityAuthenticationOtpProperties {
+public class EulerSecurityAuthenticationOtpProperties {
 
     /**
      * Whether the OTP module is enabled. Default is {@code false}.

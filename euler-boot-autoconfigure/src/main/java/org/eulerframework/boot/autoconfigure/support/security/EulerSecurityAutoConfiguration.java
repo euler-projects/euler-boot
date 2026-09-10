@@ -15,7 +15,7 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security;
 
-import org.eulerframework.boot.autoconfigure.support.data.jpa.EulerBootDataJpaAuditingAutoConfiguration;
+import org.eulerframework.boot.autoconfigure.support.data.jpa.EulerDataJpaAuditingAutoConfiguration;
 import org.eulerframework.security.authentication.ChallengeService;
 import org.eulerframework.security.authentication.InMemoryChallengeService;
 import org.eulerframework.security.authentication.appattest.apple.AppleAppAttestValidationService;
@@ -54,20 +54,20 @@ import java.util.List;
 
 @AutoConfiguration(
         before = {
-                EulerBootDataJpaAuditingAutoConfiguration.class
+                EulerDataJpaAuditingAutoConfiguration.class
         },
         beforeName = {
                 "org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration",
                 "org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration"
         })
 @EnableConfigurationProperties({
-        EulerBootSecurityProperties.class,
-        EulerBootSecurityAuthenticationAppAttestProperties.class,
-        EulerBootSecurityAuthenticationOtpProperties.class,
-        EulerBootSecurityAuthenticationWechatProperties.class
+        EulerSecurityProperties.class,
+        EulerSecurityAuthenticationAppAttestProperties.class,
+        EulerSecurityAuthenticationOtpProperties.class,
+        EulerSecurityAuthenticationWechatProperties.class
 })
 @ConditionalOnClass(DefaultAuthenticationEventPublisher.class)
-public class EulerBootSecurityAutoConfiguration {
+public class EulerSecurityAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(UserContext.class)
@@ -84,7 +84,7 @@ public class EulerBootSecurityAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(JitProvisioningPolicyResolver.class)
     public JitProvisioningPolicyResolver jitProvisioningPolicyResolver(
-            EulerBootSecurityProperties securityProperties) {
+            EulerSecurityProperties securityProperties) {
         return JitProvisioningPropertiesMapper.asResolver(securityProperties.getIdentityType());
     }
 
@@ -131,7 +131,7 @@ public class EulerBootSecurityAutoConfiguration {
         @ConditionalOnBean(AppAttestAppService.class)
         public RegisteredAppRepository appleAppRepository(
                 AppAttestAppService appAttestAppService,
-                EulerBootSecurityAuthenticationAppAttestProperties properties) {
+                EulerSecurityAuthenticationAppAttestProperties properties) {
             return new AppAttestServiceRegisteredAppRepository(
                     appAttestAppService,
                     buildRegisteredApps(properties));
@@ -146,7 +146,7 @@ public class EulerBootSecurityAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean({RegisteredAppRepository.class, AppAttestAppService.class})
         public RegisteredAppRepository inMemoryAppleAppRepository(
-                EulerBootSecurityAuthenticationAppAttestProperties properties,
+                EulerSecurityAuthenticationAppAttestProperties properties,
                 List<RegisteredAppChangeListener> listeners) {
             return new InMemoryRegisteredAppRepository(
                     buildRegisteredApps(properties),
@@ -158,7 +158,7 @@ public class EulerBootSecurityAutoConfiguration {
          * {@link RegisteredApp} instances suitable for preload.
          */
         private static List<RegisteredApp> buildRegisteredApps(
-                EulerBootSecurityAuthenticationAppAttestProperties properties) {
+                EulerSecurityAuthenticationAppAttestProperties properties) {
             return properties.getApps().entrySet().stream()
                     .map(e -> RegisteredApp.withId(e.getKey())
                             .teamId(e.getValue().getTeamId())
@@ -186,7 +186,7 @@ public class EulerBootSecurityAutoConfiguration {
         public AppleAppAttestValidationService appleAppAttestValidationService(
                 RegisteredAppRepository appleAppRepository,
                 AppAttestAttestationRegistrationService registrationService,
-                EulerBootSecurityAuthenticationAppAttestProperties properties) {
+                EulerSecurityAuthenticationAppAttestProperties properties) {
             // Default implementation: bundled Apple Root CA + pure-JDK X.509 / CBOR validation.
             // No webauthn4j dependency required. Applications that prefer the webauthn4j
             // implementation can register their own AppleAppAttestValidationService bean.
@@ -213,7 +213,7 @@ public class EulerBootSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        public OtpPolicyResolver otpPolicyResolver(EulerBootSecurityAuthenticationOtpProperties properties) {
+        public OtpPolicyResolver otpPolicyResolver(EulerSecurityAuthenticationOtpProperties properties) {
             return new StaticOtpPolicyResolver(properties.getPolicy().toOtpPolicy());
         }
 
@@ -227,7 +227,7 @@ public class EulerBootSecurityAutoConfiguration {
         @ConditionalOnMissingBean(OtpTicketService.class)
         @ConditionalOnProperty(prefix = "euler.security.authentication.otp", name = "storage",
                 havingValue = "in-memory", matchIfMissing = true)
-        public OtpTicketService inMemoryOtpTicketService(EulerBootSecurityAuthenticationOtpProperties properties) {
+        public OtpTicketService inMemoryOtpTicketService(EulerSecurityAuthenticationOtpProperties properties) {
             return new InMemoryOtpTicketService(
                     InMemoryOtpTicketService.DEFAULT_MAX_TICKETS,
                     properties.getPolicy().getMaxFailures());
@@ -238,7 +238,7 @@ public class EulerBootSecurityAutoConfiguration {
         @ConditionalOnProperty(prefix = "euler.security.authentication.otp", name = "storage", havingValue = "jdbc")
         @ConditionalOnBean(JdbcOperations.class)
         public OtpTicketService jdbcOtpTicketService(JdbcOperations jdbcOperations,
-                                                     EulerBootSecurityAuthenticationOtpProperties properties) {
+                                                     EulerSecurityAuthenticationOtpProperties properties) {
             return new JdbcOtpTicketService(
                     jdbcOperations,
                     JdbcOtpTicketService.DEFAULT_TABLE_NAME,
@@ -250,7 +250,7 @@ public class EulerBootSecurityAutoConfiguration {
         @ConditionalOnProperty(prefix = "euler.security.authentication.otp", name = "storage", havingValue = "redis")
         //@ConditionalOnBean(StringRedisTemplate.class)
         public OtpTicketService redisOtpTicketService(StringRedisTemplate redisTemplate,
-                                                      EulerBootSecurityAuthenticationOtpProperties properties) {
+                                                      EulerSecurityAuthenticationOtpProperties properties) {
             return new RedisOtpTicketService(redisTemplate, properties.getPolicy().getMaxFailures());
         }
 

@@ -37,7 +37,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * </pre>
  */
 @ConfigurationProperties(prefix = "euler.security.authentication.wechat")
-public class EulerBootSecurityAuthenticationWechatProperties {
+public class EulerSecurityAuthenticationWechatProperties {
 
     /**
      * Whether WeChat login is enabled. Default is {@code false}.

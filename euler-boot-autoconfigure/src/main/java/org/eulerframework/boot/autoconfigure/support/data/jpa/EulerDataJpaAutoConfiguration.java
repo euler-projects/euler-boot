@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Bean;
 
 @AutoConfiguration
 @ConditionalOnClass(EntityManager.class)
-public class EulerBootDataJpaAutoConfiguration {
+public class EulerDataJpaAutoConfiguration {
     @Bean
     @ConditionalOnClass(JPAQueryFactory.class)
     @ConditionalOnMissingBean(JPAQueryFactory.class)

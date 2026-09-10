@@ -23,5 +23,5 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 @EnableConfigurationProperties({
         EulerApplicationProperties.class
 })
-public class EulerBootAutoConfiguration {
+public class EulerAutoConfiguration {
 }

@@ -47,7 +47,7 @@ public class JitProvisioningPropertiesMapperTests {
 
     @Test
     public void declaredIdentityTypeOverridesAuthorities() {
-        EulerBootSecurityProperties.IdentityType corpAccount = identityType(it ->
+        EulerSecurityProperties.IdentityType corpAccount = identityType(it ->
                 it.getJitProvisioning().setDefaultAuthorities(new String[]{"user", "staff"}));
 
         JitProvisioningPolicyResolver resolver =
@@ -59,7 +59,7 @@ public class JitProvisioningPropertiesMapperTests {
 
     @Test
     public void explicitlyDisabledIdentityTypeRejectsProvisioning() {
-        EulerBootSecurityProperties.IdentityType device = identityType(it ->
+        EulerSecurityProperties.IdentityType device = identityType(it ->
                 it.getJitProvisioning().setEnabled(false));
 
         JitProvisioningPolicyResolver resolver =
@@ -71,7 +71,7 @@ public class JitProvisioningPropertiesMapperTests {
 
     @Test
     public void declarationsOfSeveralIdentityTypesAreIndependent() {
-        Map<String, EulerBootSecurityProperties.IdentityType> identityTypes = new LinkedHashMap<>();
+        Map<String, EulerSecurityProperties.IdentityType> identityTypes = new LinkedHashMap<>();
         identityTypes.put("phone", identityType(it ->
                 it.getJitProvisioning().setDefaultAuthorities(new String[]{"user"})));
         identityTypes.put("device", identityType(it ->
@@ -90,16 +90,16 @@ public class JitProvisioningPropertiesMapperTests {
     @Test
     public void emptyIdentityTypeDeclarationUsesDefaults() {
         JitProvisioningPolicyResolver resolver = JitProvisioningPropertiesMapper.asResolver(
-                Map.of("phone", new EulerBootSecurityProperties.IdentityType()));
+                Map.of("phone", new EulerSecurityProperties.IdentityType()));
 
         assertTrue(resolver.resolve("phone").isEnabled());
         assertEquals(List.of("user"), resolver.resolve("phone").getDefaultAuthorities());
     }
 
-    private static EulerBootSecurityProperties.IdentityType identityType(
-            Consumer<EulerBootSecurityProperties.IdentityType> customizer) {
-        EulerBootSecurityProperties.IdentityType identityType =
-                new EulerBootSecurityProperties.IdentityType();
+    private static EulerSecurityProperties.IdentityType identityType(
+            Consumer<EulerSecurityProperties.IdentityType> customizer) {
+        EulerSecurityProperties.IdentityType identityType =
+                new EulerSecurityProperties.IdentityType();
         customizer.accept(identityType);
         return identityType;
     }

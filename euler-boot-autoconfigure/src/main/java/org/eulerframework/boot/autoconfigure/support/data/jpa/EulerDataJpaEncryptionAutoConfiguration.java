@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 
 /**
  * Wires the JPA-layer data-encryption stack from
- * {@link EulerBootDataJpaEncryptionProperties}.
+ * {@link EulerDataJpaEncryptionProperties}.
  *
  * <p>The {@link DataCipher} bean produced here is the single injection point
  * used by every {@code AbstractEncryptedAttributeConverter} in the
@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
  * <p>Bean layout:
  * <ul>
  *   <li>{@link KeyRepository} — {@link InMemoryKeyRepository} built from
- *       {@link EulerBootDataJpaEncryptionProperties#getKeys()}.</li>
+ *       {@link EulerDataJpaEncryptionProperties#getKeys()}.</li>
  *   <li>{@link NoopDataCipher} — always registered; can be selected as
  *       {@code primary-alg} to disable encryption for new writes while still
  *       decrypting historical ciphertexts written under other algorithms.</li>
@@ -60,7 +60,7 @@ import java.util.stream.Collectors;
  *   <li>{@link DelegatingDataCipher} (exposed as {@link DataCipher}) — the
  *       bean consumed by every encrypted attribute converter. Its primary
  *       cipher follows
- *       {@link EulerBootDataJpaEncryptionProperties#getPrimaryAlg()}.</li>
+ *       {@link EulerDataJpaEncryptionProperties#getPrimaryAlg()}.</li>
  * </ul>
  *
  * <p>The whole auto-configuration is skipped unless at least one property
@@ -71,36 +71,36 @@ import java.util.stream.Collectors;
  */
 @AutoConfiguration
 @ConditionalOnClass({DataCipher.class, EntityManager.class})
-@Conditional(EulerBootDataJpaEncryptionAutoConfiguration.OnEncryptionPropertiesPresent.class)
-@EnableConfigurationProperties(EulerBootDataJpaEncryptionProperties.class)
-public class EulerBootDataJpaEncryptionAutoConfiguration {
+@Conditional(EulerDataJpaEncryptionAutoConfiguration.OnEncryptionPropertiesPresent.class)
+@EnableConfigurationProperties(EulerDataJpaEncryptionProperties.class)
+public class EulerDataJpaEncryptionAutoConfiguration {
 
     private static final String PROPERTY_PREFIX = "euler.data.jpa.encryption";
 
     @Bean
     @ConditionalOnMissingBean
-    public KeyRepository dataJpaEncryptionKeyRepository(EulerBootDataJpaEncryptionProperties properties) {
+    public KeyRepository dataJpaEncryptionKeyRepository(EulerDataJpaEncryptionProperties properties) {
         InMemoryKeyRepository.Builder builder = InMemoryKeyRepository.builder();
-        Map<String, EulerBootDataJpaEncryptionProperties.KeyDefinition> keys = properties.getKeys();
+        Map<String, EulerDataJpaEncryptionProperties.KeyDefinition> keys = properties.getKeys();
         if (keys.isEmpty()) {
             return builder.build();
         }
 
         // Group entries by alg for primary validation
-        Map<String, List<Map.Entry<String, EulerBootDataJpaEncryptionProperties.KeyDefinition>>> byAlg =
+        Map<String, List<Map.Entry<String, EulerDataJpaEncryptionProperties.KeyDefinition>>> byAlg =
                 keys.entrySet().stream()
                         .collect(Collectors.groupingBy(
                                 e -> normalizeAlg(e.getValue().getAlg()),
                                 LinkedHashMap::new,
                                 Collectors.toList()));
 
-        for (Map.Entry<String, List<Map.Entry<String, EulerBootDataJpaEncryptionProperties.KeyDefinition>>> algGroup
+        for (Map.Entry<String, List<Map.Entry<String, EulerDataJpaEncryptionProperties.KeyDefinition>>> algGroup
                 : byAlg.entrySet()) {
             String alg = algGroup.getKey();
-            List<Map.Entry<String, EulerBootDataJpaEncryptionProperties.KeyDefinition>> entries = algGroup.getValue();
+            List<Map.Entry<String, EulerDataJpaEncryptionProperties.KeyDefinition>> entries = algGroup.getValue();
 
             // Validate exactly one primary per algorithm
-            List<Map.Entry<String, EulerBootDataJpaEncryptionProperties.KeyDefinition>> primaries = entries.stream()
+            List<Map.Entry<String, EulerDataJpaEncryptionProperties.KeyDefinition>> primaries = entries.stream()
                     .filter(e -> e.getValue().isPrimary())
                     .toList();
             if (primaries.isEmpty()) {
@@ -121,9 +121,9 @@ public class EulerBootDataJpaEncryptionAutoConfiguration {
             String primaryKid = primaries.getFirst().getValue().getKid();
             builder.primaryKid(alg, primaryKid);
 
-            for (Map.Entry<String, EulerBootDataJpaEncryptionProperties.KeyDefinition> entry : entries) {
+            for (Map.Entry<String, EulerDataJpaEncryptionProperties.KeyDefinition> entry : entries) {
                 String logicalId = entry.getKey();
-                EulerBootDataJpaEncryptionProperties.KeyDefinition def = entry.getValue();
+                EulerDataJpaEncryptionProperties.KeyDefinition def = entry.getValue();
                 if (!StringUtils.hasText(def.getKid())) {
                     throw new IllegalStateException(
                             PROPERTY_PREFIX + ".keys." + logicalId + ".kid is required");
@@ -146,7 +146,7 @@ public class EulerBootDataJpaEncryptionAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public DataCipher dataJpaEncryptionDataCipher(EulerBootDataJpaEncryptionProperties properties,
+    public DataCipher dataJpaEncryptionDataCipher(EulerDataJpaEncryptionProperties properties,
                                                   KeyRepository keyRepository) {
         String primaryAlg = properties.getPrimaryAlg();
         if (!StringUtils.hasText(primaryAlg)) {

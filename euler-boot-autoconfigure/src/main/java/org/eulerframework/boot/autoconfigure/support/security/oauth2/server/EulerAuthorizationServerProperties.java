@@ -20,7 +20,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.time.Duration;
 
 @ConfigurationProperties(prefix = "euler.security.oauth2.authorizationserver")
-public class EulerBootAuthorizationServerProperties {
+public class EulerAuthorizationServerProperties {
     private TokenStoreType authorizationStoreType = TokenStoreType.IN_MEMORY;
     private Duration authorizationLifetime = Duration.ofDays(7);
     private String redisKeyPrefix = "euler:oauth2:auth";

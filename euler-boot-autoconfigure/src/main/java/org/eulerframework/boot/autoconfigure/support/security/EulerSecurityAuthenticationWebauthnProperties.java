@@ -18,7 +18,7 @@ package org.eulerframework.boot.autoconfigure.support.security;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "euler.security.authentication.webauthn")
-public class EulerBootSecurityAuthenticationWebauthnProperties {
+public class EulerSecurityAuthenticationWebauthnProperties {
     private boolean enabled = false;
     private String rpId;
     private String[] allowedOrigins;

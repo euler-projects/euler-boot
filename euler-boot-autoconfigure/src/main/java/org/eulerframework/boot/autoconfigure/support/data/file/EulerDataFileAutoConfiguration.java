@@ -37,8 +37,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 @AutoConfiguration
 @ConditionalOnClass(FileStorage.class)
-@EnableConfigurationProperties(EulerBootDataFileProperties.class)
-public class EulerBootDataFileAutoConfiguration {
+@EnableConfigurationProperties(EulerDataFileProperties.class)
+public class EulerDataFileAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(FileIndexRegistry.class)
@@ -64,13 +64,13 @@ public class EulerBootDataFileAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnProperty(prefix = "euler.data.file.jdbc-storage", name = "enabled", havingValue = "true")
-    public static class EulerBootDataJdbcFileStorageConfiguration {
+    public static class EulerDataJdbcFileStorageConfiguration {
         @Bean
         public JdbcFileStorage jdbcFileStorage(
                 JdbcTemplate jdbcTemplate,
                 FileIndexRegistry fileIndexRegistry,
                 FileTokenRegistry fileTokenRegistry,
-                EulerBootDataFileProperties properties) {
+                EulerDataFileProperties properties) {
             JdbcFileStorage jdbcFileStorage = new JdbcFileStorage(jdbcTemplate,
                     properties.getLocalStorage().getFileDownloadUrlTemplate(),
                     fileIndexRegistry, fileTokenRegistry);
@@ -98,13 +98,13 @@ public class EulerBootDataFileAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnProperty(prefix = "euler.data.file.local-storage", name = "enabled", havingValue = "true")
-    public static class EulerBootDataLocalFileStorageConfiguration {
+    public static class EulerDataLocalFileStorageConfiguration {
         @Bean
         public LocalFileStorage localFileStorage(
                 JdbcTemplate jdbcTemplate,
                 FileIndexRegistry fileIndexRegistry,
                 FileTokenRegistry fileTokenRegistry,
-                EulerBootDataFileProperties properties) {
+                EulerDataFileProperties properties) {
             return new LocalFileStorage(jdbcTemplate,
                     properties.getLocalStorage().getFileDownloadUrlTemplate(),
                     properties.getLocalStorage().getBaseDir(),

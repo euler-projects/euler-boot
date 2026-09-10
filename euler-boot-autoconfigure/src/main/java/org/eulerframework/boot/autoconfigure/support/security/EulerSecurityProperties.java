@@ -22,7 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @ConfigurationProperties(prefix = "euler.security")
-public class EulerBootSecurityProperties {
+public class EulerSecurityProperties {
 
     /**
      * Per-identity-type settings, keyed by the identity type stored as

@@ -15,8 +15,8 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.resource;
 
-import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAutoConfiguration;
-import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootSecurityWebAutoConfiguration;
+import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityAutoConfiguration;
+import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerSecurityWebAutoConfiguration;
 import org.eulerframework.security.core.context.DelegatingUserContext;
 import org.eulerframework.security.core.context.UserContext;
 import org.eulerframework.security.core.context.UserDetailsPrincipalUserContext;
@@ -37,22 +37,22 @@ import org.springframework.security.oauth2.server.resource.authentication.Bearer
                 // Ensure the resource server's Spring Security overrides take effect,
                 // including but not limited to:
                 // - Preferring the resource server's UserContext
-                EulerBootSecurityWebAutoConfiguration.class,
-                EulerBootSecurityAutoConfiguration.class,
+                EulerSecurityWebAutoConfiguration.class,
+                EulerSecurityAutoConfiguration.class,
 
                 // Supersede Spring's default resource server auto-configuration
                 OAuth2ResourceServerAutoConfiguration.class
         })
-@EnableConfigurationProperties(EulerBootResourceServerProperties.class)
+@EnableConfigurationProperties(EulerResourceServerProperties.class)
 @ConditionalOnClass(BearerTokenAuthenticationToken.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @Import({
-        EulerBootResourceServerConfiguration.LocalAuthorizationServerResourceServerConfiguration.class,
-        EulerBootResourceServerConfiguration.OpaqueTokenResourceServerConfiguration.class,
-        EulerBootResourceServerConfiguration.JwkSetUriResourceServerConfiguration.class,
-        EulerBootResourceServerConfiguration.KeyValueJwtResourceServerConfiguration.class
+        EulerResourceServerSecurityConfiguration.LocalAuthorizationServerResourceServerConfiguration.class,
+        EulerResourceServerSecurityConfiguration.OpaqueTokenResourceServerConfiguration.class,
+        EulerResourceServerSecurityConfiguration.JwkSetUriResourceServerConfiguration.class,
+        EulerResourceServerSecurityConfiguration.KeyValueJwtResourceServerConfiguration.class
 })
-public class EulerBootResourceServerAutoConfiguration {
+public class EulerResourceServerAutoConfiguration {
     @Bean
     public ResourceServerUserDetailsProvider resourceServerUserDetailsProvider() {
         return new ResourceServerUserDetailsProvider();

@@ -19,7 +19,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.unit.DataSize;
 
 @ConfigurationProperties(prefix = "euler.data.file")
-public class EulerBootDataFileProperties {
+public class EulerDataFileProperties {
     private JdbcStorage jdbcStorage = new JdbcStorage();
     private LocalStorage localStorage = new LocalStorage();
 

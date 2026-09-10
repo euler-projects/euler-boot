@@ -90,8 +90,8 @@ import java.util.Map;
 
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(prefix = "euler.security.web", name = "enabled", havingValue = "true")
-public class EulerBootWebSecurityConfiguration {
-    private final Logger logger = LoggerFactory.getLogger(EulerBootWebSecurityConfiguration.class);
+public class EulerWebSecurityConfiguration {
+    private final Logger logger = LoggerFactory.getLogger(EulerWebSecurityConfiguration.class);
 
     /**
      * Shared {@link CsrfTokenRepository} used by both the default web security
@@ -135,24 +135,24 @@ public class EulerBootWebSecurityConfiguration {
             @Qualifier(SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
             LoginPageAuthenticationEntryPoint loginPageEntryPoint,
             CsrfTokenRepository csrfTokenRepository,
-            EulerBootSecurityProperties eulerBootSecurityProperties,
-            EulerSecurityLoginMethodPasswordProperties eulerBootSecurityLoginMethodPasswordProperties,
+            EulerSecurityProperties eulerSecurityProperties,
+            EulerSecurityLoginMethodPasswordProperties eulerSecurityLoginMethodPasswordProperties,
             EulerSecurityLoginMethodOtpProperties eulerSecurityLoginMethodOtpProperties,
             EulerSecurityLoginMethodOAuth2Properties eulerSecurityLoginMethodOAuth2Properties,
-            EulerBootSecurityWebProperties eulerBootSecurityWebProperties,
-            EulerBootSecurityAuthenticationWebauthnProperties eulerBootSecurityWebAuthnProperties,
-            EulerBootSecurityWebEndpointProperties eulerSecurityWebEndpointProperties,
-            EulerBootSecurityAuthenticationAppAttestProperties eulerBootSecurityAppAttestProperties,
-            EulerBootSecurityAuthenticationOtpProperties eulerBootSecurityOtpProperties,
+            EulerSecurityWebProperties eulerSecurityWebProperties,
+            EulerSecurityAuthenticationWebauthnProperties eulerSecurityWebAuthnProperties,
+            EulerSecurityWebEndpointProperties eulerSecurityWebEndpointProperties,
+            EulerSecurityAuthenticationAppAttestProperties eulerSecurityAppAttestProperties,
+            EulerSecurityAuthenticationOtpProperties eulerSecurityOtpProperties,
             DefaultLoginMethodService loginMethodService,
             JitProvisioningPolicyResolver jitProvisioningPolicyResolver,
             ObjectProvider<WebAuthnPresent> wenAuthnPresent,
             ObjectProvider<OAuth2LoginPresent> oauth2LoginPresent) throws Exception {
-        Assert.isTrue(eulerBootSecurityWebProperties.isEnabled(), "euler web properties disabled, can not init defaultSecurityFilterChain");
+        Assert.isTrue(eulerSecurityWebProperties.isEnabled(), "euler web properties disabled, can not init defaultSecurityFilterChain");
         this.logger.debug("Create default security filter chain");
 
-        String[] urlPatterns = eulerBootSecurityWebProperties.getUrlPatterns();
-        String[] ignoredUrlPatterns = eulerBootSecurityWebProperties.getIgnoredUrlPatterns();
+        String[] urlPatterns = eulerSecurityWebProperties.getUrlPatterns();
+        String[] ignoredUrlPatterns = eulerSecurityWebProperties.getIgnoredUrlPatterns();
         SecurityFilterUtils.configSecurityMatcher(http, urlPatterns, ignoredUrlPatterns);
 //        DefaultLogoutPageGeneratingFilter defaultLogoutPageGeneratingFilter = new DefaultLogoutPageGeneratingFilter();
 //        defaultLogoutPageGeneratingFilter.setResolveHiddenInputs(this::hiddenInputs);
@@ -180,7 +180,7 @@ public class EulerBootWebSecurityConfiguration {
                 new SimpleUrlAuthenticationFailureHandler(
                         eulerSecurityWebEndpointProperties.getUser().getLoginPage() + "?error"));
 
-        String otpLoginEndpointUri = eulerBootSecurityOtpProperties.getLoginEndpointUri();
+        String otpLoginEndpointUri = eulerSecurityOtpProperties.getLoginEndpointUri();
 
         http
                 .authorizeHttpRequests(authorize -> {
@@ -243,7 +243,7 @@ public class EulerBootWebSecurityConfiguration {
                     .loginMethodService(loginMethodService));
         }
 
-        if (eulerBootSecurityWebAuthnProperties.isEnabled()) {
+        if (eulerSecurityWebAuthnProperties.isEnabled()) {
             if (wenAuthnPresent.getIfAvailable() == null) {
                 throw new IllegalStateException("WebAuthn is enabled but the required dependency is missing. " +
                         "Please add the org.eulerframework:euler-security-webauthn dependency to your project.");
@@ -251,12 +251,12 @@ public class EulerBootWebSecurityConfiguration {
             logger.debug("WebAuthn dependency detected and enabled, configuring WebAuthn support.");
             http
                     .webAuthn((webAuthn) -> webAuthn
-                            .rpId(eulerBootSecurityWebAuthnProperties.getRpId())
-                            .allowedOrigins(eulerBootSecurityWebAuthnProperties.getAllowedOrigins())
+                            .rpId(eulerSecurityWebAuthnProperties.getRpId())
+                            .allowedOrigins(eulerSecurityWebAuthnProperties.getAllowedOrigins())
                     );
         }
 
-        if (eulerBootSecurityAppAttestProperties.isEnabled()) {
+        if (eulerSecurityAppAttestProperties.isEnabled()) {
             // App Attest core classes live in euler-security-web (AppAttestSecurityConfigurer)
             // and euler-security-core (DefaultAppleAppAttestValidationService), both of which
             // are non-optional transitive dependencies of this autoconfigure module. No
@@ -267,10 +267,10 @@ public class EulerBootWebSecurityConfiguration {
                             .resolve(JitProvisioningPolicyResolver.IDENTITY_TYPE_DEVICE)));
         }
 
-        if (eulerBootSecurityOtpProperties.isEnabled()) {
+        if (eulerSecurityOtpProperties.isEnabled()) {
             logger.debug("OTP module enabled, configuring one-time-password login.");
             OtpTestAccountSupport otpTestAccountSupport = null;
-            EulerBootSecurityAuthenticationOtpProperties.Test test = eulerBootSecurityOtpProperties.getTest();
+            EulerSecurityAuthenticationOtpProperties.Test test = eulerSecurityOtpProperties.getTest();
             if (test != null && test.isUsable()) {
                 otpTestAccountSupport = new OtpTestAccountSupport(test.getAccounts(), test.getFixedOtp());
                 logger.warn("OTP test-account short-circuit is ENABLED ({} account(s)) - DO NOT use in production.",
@@ -282,12 +282,12 @@ public class EulerBootWebSecurityConfiguration {
                     .loginProcessingUrl(otpLoginEndpointUri)
                     .successHandler(loginSuccessHandler)
                     .failureHandler(loginFailureHandler)
-                    .issueEndpointUri(eulerBootSecurityOtpProperties.getIssueEndpointUri())
+                    .issueEndpointUri(eulerSecurityOtpProperties.getIssueEndpointUri())
                     .testAccountSupport(otpTestAccountSupportFinal));
         }
 
         boolean anyOtpLoginMethod = !eulerSecurityLoginMethodOtpProperties.getOtp().isEmpty();
-        if (anyOtpLoginMethod && !eulerBootSecurityOtpProperties.isEnabled()) {
+        if (anyOtpLoginMethod && !eulerSecurityOtpProperties.isEnabled()) {
             throw new IllegalStateException("At least one entry is declared under " +
                     "euler.security.login-method.otp " +
                     "but the OTP mechanism is disabled. Please set " +
@@ -335,10 +335,10 @@ public class EulerBootWebSecurityConfiguration {
     @Bean(SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
     @ConditionalOnMissingBean(name = SecurityFilterChainBeanNames.LOGIN_PAGE_AUTHENTICATION_ENTRY_POINT)
     public LoginPageAuthenticationEntryPoint loginPageAuthenticationEntryPoint(
-            EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties) {
+            EulerSecurityWebEndpointProperties eulerSecurityWebEndpointProperties) {
         LoginPageAuthenticationEntryPoint loginUrlAuthenticationEntryPoint = new LoginPageAuthenticationEntryPoint();
-        loginUrlAuthenticationEntryPoint.setLoginPage(eulerBootSecurityWebEndpointProperties.getUser().getLoginPage());
-        loginUrlAuthenticationEntryPoint.setRedirectParameter(eulerBootSecurityWebEndpointProperties.getUser().getLoginSuccessRedirectParameter());
+        loginUrlAuthenticationEntryPoint.setLoginPage(eulerSecurityWebEndpointProperties.getUser().getLoginPage());
+        loginUrlAuthenticationEntryPoint.setRedirectParameter(eulerSecurityWebEndpointProperties.getUser().getLoginSuccessRedirectParameter());
         return loginUrlAuthenticationEntryPoint;
     }
 
@@ -372,14 +372,14 @@ public class EulerBootWebSecurityConfiguration {
         @Bean
         public EulerSecurityUserPageController eulerSecurityUserPageController(
                 PageRender pageRender, LoginMethodService loginMethodService,
-                EulerBootSecurityWebEndpointProperties eulerBootSecurityWebEndpointProperties) {
+                EulerSecurityWebEndpointProperties eulerSecurityWebEndpointProperties) {
             EulerSecurityUserPageController controller =
                     new EulerSecurityUserPageController(pageRender, loginMethodService);
             // The bound list is what lets a YAML sequence reach the page:
             // binding a sequence yields indexed keys the controller's own
             // @Value fallback cannot read.
             controller.setLoginPageMethods(
-                    eulerBootSecurityWebEndpointProperties.getUser().getLoginPageMethods());
+                    eulerSecurityWebEndpointProperties.getUser().getLoginPageMethods());
             return controller;
         }
     }

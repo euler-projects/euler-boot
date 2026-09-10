@@ -60,7 +60,7 @@ public final class JitProvisioningPropertiesMapper {
      *                      {@code null} is treated as empty
      */
     public static JitProvisioningPolicyResolver asResolver(
-            Map<String, EulerBootSecurityProperties.IdentityType> identityTypes) {
+            Map<String, EulerSecurityProperties.IdentityType> identityTypes) {
         JitProvisioningPolicy defaultPolicy = asPolicy(new JitProvisioning());
         Map<String, JitProvisioningPolicy> policies = new LinkedHashMap<>();
         if (identityTypes != null) {

@@ -46,7 +46,7 @@ import java.util.Map;
  * </pre>
  */
 @ConfigurationProperties(prefix = "euler.security.authentication.app-attest")
-public class EulerBootSecurityAuthenticationAppAttestProperties {
+public class EulerSecurityAuthenticationAppAttestProperties {
 
     /**
      * Whether device attestation is enabled. Default is {@code false}.

@@ -22,7 +22,7 @@ import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
-import org.eulerframework.boot.autoconfigure.support.security.oauth2.server.EulerBootAuthorizationServerJwkProperties.KeyDefinition;
+import org.eulerframework.boot.autoconfigure.support.security.oauth2.server.EulerAuthorizationServerJwkProperties.KeyDefinition;
 import org.eulerframework.security.jwk.JwkEntry;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;

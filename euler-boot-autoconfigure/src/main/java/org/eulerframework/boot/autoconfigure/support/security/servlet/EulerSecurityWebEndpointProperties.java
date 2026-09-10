@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ConfigurationProperties(prefix = EulerSecurityEndpoints.PROPERTY_NAME_PREFIX)
-public class EulerBootSecurityWebEndpointProperties {
+public class EulerSecurityWebEndpointProperties {
 
     /**
      * CSRF token endpoint settings.

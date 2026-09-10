@@ -30,7 +30,7 @@ import java.util.Optional;
 
 @AutoConfiguration
 @ConditionalOnBean(AuditingEntityListener.class)
-public class EulerBootDataJpaAuditingAutoConfiguration {
+public class EulerDataJpaAuditingAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnBean(UserContext.class)

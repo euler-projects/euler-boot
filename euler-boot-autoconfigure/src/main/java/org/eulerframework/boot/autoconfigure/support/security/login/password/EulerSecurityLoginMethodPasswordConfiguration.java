@@ -17,7 +17,7 @@ package org.eulerframework.boot.autoconfigure.support.security.login.password;
 
 import org.eulerframework.boot.autoconfigure.support.security.login.BaseLoginMethodConfiguration;
 import org.eulerframework.boot.autoconfigure.support.security.login.LoginMethodConfiguration;
-import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootSecurityWebEndpointProperties;
+import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerSecurityWebEndpointProperties;
 import org.eulerframework.security.web.login.PasswordLoginMethodHandler;
 import org.eulerframework.security.web.login.RegisteredLoginMethod;
 import org.eulerframework.security.web.login.RegisteredPasswordLoginMethod;
@@ -43,7 +43,7 @@ public class EulerSecurityLoginMethodPasswordConfiguration implements LoginMetho
     @Bean
     @ConditionalOnMissingBean(PasswordLoginMethodHandler.class)
     public PasswordLoginMethodHandler passwordLoginMethodHandler(
-            EulerBootSecurityWebEndpointProperties endpointProperties) {
+            EulerSecurityWebEndpointProperties endpointProperties) {
         return new PasswordLoginMethodHandler(
                 endpointProperties.getUser().getLoginProcessingUrl(),
                 endpointProperties.getUser().getLoginPage(),

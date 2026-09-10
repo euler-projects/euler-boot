@@ -32,14 +32,14 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * Pins the credential discrimination of
- * {@link EulerBootResourceServerConfiguration.SessionAwareCsrfProtectionMatcher}:
+ * {@link EulerResourceServerSecurityConfiguration.SessionAwareCsrfProtectionMatcher}:
  * CSRF is owed by session-borne callers only, never by safe methods,
  * anonymous callers or Bearer callers.
  */
 public class SessionAwareCsrfProtectionMatcherTests {
 
-    private final EulerBootResourceServerConfiguration.SessionAwareCsrfProtectionMatcher matcher =
-            new EulerBootResourceServerConfiguration.SessionAwareCsrfProtectionMatcher();
+    private final EulerResourceServerSecurityConfiguration.SessionAwareCsrfProtectionMatcher matcher =
+            new EulerResourceServerSecurityConfiguration.SessionAwareCsrfProtectionMatcher();
 
     @After
     public void clearContext() {

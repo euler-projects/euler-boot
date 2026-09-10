@@ -19,7 +19,7 @@ import org.eulerframework.boot.autoconfigure.support.security.login.oauth2.Euler
 import org.eulerframework.boot.autoconfigure.support.security.login.otp.EulerSecurityLoginMethodOtpConfiguration;
 import org.eulerframework.boot.autoconfigure.support.security.login.password.EulerSecurityLoginMethodPasswordConfiguration;
 import org.eulerframework.boot.autoconfigure.support.security.login.password.EulerSecurityLoginMethodPasswordProperties;
-import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootSecurityWebAutoConfiguration;
+import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerSecurityWebAutoConfiguration;
 import org.eulerframework.security.web.login.*;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -41,7 +41,7 @@ import java.util.List;
 @AutoConfiguration(
         // make sure LoginMethodService has bean created
         // before EulerSecurityUserEndpoint
-        before = EulerBootSecurityWebAutoConfiguration.class,
+        before = EulerSecurityWebAutoConfiguration.class,
         // Wait for Spring Boot to publish the default
         // ClientRegistrationRepository, which the oauth2 type's handler
         // is conditional on. Named rather than typed: OAuth2 client

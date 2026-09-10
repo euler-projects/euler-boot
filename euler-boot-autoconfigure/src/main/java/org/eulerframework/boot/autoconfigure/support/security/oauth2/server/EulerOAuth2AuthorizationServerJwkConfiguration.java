@@ -16,7 +16,7 @@
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
 import com.nimbusds.jose.jwk.JWK;
-import org.eulerframework.boot.autoconfigure.support.security.oauth2.server.EulerBootAuthorizationServerJwkProperties.KeyDefinition;
+import org.eulerframework.boot.autoconfigure.support.security.oauth2.server.EulerAuthorizationServerJwkProperties.KeyDefinition;
 import org.eulerframework.boot.autoconfigure.support.security.oauth2.server.util.JwkEntryParser;
 import org.eulerframework.security.jwk.*;
 import org.eulerframework.security.jwk.source.ManagedJwkSource;
@@ -128,7 +128,7 @@ public class EulerOAuth2AuthorizationServerJwkConfiguration {
         @ConditionalOnBean(JwkManageService.class)
         JwkRepository managedJwkRepository(
                 JwkManageService manageService,
-                EulerBootAuthorizationServerJwkProperties props,
+                EulerAuthorizationServerJwkProperties props,
                 ResourceLoader resourceLoader) {
             List<JwkEntry> initialEntries = parseJwkEntries(props.getKeys().values(), new JwkEntryParser(resourceLoader));
             ManagedJwkRepository repository = new ManagedJwkRepository(manageService, initialEntries);
@@ -141,7 +141,7 @@ public class EulerOAuth2AuthorizationServerJwkConfiguration {
                 JwkRepository.class,
                 JwkManageService.class
         })
-        JwkRepository inMemoryJwkRepository(EulerBootAuthorizationServerJwkProperties props,
+        JwkRepository inMemoryJwkRepository(EulerAuthorizationServerJwkProperties props,
                                             ResourceLoader resourceLoader) {
             List<JwkEntry> initialEntries = parseJwkEntries(props.getKeys().values(), new JwkEntryParser(resourceLoader));
             InMemoryJwkRepository repository = new InMemoryJwkRepository(initialEntries);

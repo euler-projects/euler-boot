@@ -53,8 +53,8 @@ public class InitializeOneTimePasswordAuthenticationProviderManagerConfigurer ex
     class InitializeOtpManagerConfigurer extends GlobalAuthenticationConfigurerAdapter {
         @Override
         public void configure(AuthenticationManagerBuilder auth) {
-            EulerBootSecurityAuthenticationOtpProperties properties = InitializeOneTimePasswordAuthenticationProviderManagerConfigurer.this.context
-                    .getBeanProvider(EulerBootSecurityAuthenticationOtpProperties.class)
+            EulerSecurityAuthenticationOtpProperties properties = InitializeOneTimePasswordAuthenticationProviderManagerConfigurer.this.context
+                    .getBeanProvider(EulerSecurityAuthenticationOtpProperties.class)
                     .getIfAvailable();
             if (properties == null || !properties.isEnabled()) {
                 return;

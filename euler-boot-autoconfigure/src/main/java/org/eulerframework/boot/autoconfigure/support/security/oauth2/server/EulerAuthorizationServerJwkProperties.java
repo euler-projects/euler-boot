@@ -39,12 +39,12 @@ import java.util.Map;
  *       baseline.</li>
  * </ul>
  * <p>
- * Extracted from {@code EulerBootAuthorizationServerProperties} to keep the JWK
+ * Extracted from {@code EulerAuthorizationServerProperties} to keep the JWK
  * surface flat and discoverable; the property path {@code
  * euler.security.oauth2.authorizationserver.jwk.*} is preserved for end users.
  */
 @ConfigurationProperties(prefix = "euler.security.oauth2.authorizationserver.jwk")
-public class EulerBootAuthorizationServerJwkProperties {
+public class EulerAuthorizationServerJwkProperties {
 
     /**
      * Pre-configured keys keyed by an opaque logical id. Iteration preserves

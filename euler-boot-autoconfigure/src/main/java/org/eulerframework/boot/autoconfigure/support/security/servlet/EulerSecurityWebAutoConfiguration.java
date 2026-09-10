@@ -15,9 +15,9 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.servlet;
 
-import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAuthenticationWebauthnProperties;
-import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAutoConfiguration;
-import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityProperties;
+import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityAuthenticationWebauthnProperties;
+import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityAutoConfiguration;
+import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityProperties;
 import org.eulerframework.security.core.userdetails.EulerUserDetails;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -27,7 +27,7 @@ import org.springframework.context.annotation.Import;
 
 @AutoConfiguration(
         before = {
-                EulerBootSecurityAutoConfiguration.class
+                EulerSecurityAutoConfiguration.class
         },
         beforeName = {
                 "org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration",
@@ -43,15 +43,15 @@ import org.springframework.context.annotation.Import;
         }
 )
 @EnableConfigurationProperties({
-        EulerBootSecurityProperties.class,
-        EulerBootSecurityWebProperties.class,
-        EulerBootSecurityAuthenticationWebauthnProperties.class,
-        EulerBootSecurityWebEndpointProperties.class})
+        EulerSecurityProperties.class,
+        EulerSecurityWebProperties.class,
+        EulerSecurityAuthenticationWebauthnProperties.class,
+        EulerSecurityWebEndpointProperties.class})
 @ConditionalOnClass(EulerUserDetails.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @Import({
-        EulerBootWebSecurityConfiguration.class,
+        EulerWebSecurityConfiguration.class,
         EulerUserDetailsServiceConfiguration.class
 })
-public class EulerBootSecurityWebAutoConfiguration {
+public class EulerSecurityWebAutoConfiguration {
 }

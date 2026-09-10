@@ -15,9 +15,9 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
-import org.eulerframework.boot.autoconfigure.support.security.EulerBootSecurityAutoConfiguration;
-import org.eulerframework.boot.autoconfigure.support.security.oauth2.resource.EulerBootResourceServerAutoConfiguration;
-import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerBootSecurityWebAutoConfiguration;
+import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityAutoConfiguration;
+import org.eulerframework.boot.autoconfigure.support.security.oauth2.resource.EulerResourceServerAutoConfiguration;
+import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerSecurityWebAutoConfiguration;
 import org.eulerframework.security.core.context.DelegatingUserContext;
 import org.eulerframework.security.core.context.UserContext;
 import org.eulerframework.security.core.context.UserDetailsPrincipalUserContext;
@@ -40,13 +40,13 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
         // built-in resource server overrides take effect, including but not limited to:
         // - Activating OAuth2NativeTokenAuthenticationManager via OAuth2AuthorizationService bean detection
         // - Preferring the authorization server's UserContext
-        EulerBootResourceServerAutoConfiguration.class,
+        EulerResourceServerAutoConfiguration.class,
 
         // Ensure the authorization server's Spring Security overrides take effect,
         // including but not limited to:
         // - Preferring the authorization server's UserContext
-        EulerBootSecurityWebAutoConfiguration.class,
-        EulerBootSecurityAutoConfiguration.class,
+        EulerSecurityWebAutoConfiguration.class,
+        EulerSecurityAutoConfiguration.class,
 
         // Supersede Spring's default authorization server auto-configuration
         OAuth2AuthorizationServerAutoConfiguration.class,
@@ -54,12 +54,12 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
         // the authorization server also acts as a resource server
         OAuth2ResourceServerAutoConfiguration.class
 })
-@EnableConfigurationProperties({EulerBootAuthorizationServerProperties.class,
-        EulerBootAuthorizationServerJwkProperties.class})
+@EnableConfigurationProperties({EulerAuthorizationServerProperties.class,
+        EulerAuthorizationServerJwkProperties.class})
 @ConditionalOnClass(OAuth2Authorization.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-@Import(EulerBootAuthorizationServerConfiguration.class)
-public class EulerBootAuthorizationServerAutoConfiguration {
+@Import(EulerAuthorizationServerSecurityConfiguration.class)
+public class EulerAuthorizationServerAutoConfiguration {
     @Bean
     public AuthorizationServerUserDetailsProvider authorizationServerUserDetailsProvider(
             EulerUserDetailsService eulerUserDetailsService) {

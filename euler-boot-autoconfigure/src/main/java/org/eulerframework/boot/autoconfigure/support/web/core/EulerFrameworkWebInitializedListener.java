@@ -66,8 +66,8 @@ public class EulerFrameworkWebInitializedListener implements ApplicationListener
             ServletContextHolder.holdServletContext(servletContext);
 
             this.logger.info("Initializing Web Config");
-            EulerBootPropertySource eulerBootPropertySource = event.getApplicationContext().getBean(EulerBootPropertySource.class);
-            WebConfig.setPropertyReader(new PropertyReader(eulerBootPropertySource));
+            EulerPropertySource eulerPropertySource = event.getApplicationContext().getBean(EulerPropertySource.class);
+            WebConfig.setPropertyReader(new PropertyReader(eulerPropertySource));
 
             this.logger.info("Initializing System Attributes");
             Assert.notNull(servletContext, "ServletContext was not found");
