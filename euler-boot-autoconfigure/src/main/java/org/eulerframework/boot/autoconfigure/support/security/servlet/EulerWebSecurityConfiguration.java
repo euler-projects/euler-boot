@@ -28,7 +28,6 @@ import org.eulerframework.security.config.annotation.web.configurers.login.Login
 import org.eulerframework.security.config.annotation.web.configurers.oauth2.OAuth2LoginSecurityConfigurer;
 import org.eulerframework.security.config.annotation.web.configurers.otp.OneTimePasswordLoginConfigurer;
 import org.eulerframework.security.oauth2.client.authentication.OAuth2LoginPrincipalPromotingSuccessHandler;
-import org.eulerframework.security.provisioning.jit.JitProvisioningPolicyResolver;
 import org.eulerframework.security.web.login.DefaultLoginMethodService;
 import org.eulerframework.security.core.captcha.view.DefaultSmsCaptchaView;
 import org.eulerframework.security.core.captcha.view.SmsCaptchaView;
@@ -64,6 +63,7 @@ import org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilte
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -145,7 +145,6 @@ public class EulerWebSecurityConfiguration {
             EulerSecurityAuthenticationAppAttestProperties eulerSecurityAppAttestProperties,
             EulerSecurityAuthenticationOtpProperties eulerSecurityOtpProperties,
             DefaultLoginMethodService loginMethodService,
-            JitProvisioningPolicyResolver jitProvisioningPolicyResolver,
             ObjectProvider<WebAuthnPresent> wenAuthnPresent,
             ObjectProvider<OAuth2LoginPresent> oauth2LoginPresent) throws Exception {
         Assert.isTrue(eulerSecurityWebProperties.isEnabled(), "euler web properties disabled, can not init defaultSecurityFilterChain");
@@ -262,9 +261,7 @@ public class EulerWebSecurityConfiguration {
             // are non-optional transitive dependencies of this autoconfigure module. No
             // classpath probe is needed here; the property switch alone gates activation.
             logger.debug("App Attest enabled, configuring App Attest registration endpoints.");
-            http.with(new AppAttestSecurityConfigurer(), appAttest -> appAttest
-                    .jitProvisioning(jitProvisioningPolicyResolver
-                            .resolve(JitProvisioningPolicyResolver.IDENTITY_TYPE_DEVICE)));
+            http.with(new AppAttestSecurityConfigurer(), Customizer.withDefaults());
         }
 
         if (eulerSecurityOtpProperties.isEnabled()) {
