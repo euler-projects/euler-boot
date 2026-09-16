@@ -15,7 +15,6 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security;
 
-import org.eulerframework.security.authentication.appattest.RegisteredApp;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.LinkedHashMap;
@@ -41,7 +40,6 @@ import java.util.Map;
  *             team-id: ABCDE12345
  *             bundle-id: com.example.myapp.dev
  *             oauth2-enabled: true
- *             oauth2-client-type: static
  *         development-environment: false
  * </pre>
  */
@@ -121,14 +119,6 @@ public class EulerSecurityAuthenticationAppAttestProperties {
          */
         private boolean oauth2Enabled = false;
 
-        /**
-         * How the OAuth2 {@code client_id} is provisioned. Required when
-         * {@link #oauth2Enabled} is {@code true}.
-         *
-         * @see RegisteredApp.OAuth2ClientType
-         */
-        private RegisteredApp.OAuth2ClientType oauth2ClientType;
-
         public String getTeamId() {
             return teamId;
         }
@@ -151,14 +141,6 @@ public class EulerSecurityAuthenticationAppAttestProperties {
 
         public void setOauth2Enabled(boolean oauth2Enabled) {
             this.oauth2Enabled = oauth2Enabled;
-        }
-
-        public RegisteredApp.OAuth2ClientType getOauth2ClientType() {
-            return oauth2ClientType;
-        }
-
-        public void setOauth2ClientType(RegisteredApp.OAuth2ClientType oauth2ClientType) {
-            this.oauth2ClientType = oauth2ClientType;
         }
     }
 }
