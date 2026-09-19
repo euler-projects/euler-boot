@@ -21,7 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Configuration properties for device attestation registration and assertion.
+ * Configuration properties for App instance registration and assertion.
  * <p>
  * These properties control the device attest endpoint configuration including
  * the list of allowed apps (teamId + bundleId pairs) and environment settings.

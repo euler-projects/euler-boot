@@ -21,7 +21,7 @@ import org.eulerframework.boot.autoconfigure.support.security.login.oauth2.Euler
 import org.eulerframework.boot.autoconfigure.support.security.login.otp.EulerSecurityLoginMethodOtpProperties;
 import org.eulerframework.boot.autoconfigure.support.security.login.password.EulerSecurityLoginMethodPasswordProperties;
 import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilterUtils;
-import org.eulerframework.security.config.annotation.web.configurers.appattest.AppAttestSecurityConfigurer;
+import org.eulerframework.security.config.annotation.web.configurers.appattest.AppAttestConfigurer;
 import org.eulerframework.security.authentication.otp.OtpTestAccountSupport;
 import org.eulerframework.security.config.annotation.web.configurers.login.LoginMethodDispatchConfigurer;
 import org.eulerframework.security.config.annotation.web.configurers.login.LoginMethodsConfigurer;
@@ -256,12 +256,12 @@ public class EulerWebSecurityConfiguration {
         }
 
         if (eulerSecurityAppAttestProperties.isEnabled()) {
-            // App Attest core classes live in euler-security-web (AppAttestSecurityConfigurer)
+            // App Attest core classes live in euler-security-web (AppAttestConfigurer)
             // and euler-security-core (DefaultAppleAppAttestValidationService), both of which
             // are non-optional transitive dependencies of this autoconfigure module. No
             // classpath probe is needed here; the property switch alone gates activation.
             logger.debug("App Attest enabled, configuring App Attest registration endpoints.");
-            http.with(new AppAttestSecurityConfigurer(), Customizer.withDefaults());
+            http.with(new AppAttestConfigurer(), Customizer.withDefaults());
         }
 
         if (eulerSecurityOtpProperties.isEnabled()) {

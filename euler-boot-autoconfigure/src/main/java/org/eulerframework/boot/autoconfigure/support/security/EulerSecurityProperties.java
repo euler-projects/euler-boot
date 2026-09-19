@@ -45,7 +45,7 @@ public class EulerSecurityProperties {
         /**
          * Just-in-time provisioning applied when an identity of this
          * type is seen for the first time, regardless of the entry point
-         * (web login, OAuth2 token grant, device registration).
+         * (web login, OAuth2 token grant, App instance registration).
          */
         @NestedConfigurationProperty
         private final JitProvisioning jitProvisioning = new JitProvisioning();
