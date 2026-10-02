@@ -16,9 +16,8 @@
 package org.eulerframework.boot.autoconfigure.support.security.login;
 
 import org.eulerframework.boot.autoconfigure.support.security.login.oauth2.EulerSecurityLoginMethodOAuth2Configuration;
-import org.eulerframework.boot.autoconfigure.support.security.login.otp.EulerSecurityLoginMethodOtpConfiguration;
+import org.eulerframework.boot.autoconfigure.support.security.login.otp.EulerSecurityLoginMethodOneTimePasswordConfiguration;
 import org.eulerframework.boot.autoconfigure.support.security.login.password.EulerSecurityLoginMethodPasswordConfiguration;
-import org.eulerframework.boot.autoconfigure.support.security.login.password.EulerSecurityLoginMethodPasswordProperties;
 import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerSecurityWebAutoConfiguration;
 import org.eulerframework.security.web.login.*;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -51,7 +50,7 @@ import java.util.List;
 @Import({
         EulerSecurityLoginMethodPasswordConfiguration.class,
         EulerSecurityLoginMethodOAuth2Configuration.class,
-        EulerSecurityLoginMethodOtpConfiguration.class
+        EulerSecurityLoginMethodOneTimePasswordConfiguration.class
 })
 public class EulerSecurityLoginMethodAutoConfiguration {
 

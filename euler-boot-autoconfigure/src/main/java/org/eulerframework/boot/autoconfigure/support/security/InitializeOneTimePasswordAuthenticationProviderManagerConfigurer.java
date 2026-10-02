@@ -16,7 +16,7 @@
 package org.eulerframework.boot.autoconfigure.support.security;
 
 import org.eulerframework.security.authentication.otp.OneTimePasswordAuthenticationProvider;
-import org.eulerframework.security.authentication.otp.OtpTicketService;
+import org.eulerframework.security.authentication.otp.OneTimePasswordService;
 import org.eulerframework.security.core.EulerUserService;
 import org.eulerframework.security.core.identity.UserIdentityService;
 import org.eulerframework.security.provisioning.jit.JitProvisioningPolicyResolver;
@@ -47,14 +47,14 @@ public class InitializeOneTimePasswordAuthenticationProviderManagerConfigurer ex
 
     @Override
     public void init(AuthenticationManagerBuilder auth) {
-        auth.apply(new InitializeOtpManagerConfigurer());
+        auth.apply(new InitializeOneTimePasswordManagerConfigurer());
     }
 
-    class InitializeOtpManagerConfigurer extends GlobalAuthenticationConfigurerAdapter {
+    class InitializeOneTimePasswordManagerConfigurer extends GlobalAuthenticationConfigurerAdapter {
         @Override
         public void configure(AuthenticationManagerBuilder auth) {
-            EulerSecurityAuthenticationOtpProperties properties = InitializeOneTimePasswordAuthenticationProviderManagerConfigurer.this.context
-                    .getBeanProvider(EulerSecurityAuthenticationOtpProperties.class)
+            EulerSecurityAuthenticationOneTimePasswordProperties properties = InitializeOneTimePasswordAuthenticationProviderManagerConfigurer.this.context
+                    .getBeanProvider(EulerSecurityAuthenticationOneTimePasswordProperties.class)
                     .getIfAvailable();
             if (properties == null || !properties.isEnabled()) {
                 return;
@@ -70,8 +70,8 @@ public class InitializeOneTimePasswordAuthenticationProviderManagerConfigurer ex
                 return;
             }
 
-            OtpTicketService otpTicketService = InitializeOneTimePasswordAuthenticationProviderManagerConfigurer.this.context
-                    .getBeanProvider(OtpTicketService.class)
+            OneTimePasswordService oneTimePasswordService = InitializeOneTimePasswordAuthenticationProviderManagerConfigurer.this.context
+                    .getBeanProvider(OneTimePasswordService.class)
                     .getIfAvailable();
             UserIdentityService userIdentityService = InitializeOneTimePasswordAuthenticationProviderManagerConfigurer.this.context
                     .getBeanProvider(UserIdentityService.class)
@@ -82,7 +82,7 @@ public class InitializeOneTimePasswordAuthenticationProviderManagerConfigurer ex
             JitProvisioningPolicyResolver jitProvisioningPolicyResolver = InitializeOneTimePasswordAuthenticationProviderManagerConfigurer.this.context
                     .getBeanProvider(JitProvisioningPolicyResolver.class)
                     .getIfAvailable();
-            if (otpTicketService == null
+            if (oneTimePasswordService == null
                     || userIdentityService == null
                     || eulerUserService == null
                     || jitProvisioningPolicyResolver == null) {
@@ -92,7 +92,7 @@ public class InitializeOneTimePasswordAuthenticationProviderManagerConfigurer ex
             }
 
             auth.authenticationProvider(new OneTimePasswordAuthenticationProvider(
-                    otpTicketService, userIdentityService, eulerUserService, jitProvisioningPolicyResolver));
+                    oneTimePasswordService, userIdentityService, eulerUserService, jitProvisioningPolicyResolver));
         }
     }
 }

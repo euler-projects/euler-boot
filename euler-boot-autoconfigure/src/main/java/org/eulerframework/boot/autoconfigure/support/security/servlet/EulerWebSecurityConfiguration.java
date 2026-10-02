@@ -18,11 +18,11 @@ package org.eulerframework.boot.autoconfigure.support.security.servlet;
 import jakarta.servlet.http.HttpServletRequest;
 import org.eulerframework.boot.autoconfigure.support.security.*;
 import org.eulerframework.boot.autoconfigure.support.security.login.oauth2.EulerSecurityLoginMethodOAuth2Properties;
-import org.eulerframework.boot.autoconfigure.support.security.login.otp.EulerSecurityLoginMethodOtpProperties;
+import org.eulerframework.boot.autoconfigure.support.security.login.otp.EulerSecurityLoginMethodOneTimePasswordProperties;
 import org.eulerframework.boot.autoconfigure.support.security.login.password.EulerSecurityLoginMethodPasswordProperties;
 import org.eulerframework.boot.autoconfigure.support.security.util.SecurityFilterUtils;
 import org.eulerframework.security.config.annotation.web.configurers.appattest.AppAttestConfigurer;
-import org.eulerframework.security.authentication.otp.OtpTestAccountSupport;
+import org.eulerframework.security.authentication.otp.OneTimePasswordTestAccountSupport;
 import org.eulerframework.security.config.annotation.web.configurers.login.LoginMethodDispatchConfigurer;
 import org.eulerframework.security.config.annotation.web.configurers.login.LoginMethodsConfigurer;
 import org.eulerframework.security.config.annotation.web.configurers.oauth2.OAuth2LoginSecurityConfigurer;
@@ -137,13 +137,13 @@ public class EulerWebSecurityConfiguration {
             CsrfTokenRepository csrfTokenRepository,
             EulerSecurityProperties eulerSecurityProperties,
             EulerSecurityLoginMethodPasswordProperties eulerSecurityLoginMethodPasswordProperties,
-            EulerSecurityLoginMethodOtpProperties eulerSecurityLoginMethodOtpProperties,
+            EulerSecurityLoginMethodOneTimePasswordProperties eulerSecurityLoginMethodOneTimePasswordProperties,
             EulerSecurityLoginMethodOAuth2Properties eulerSecurityLoginMethodOAuth2Properties,
             EulerSecurityWebProperties eulerSecurityWebProperties,
             EulerSecurityAuthenticationWebauthnProperties eulerSecurityWebAuthnProperties,
             EulerSecurityWebEndpointProperties eulerSecurityWebEndpointProperties,
             EulerSecurityAuthenticationAppAttestProperties eulerSecurityAppAttestProperties,
-            EulerSecurityAuthenticationOtpProperties eulerSecurityOtpProperties,
+            EulerSecurityAuthenticationOneTimePasswordProperties eulerSecurityOneTimePasswordProperties,
             DefaultLoginMethodService loginMethodService,
             ObjectProvider<WebAuthnPresent> wenAuthnPresent,
             ObjectProvider<OAuth2LoginPresent> oauth2LoginPresent) throws Exception {
@@ -179,7 +179,7 @@ public class EulerWebSecurityConfiguration {
                 new SimpleUrlAuthenticationFailureHandler(
                         eulerSecurityWebEndpointProperties.getUser().getLoginPage() + "?error"));
 
-        String otpLoginEndpointUri = eulerSecurityOtpProperties.getLoginEndpointUri();
+        String otpLoginEndpointUri = eulerSecurityOneTimePasswordProperties.getLoginEndpointUri();
 
         http
                 .authorizeHttpRequests(authorize -> {
@@ -264,27 +264,27 @@ public class EulerWebSecurityConfiguration {
             http.with(new AppAttestConfigurer(), Customizer.withDefaults());
         }
 
-        if (eulerSecurityOtpProperties.isEnabled()) {
+        if (eulerSecurityOneTimePasswordProperties.isEnabled()) {
             logger.debug("OTP module enabled, configuring one-time-password login.");
-            OtpTestAccountSupport otpTestAccountSupport = null;
-            EulerSecurityAuthenticationOtpProperties.Test test = eulerSecurityOtpProperties.getTest();
+            OneTimePasswordTestAccountSupport oneTimePasswordTestAccountSupport = null;
+            EulerSecurityAuthenticationOneTimePasswordProperties.Test test = eulerSecurityOneTimePasswordProperties.getTest();
             if (test != null && test.isUsable()) {
-                otpTestAccountSupport = new OtpTestAccountSupport(test.getAccounts(), test.getFixedOtp());
+                oneTimePasswordTestAccountSupport = new OneTimePasswordTestAccountSupport(test.getAccounts(), test.getFixedOtp());
                 logger.warn("OTP test-account short-circuit is ENABLED ({} account(s)) - DO NOT use in production.",
-                        otpTestAccountSupport.getAccounts().size());
+                        oneTimePasswordTestAccountSupport.getAccounts().size());
             }
-            OtpTestAccountSupport otpTestAccountSupportFinal = otpTestAccountSupport;
+            OneTimePasswordTestAccountSupport oneTimePasswordTestAccountSupportFinal = oneTimePasswordTestAccountSupport;
             http.with(new OneTimePasswordLoginConfigurer(), otp -> otp
                     .loginPage(eulerSecurityWebEndpointProperties.getUser().getLoginPage())
                     .loginProcessingUrl(otpLoginEndpointUri)
                     .successHandler(loginSuccessHandler)
                     .failureHandler(loginFailureHandler)
-                    .issueEndpointUri(eulerSecurityOtpProperties.getIssueEndpointUri())
-                    .testAccountSupport(otpTestAccountSupportFinal));
+                    .issueEndpointUri(eulerSecurityOneTimePasswordProperties.getIssueEndpointUri())
+                    .testAccountSupport(oneTimePasswordTestAccountSupportFinal));
         }
 
-        boolean anyOtpLoginMethod = !eulerSecurityLoginMethodOtpProperties.getOtp().isEmpty();
-        if (anyOtpLoginMethod && !eulerSecurityOtpProperties.isEnabled()) {
+        boolean anyOneTimePasswordLoginMethod = !eulerSecurityLoginMethodOneTimePasswordProperties.getOtp().isEmpty();
+        if (anyOneTimePasswordLoginMethod && !eulerSecurityOneTimePasswordProperties.isEnabled()) {
             throw new IllegalStateException("At least one entry is declared under " +
                     "euler.security.login-method.otp " +
                     "but the OTP mechanism is disabled. Please set " +

@@ -15,7 +15,7 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security;
 
-import org.eulerframework.security.authentication.otp.OtpPolicy;
+import org.eulerframework.security.authentication.otp.OneTimePasswordPolicy;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
@@ -49,7 +49,7 @@ import java.util.regex.Pattern;
  * </pre>
  */
 @ConfigurationProperties(prefix = "euler.security.authentication.otp")
-public class EulerSecurityAuthenticationOtpProperties {
+public class EulerSecurityAuthenticationOneTimePasswordProperties {
 
     /**
      * Whether the OTP module is enabled. Default is {@code false}.
@@ -69,7 +69,7 @@ public class EulerSecurityAuthenticationOtpProperties {
     private String loginEndpointUri = "/login/otp";
 
     /**
-     * Storage backend for {@link org.eulerframework.security.authentication.otp.OtpTicketService OtpTicketService}.
+     * Storage backend for {@link org.eulerframework.security.authentication.otp.OneTimePasswordService OneTimePasswordService}.
      * Default is {@link Storage#IN_MEMORY}.
      */
     private Storage storage = Storage.IN_MEMORY;
@@ -77,7 +77,7 @@ public class EulerSecurityAuthenticationOtpProperties {
     /**
      * Default OTP policy. Per channel / purpose / identity differentiation is
      * achieved by providing a custom
-     * {@link org.eulerframework.security.authentication.otp.OtpPolicyResolver OtpPolicyResolver} bean.
+     * {@link org.eulerframework.security.authentication.otp.OneTimePasswordPolicyResolver OneTimePasswordPolicyResolver} bean.
      */
     private Policy policy = new Policy();
 
@@ -143,7 +143,7 @@ public class EulerSecurityAuthenticationOtpProperties {
     }
 
     /**
-     * Properties carrier for {@link OtpPolicy}.
+     * Properties carrier for {@link OneTimePasswordPolicy}.
      */
     public static class Policy {
 
@@ -201,8 +201,8 @@ public class EulerSecurityAuthenticationOtpProperties {
             this.maxFailures = maxFailures;
         }
 
-        public OtpPolicy toOtpPolicy() {
-            return new OtpPolicy(this.otpLength, this.expiresIn, this.retryAfter, this.maxFailures);
+        public OneTimePasswordPolicy toOneTimePasswordPolicy() {
+            return new OneTimePasswordPolicy(this.otpLength, this.expiresIn, this.retryAfter, this.maxFailures);
         }
     }
 

@@ -15,13 +15,13 @@
  */
 package org.eulerframework.boot.autoconfigure.support.security.login.otp;
 
-import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityAuthenticationOtpProperties;
+import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityAuthenticationOneTimePasswordProperties;
 import org.eulerframework.boot.autoconfigure.support.security.login.BaseLoginMethodConfiguration;
 import org.eulerframework.boot.autoconfigure.support.security.login.LoginMethodConfiguration;
 import org.eulerframework.boot.autoconfigure.support.security.servlet.EulerSecurityWebEndpointProperties;
-import org.eulerframework.security.web.login.OtpLoginMethodHandler;
+import org.eulerframework.security.web.login.OneTimePasswordLoginMethodHandler;
 import org.eulerframework.security.web.login.RegisteredLoginMethod;
-import org.eulerframework.security.web.login.RegisteredOtpLoginMethod;
+import org.eulerframework.security.web.login.RegisteredOneTimePasswordLoginMethod;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -32,23 +32,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties({EulerSecurityLoginMethodOtpProperties.class})
-public class EulerSecurityLoginMethodOtpConfiguration implements LoginMethodConfiguration {
-    private final EulerSecurityLoginMethodOtpProperties properties;
+@EnableConfigurationProperties({EulerSecurityLoginMethodOneTimePasswordProperties.class})
+public class EulerSecurityLoginMethodOneTimePasswordConfiguration implements LoginMethodConfiguration {
+    private final EulerSecurityLoginMethodOneTimePasswordProperties properties;
 
-    public EulerSecurityLoginMethodOtpConfiguration(EulerSecurityLoginMethodOtpProperties properties) {
+    public EulerSecurityLoginMethodOneTimePasswordConfiguration(EulerSecurityLoginMethodOneTimePasswordProperties properties) {
         this.properties = properties;
     }
 
     @Bean
-    @ConditionalOnMissingBean(OtpLoginMethodHandler.class)
-    public OtpLoginMethodHandler otpLoginMethodHandler(
+    @ConditionalOnMissingBean(OneTimePasswordLoginMethodHandler.class)
+    public OneTimePasswordLoginMethodHandler otpLoginMethodHandler(
             EulerSecurityWebEndpointProperties endpointProperties,
-            EulerSecurityAuthenticationOtpProperties otpProperties) {
-        return new OtpLoginMethodHandler(
+            EulerSecurityAuthenticationOneTimePasswordProperties oneTimePasswordProperties) {
+        return new OneTimePasswordLoginMethodHandler(
                 endpointProperties.getUser().getLoginPage(),
                 endpointProperties.getLoginMethods().getDispatch().getMethodParameter(),
-                otpProperties.getLoginEndpointUri());
+                oneTimePasswordProperties.getLoginEndpointUri());
     }
 
     @Override
@@ -58,7 +58,7 @@ public class EulerSecurityLoginMethodOtpConfiguration implements LoginMethodConf
             if (method == null) {
                 return;
             }
-            registered.add(new RegisteredOtpLoginMethod(id, name(id, method),
+            registered.add(new RegisteredOneTimePasswordLoginMethod(id, name(id, method),
                     method.getIdentityType(), method.isPrimary(), method.getChannel()));
         });
         return registered;

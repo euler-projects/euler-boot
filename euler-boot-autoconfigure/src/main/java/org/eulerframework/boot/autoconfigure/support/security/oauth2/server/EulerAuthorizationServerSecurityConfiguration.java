@@ -16,11 +16,11 @@
 package org.eulerframework.boot.autoconfigure.support.security.oauth2.server;
 
 import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityAuthenticationAppAttestProperties;
-import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityAuthenticationOtpProperties;
+import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityAuthenticationOneTimePasswordProperties;
 import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityAuthenticationWechatProperties;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.security.core.identity.UserIdentityService;
-import org.eulerframework.security.authentication.otp.OtpTicketService;
+import org.eulerframework.security.authentication.otp.OneTimePasswordService;
 import org.eulerframework.security.provisioning.jit.JitProvisioningPolicyResolver;
 import org.eulerframework.security.config.annotation.web.configurers.identity.UserIdentitySecurityConfigurer;
 import org.eulerframework.security.config.annotation.web.configurers.user.UserSecurityConfigurer;
@@ -85,9 +85,9 @@ public class EulerAuthorizationServerSecurityConfiguration {
             LoginPageAuthenticationEntryPoint loginPageEntryPoint,
             EulerAuthorizationServerProperties eulerAuthorizationServerProperties,
             EulerSecurityAuthenticationAppAttestProperties eulerSecurityAppAttestProperties,
-            EulerSecurityAuthenticationOtpProperties eulerSecurityOtpProperties,
+            EulerSecurityAuthenticationOneTimePasswordProperties eulerSecurityOneTimePasswordProperties,
             EulerSecurityAuthenticationWechatProperties eulerSecurityWechatLoginProperties,
-            ObjectProvider<OtpTicketService> otpTicketServiceProvider,
+            ObjectProvider<OneTimePasswordService> oneTimePasswordServiceProvider,
             ObjectProvider<UserIdentityService> userIdentityServiceProvider,
             ObjectProvider<EulerUserDetailsManager> userDetailsManagerProvider,
             ObjectProvider<EulerDeviceUserDetailsService> deviceUserDetailsServiceProvider,
@@ -164,13 +164,13 @@ public class EulerAuthorizationServerSecurityConfiguration {
             EulerAuthorizationServerConfiguration.configWechatAuthentication(http, authenticationConfiguration);
         }
 
-        if (eulerSecurityOtpProperties.isEnabled()) {
-            OtpTicketService otpTicketService = otpTicketServiceProvider.getIfAvailable();
-            if (otpTicketService == null
+        if (eulerSecurityOneTimePasswordProperties.isEnabled()) {
+            OneTimePasswordService oneTimePasswordService = oneTimePasswordServiceProvider.getIfAvailable();
+            if (oneTimePasswordService == null
                     || userIdentityService == null) {
                 throw new IllegalStateException(
                         "OTP grant is enabled but required beans are missing: "
-                                + "OtpTicketService=" + (otpTicketService != null)
+                                + "OneTimePasswordService=" + (oneTimePasswordService != null)
                                 + ", UserIdentityService=" + (userIdentityService != null));
             }
             // User-level authentication is delegated to the shared
@@ -182,7 +182,7 @@ public class EulerAuthorizationServerSecurityConfiguration {
             // auto-binding.
             EulerDeviceUserDetailsService deviceUserDetailsService =
                     deviceUserDetailsServiceProvider.getIfAvailable();
-            EulerAuthorizationServerConfiguration.configOtpAuthentication(http, authenticationConfiguration,
+            EulerAuthorizationServerConfiguration.configOneTimePasswordAuthentication(http, authenticationConfiguration,
                     deviceUserDetailsService);
         }
 

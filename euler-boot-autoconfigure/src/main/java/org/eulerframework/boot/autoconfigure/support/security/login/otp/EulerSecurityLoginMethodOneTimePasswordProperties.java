@@ -22,17 +22,17 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @ConfigurationProperties(prefix = "euler.security.login-method")
-public class EulerSecurityLoginMethodOtpProperties {
-    private final Map<String, LoginMethodOtpConfiguration> otp = new LinkedHashMap<>();
+public class EulerSecurityLoginMethodOneTimePasswordProperties {
+    private final Map<String, LoginMethodOneTimePasswordConfiguration> otp = new LinkedHashMap<>();
 
-    public Map<String, LoginMethodOtpConfiguration> getOtp() {
+    public Map<String, LoginMethodOneTimePasswordConfiguration> getOtp() {
         return otp;
     }
 
     /**
      * An {@code otp} method declaration.
      */
-    public static class LoginMethodOtpConfiguration extends BaseLoginMethodConfiguration {
+    public static class LoginMethodOneTimePasswordConfiguration extends BaseLoginMethodConfiguration {
 
         /**
          * Identity type the one-time password is sent to and

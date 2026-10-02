@@ -21,16 +21,16 @@ import org.eulerframework.security.authentication.InMemoryChallengeService;
 import org.eulerframework.security.authentication.appattest.apple.AppleAppAttestValidationService;
 import org.eulerframework.security.authentication.appattest.apple.DefaultAppleAppAttestValidationService;
 import org.eulerframework.security.authentication.appattest.*;
-import org.eulerframework.security.authentication.otp.InMemoryOtpTicketService;
-import org.eulerframework.security.authentication.otp.JdbcOtpTicketService;
-import org.eulerframework.security.authentication.otp.OtpChannel;
-import org.eulerframework.security.authentication.otp.OtpGenerator;
-import org.eulerframework.security.authentication.otp.OtpPolicyResolver;
-import org.eulerframework.security.authentication.otp.OtpTicketService;
-import org.eulerframework.security.authentication.otp.RedisOtpTicketService;
-import org.eulerframework.security.authentication.otp.SecureRandomOtpGenerator;
-import org.eulerframework.security.authentication.otp.StaticOtpPolicyResolver;
-import org.eulerframework.security.authentication.otp.StdoutOtpChannel;
+import org.eulerframework.security.authentication.otp.InMemoryOneTimePasswordService;
+import org.eulerframework.security.authentication.otp.JdbcOneTimePasswordService;
+import org.eulerframework.security.authentication.otp.OneTimePasswordChannel;
+import org.eulerframework.security.authentication.otp.OneTimePasswordGenerator;
+import org.eulerframework.security.authentication.otp.OneTimePasswordPolicyResolver;
+import org.eulerframework.security.authentication.otp.OneTimePasswordService;
+import org.eulerframework.security.authentication.otp.RedisOneTimePasswordService;
+import org.eulerframework.security.authentication.otp.SecureRandomOneTimePasswordGenerator;
+import org.eulerframework.security.authentication.otp.StaticOneTimePasswordPolicyResolver;
+import org.eulerframework.security.authentication.otp.StdoutOneTimePasswordChannel;
 import org.eulerframework.security.core.context.UserContext;
 import org.eulerframework.security.core.context.UserDetailsPrincipalUserContext;
 import org.eulerframework.security.provisioning.jit.JitProvisioningPolicyResolver;
@@ -60,7 +60,7 @@ import java.util.List;
 @EnableConfigurationProperties({
         EulerSecurityProperties.class,
         EulerSecurityAuthenticationAppAttestProperties.class,
-        EulerSecurityAuthenticationOtpProperties.class,
+        EulerSecurityAuthenticationOneTimePasswordProperties.class,
         EulerSecurityAuthenticationWechatProperties.class
 })
 @ConditionalOnClass(DefaultAuthenticationEventPublisher.class)
@@ -193,67 +193,72 @@ public class EulerSecurityAutoConfiguration {
      */
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnProperty(prefix = "euler.security.authentication.otp", name = "enabled", havingValue = "true")
-    static class OtpBeanConfiguration {
+    static class OneTimePasswordBeanConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        public OtpGenerator otpGenerator() {
-            return new SecureRandomOtpGenerator();
+        public OneTimePasswordGenerator oneTimePasswordGenerator() {
+            return new SecureRandomOneTimePasswordGenerator();
         }
 
         @Bean
         @ConditionalOnMissingBean
-        public OtpPolicyResolver otpPolicyResolver(EulerSecurityAuthenticationOtpProperties properties) {
-            return new StaticOtpPolicyResolver(properties.getPolicy().toOtpPolicy());
+        public OneTimePasswordPolicyResolver oneTimePasswordPolicyResolver(EulerSecurityAuthenticationOneTimePasswordProperties properties) {
+            return new StaticOneTimePasswordPolicyResolver(properties.getPolicy().toOneTimePasswordPolicy());
         }
 
-        // OtpRecipientResolver: not provided by default. When the request carries
+        // OneTimePasswordRecipientResolver: not provided by default. When the request carries
         // identity_id but no resolver bean is registered, the endpoint returns
         // invalid_identity_id.
 
-        // ---- OtpTicketService: in-memory | jdbc | redis (mutually exclusive by storage) ----
+        // ---- OneTimePasswordService: in-memory | jdbc | redis (mutually exclusive by storage) ----
 
         @Bean
-        @ConditionalOnMissingBean(OtpTicketService.class)
+        @ConditionalOnMissingBean(OneTimePasswordService.class)
         @ConditionalOnProperty(prefix = "euler.security.authentication.otp", name = "storage",
                 havingValue = "in-memory", matchIfMissing = true)
-        public OtpTicketService inMemoryOtpTicketService(EulerSecurityAuthenticationOtpProperties properties) {
-            return new InMemoryOtpTicketService(
-                    InMemoryOtpTicketService.DEFAULT_MAX_TICKETS,
+        public OneTimePasswordService inMemoryOneTimePasswordService(OneTimePasswordGenerator oneTimePasswordGenerator,
+                                                         EulerSecurityAuthenticationOneTimePasswordProperties properties) {
+            return new InMemoryOneTimePasswordService(
+                    oneTimePasswordGenerator,
+                    InMemoryOneTimePasswordService.DEFAULT_MAX_TICKETS,
                     properties.getPolicy().getMaxFailures());
         }
 
         @Bean
-        @ConditionalOnMissingBean(OtpTicketService.class)
+        @ConditionalOnMissingBean(OneTimePasswordService.class)
         @ConditionalOnProperty(prefix = "euler.security.authentication.otp", name = "storage", havingValue = "jdbc")
         @ConditionalOnBean(JdbcOperations.class)
-        public OtpTicketService jdbcOtpTicketService(JdbcOperations jdbcOperations,
-                                                     EulerSecurityAuthenticationOtpProperties properties) {
-            return new JdbcOtpTicketService(
+        public OneTimePasswordService jdbcOneTimePasswordService(OneTimePasswordGenerator oneTimePasswordGenerator,
+                                                     JdbcOperations jdbcOperations,
+                                                     EulerSecurityAuthenticationOneTimePasswordProperties properties) {
+            return new JdbcOneTimePasswordService(
+                    oneTimePasswordGenerator,
                     jdbcOperations,
-                    JdbcOtpTicketService.DEFAULT_TABLE_NAME,
+                    JdbcOneTimePasswordService.DEFAULT_TABLE_NAME,
                     properties.getPolicy().getMaxFailures());
         }
 
         @Bean
-        @ConditionalOnMissingBean(OtpTicketService.class)
+        @ConditionalOnMissingBean(OneTimePasswordService.class)
         @ConditionalOnProperty(prefix = "euler.security.authentication.otp", name = "storage", havingValue = "redis")
         //@ConditionalOnBean(StringRedisTemplate.class)
-        public OtpTicketService redisOtpTicketService(StringRedisTemplate redisTemplate,
-                                                      EulerSecurityAuthenticationOtpProperties properties) {
-            return new RedisOtpTicketService(redisTemplate, properties.getPolicy().getMaxFailures());
+        public OneTimePasswordService redisOneTimePasswordService(OneTimePasswordGenerator oneTimePasswordGenerator,
+                                                      StringRedisTemplate redisTemplate,
+                                                      EulerSecurityAuthenticationOneTimePasswordProperties properties) {
+            return new RedisOneTimePasswordService(oneTimePasswordGenerator, redisTemplate, properties.getPolicy().getMaxFailures());
         }
 
         // ---- Channels ----
-        // Boot only ships the stdout fallback. The actual OtpChannel bean (typically a
-        // DelegatingOtpChannel composing business channels with stdout as fallback) is
+        // Boot only ships the stdout fallback. The actual OneTimePasswordChannel bean (typically a
+        // DelegatingOneTimePasswordChannel composing business channels with stdout as fallback) is
         // expected to be assembled by the application; the routing table is a business
         // concern and must not be locked down by the framework.
 
         @Bean
         @ConditionalOnMissingBean
-        public OtpChannel stdoutOtpChannel() {
-            return new StdoutOtpChannel();
+        public OneTimePasswordChannel stdoutOneTimePasswordChannel() {
+            return new StdoutOneTimePasswordChannel();
         }
     }
 }
