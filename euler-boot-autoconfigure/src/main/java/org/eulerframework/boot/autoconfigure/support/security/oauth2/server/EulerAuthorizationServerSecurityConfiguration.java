@@ -20,7 +20,11 @@ import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityAuthe
 import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityAuthenticationWechatProperties;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.security.core.identity.UserIdentityService;
+import org.eulerframework.security.authentication.appattest.AppAttestIssuedKeyService;
 import org.eulerframework.security.authentication.otp.OneTimePasswordService;
+import org.eulerframework.security.core.EulerUserService;
+import org.eulerframework.security.oauth2.server.authorization.authentication.AppAttestJwtBearerIssuerAuthenticator;
+import org.eulerframework.security.oauth2.server.authorization.authentication.JwtBearerIssuerAuthenticator;
 import org.eulerframework.security.provisioning.jit.JitProvisioningPolicyResolver;
 import org.eulerframework.security.config.annotation.web.configurers.identity.UserIdentitySecurityConfigurer;
 import org.eulerframework.security.config.annotation.web.configurers.user.UserSecurityConfigurer;
@@ -64,6 +68,7 @@ import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StringUtils;
+import org.springframework.transaction.support.TransactionOperations;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,6 +96,10 @@ public class EulerAuthorizationServerSecurityConfiguration {
             ObjectProvider<UserIdentityService> userIdentityServiceProvider,
             ObjectProvider<EulerUserDetailsManager> userDetailsManagerProvider,
             ObjectProvider<EulerDeviceUserDetailsService> deviceUserDetailsServiceProvider,
+            ObjectProvider<EulerUserService> userServiceProvider,
+            ObjectProvider<JwtBearerIssuerAuthenticator> jwtBearerIssuerAuthenticatorProvider,
+            ObjectProvider<AppAttestIssuedKeyService> appAttestIssuedKeyServiceProvider,
+            ObjectProvider<TransactionOperations> transactionOperationsProvider,
             JitProvisioningPolicyResolver jitProvisioningPolicyResolver) {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
         EulerOAuth2AuthorizationServerConfigurer eulerOAuth2AuthorizationServerConfigurer = new EulerOAuth2AuthorizationServerConfigurer();
@@ -184,6 +193,40 @@ public class EulerAuthorizationServerSecurityConfiguration {
                     deviceUserDetailsServiceProvider.getIfAvailable();
             EulerAuthorizationServerConfiguration.configOneTimePasswordAuthentication(http, authenticationConfiguration,
                     deviceUserDetailsService);
+        }
+
+        // The jwt-bearer grant keeps only the parts RFC 6749 and RFC 7523 say the same for
+        // every issuer, and delegates the rest to a JwtBearerIssuerAuthenticator. The built-in
+        // one resolves an account through the identity SPI and loads it through the user
+        // service, so the grant is wired only where both exist; without them there is nothing
+        // for an assertion to authenticate against. Which issuers the server believes is
+        // decided by the beans present, so supporting a new kind of issuer needs no change
+        // here.
+        EulerUserService eulerUserService = userServiceProvider.getIfAvailable();
+        if (userIdentityService != null && eulerUserService != null) {
+            List<JwtBearerIssuerAuthenticator> issuerAuthenticators =
+                    new ArrayList<>(jwtBearerIssuerAuthenticatorProvider.orderedStream().toList());
+            AppAttestIssuedKeyService issuedKeyService = appAttestIssuedKeyServiceProvider.getIfAvailable();
+            if (issuedKeyService != null
+                    && issuerAuthenticators.stream().noneMatch(AppAttestJwtBearerIssuerAuthenticator.class::isInstance)) {
+                // The built-in anchor for an App Attest App instance. A deployment that
+                // contributed its own has already said how it wants that issuer handled, so
+                // this one stays out of its way rather than competing with it.
+                AppAttestJwtBearerIssuerAuthenticator appAttestIssuerAuthenticator =
+                        new AppAttestJwtBearerIssuerAuthenticator(issuedKeyService, userIdentityService,
+                                eulerUserService, jitProvisioningPolicyResolver);
+                // getIfUnique rather than getIfAvailable: an atomic first login is a
+                // refinement, so an application that defines several TransactionOperations of
+                // its own should leave the grant running without one rather than fail to start.
+                TransactionOperations transactionOperations = transactionOperationsProvider.getIfUnique();
+                if (transactionOperations != null) {
+                    appAttestIssuerAuthenticator.setTransactionOperations(transactionOperations);
+                }
+                issuerAuthenticators.add(appAttestIssuerAuthenticator);
+            }
+            if (!issuerAuthenticators.isEmpty()) {
+                EulerAuthorizationServerConfiguration.configJwtBearerAuthentication(http, issuerAuthenticators);
+            }
         }
 
         // Enable extended claims support for the UserInfo endpoints

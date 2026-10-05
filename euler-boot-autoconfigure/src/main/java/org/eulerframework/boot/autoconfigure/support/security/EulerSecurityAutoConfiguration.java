@@ -165,6 +165,21 @@ public class EulerSecurityAutoConfiguration {
             return new JdbcAppAttestAttestationRegistrationService(jdbcOperations);
         }
 
+        /**
+         * Registry of the public keys an App instance issues and registers under itself as a
+         * jwt-bearer assertion issuer, written by {@code POST /app_attest/keys}.
+         * <p>
+         * Distinct from {@link AppAttestAttestationRegistrationService}, which holds the App
+         * Attest KEY the instance authenticates with: one proves the App instance, the other
+         * vouches for a key its user signs with, and only the second has anything to do with
+         * an account.
+         */
+        @Bean
+        @ConditionalOnMissingBean(AppAttestIssuedKeyService.class)
+        public AppAttestIssuedKeyService appAttestIssuedKeyService(JdbcOperations jdbcOperations) {
+            return new JdbcAppAttestIssuedKeyService(jdbcOperations);
+        }
+
         @Bean
         @ConditionalOnMissingBean(ChallengeService.class)
         public ChallengeService challengeService() {
