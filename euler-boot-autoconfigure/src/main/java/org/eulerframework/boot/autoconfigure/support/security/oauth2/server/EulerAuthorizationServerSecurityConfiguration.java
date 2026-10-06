@@ -20,7 +20,7 @@ import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityAuthe
 import org.eulerframework.boot.autoconfigure.support.security.EulerSecurityAuthenticationWechatProperties;
 import org.eulerframework.boot.autoconfigure.support.security.SecurityFilterChainBeanNames;
 import org.eulerframework.security.core.identity.UserIdentityService;
-import org.eulerframework.security.authentication.appattest.AppAttestIssuedKeyService;
+import org.eulerframework.security.authentication.appattest.AppAttestInstanceKeyRegistrationService;
 import org.eulerframework.security.authentication.otp.OneTimePasswordService;
 import org.eulerframework.security.core.EulerUserService;
 import org.eulerframework.security.oauth2.server.authorization.authentication.AppAttestJwtBearerIssuerAuthenticator;
@@ -98,7 +98,7 @@ public class EulerAuthorizationServerSecurityConfiguration {
             ObjectProvider<EulerDeviceUserDetailsService> deviceUserDetailsServiceProvider,
             ObjectProvider<EulerUserService> userServiceProvider,
             ObjectProvider<JwtBearerIssuerAuthenticator> jwtBearerIssuerAuthenticatorProvider,
-            ObjectProvider<AppAttestIssuedKeyService> appAttestIssuedKeyServiceProvider,
+            ObjectProvider<AppAttestInstanceKeyRegistrationService> appAttestInstanceKeyRegistrationServiceProvider,
             ObjectProvider<TransactionOperations> transactionOperationsProvider,
             JitProvisioningPolicyResolver jitProvisioningPolicyResolver) {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
@@ -206,14 +206,14 @@ public class EulerAuthorizationServerSecurityConfiguration {
         if (userIdentityService != null && eulerUserService != null) {
             List<JwtBearerIssuerAuthenticator> issuerAuthenticators =
                     new ArrayList<>(jwtBearerIssuerAuthenticatorProvider.orderedStream().toList());
-            AppAttestIssuedKeyService issuedKeyService = appAttestIssuedKeyServiceProvider.getIfAvailable();
-            if (issuedKeyService != null
+            AppAttestInstanceKeyRegistrationService instanceKeyRegistrationService = appAttestInstanceKeyRegistrationServiceProvider.getIfAvailable();
+            if (instanceKeyRegistrationService != null
                     && issuerAuthenticators.stream().noneMatch(AppAttestJwtBearerIssuerAuthenticator.class::isInstance)) {
                 // The built-in anchor for an App Attest App instance. A deployment that
                 // contributed its own has already said how it wants that issuer handled, so
                 // this one stays out of its way rather than competing with it.
                 AppAttestJwtBearerIssuerAuthenticator appAttestIssuerAuthenticator =
-                        new AppAttestJwtBearerIssuerAuthenticator(issuedKeyService, userIdentityService,
+                        new AppAttestJwtBearerIssuerAuthenticator(instanceKeyRegistrationService, userIdentityService,
                                 eulerUserService, jitProvisioningPolicyResolver);
                 // getIfUnique rather than getIfAvailable: an atomic first login is a
                 // refinement, so an application that defines several TransactionOperations of
