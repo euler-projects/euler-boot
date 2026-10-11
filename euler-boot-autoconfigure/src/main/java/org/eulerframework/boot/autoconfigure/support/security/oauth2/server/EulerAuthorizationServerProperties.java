@@ -27,7 +27,9 @@ public class EulerAuthorizationServerProperties {
 
     private String consentPage;
 
-    private DynamicClientRegistration dynamicClientRegistration = new DynamicClientRegistration();
+    private final DynamicClientRegistration dynamicClientRegistration = new DynamicClientRegistration();
+
+    private final Endpoint endpoint = new Endpoint();
 
     public TokenStoreType getAuthorizationStoreType() {
         return authorizationStoreType;
@@ -69,6 +71,10 @@ public class EulerAuthorizationServerProperties {
         return dynamicClientRegistration;
     }
 
+    public Endpoint getEndpoint() {
+        return endpoint;
+    }
+
     public static class DynamicClientRegistration {
         private boolean enabled;
 
@@ -78,6 +84,43 @@ public class EulerAuthorizationServerProperties {
 
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
+        }
+    }
+
+    /**
+     * Endpoint URIs this framework adds to the authorization server, mirroring the shape of Spring's
+     * {@code spring.security.oauth2.authorizationserver.endpoint}.
+     */
+    public static class Endpoint {
+        /**
+         * URI of the challenge endpoint that issues the fresh challenges clients include in their
+         * attestation. Default is {@code /oauth2/challenge}.
+         */
+        private String challengeUri = "/oauth2/challenge";
+
+        /**
+         * URI of the Authorization Challenge Endpoint (draft-ietf-oauth-first-party-apps), which
+         * exchanges an {@code otp_ticket} + {@code otp} user authentication for an
+         * {@code authorization_code}. Default is {@code /authorize-challenge}. The endpoint has no
+         * dedicated toggle: it is wired wherever attestation-based client authentication and the OTP
+         * module are both enabled, since it reuses both.
+         */
+        private String authorizationChallengeUri = "/authorize-challenge";
+
+        public String getChallengeUri() {
+            return challengeUri;
+        }
+
+        public void setChallengeUri(String challengeUri) {
+            this.challengeUri = challengeUri;
+        }
+
+        public String getAuthorizationChallengeUri() {
+            return authorizationChallengeUri;
+        }
+
+        public void setAuthorizationChallengeUri(String authorizationChallengeUri) {
+            this.authorizationChallengeUri = authorizationChallengeUri;
         }
     }
 }

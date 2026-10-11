@@ -52,6 +52,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -106,6 +107,18 @@ public class EulerAuthorizationServerSecurityConfiguration {
 
         RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
         RequestMatcher eulerEndpointsMatcher = eulerOAuth2AuthorizationServerConfigurer.getEndpointsMatcher();
+
+        // The Authorization Challenge Endpoint (draft-ietf-oauth-first-party-apps) exchanges an OTP for
+        // an authorization_code. It has no dedicated toggle: it reuses attestation-based client
+        // authentication and the shared OTP authentication, so it is wired wherever both are enabled;
+        // only its URI is configurable.
+        boolean authorizationChallengeEnabled = eulerSecurityAppAttestProperties.isEnabled()
+                && eulerSecurityOneTimePasswordProperties.isEnabled();
+        String authorizationChallengeEndpointUri =
+                eulerAuthorizationServerProperties.getEndpoint().getAuthorizationChallengeUri();
+        String challengeEndpointUri = eulerAuthorizationServerProperties.getEndpoint().getChallengeUri();
+        eulerOAuth2AuthorizationServerConfigurer.challengeEndpoint(
+                challengeEndpoint -> challengeEndpoint.endpointUri(challengeEndpointUri));
 
         // Attach the /user/identities filter to this chain when a
         // UserIdentityService bean is available. No framework default
@@ -162,7 +175,9 @@ public class EulerAuthorizationServerSecurityConfiguration {
         // mechanism switch.
         if (eulerSecurityAppAttestProperties.isEnabled()) {
             EulerAuthorizationServerConfiguration.configClientAttestationAuthentication(http, authenticationConfiguration,
-                    jitProvisioningPolicyResolver.resolve(JitProvisioningPolicyResolver.IDENTITY_TYPE_DEVICE));
+                    jitProvisioningPolicyResolver.resolve(JitProvisioningPolicyResolver.IDENTITY_TYPE_DEVICE),
+                    challengeEndpointUri,
+                    authorizationChallengeEnabled ? authorizationChallengeEndpointUri : null);
         }
 
         if (eulerAuthorizationServerProperties.getDynamicClientRegistration().isEnabled()) {
@@ -193,6 +208,25 @@ public class EulerAuthorizationServerSecurityConfiguration {
                     deviceUserDetailsServiceProvider.getIfAvailable();
             EulerAuthorizationServerConfiguration.configOneTimePasswordAuthentication(http, authenticationConfiguration,
                     deviceUserDetailsService);
+        }
+
+        // The OTP beans this endpoint depends on are already validated by the OTP block above (both are
+        // gated on the OTP module being enabled), so only the wiring remains here. Registering through the
+        // configurer puts its code-minting provider into the shared AuthenticationManager and installs its
+        // filters the way Spring installs its own protocol endpoints; the configurer also folds the
+        // endpoint into its endpoints matcher, which the chain's security matcher already includes.
+        if (authorizationChallengeEnabled) {
+            AuthenticationManager userAuthenticationManager;
+            try {
+                userAuthenticationManager = authenticationConfiguration.getAuthenticationManager();
+            } catch (Exception e) {
+                throw new IllegalStateException(
+                        "Failed to obtain the AuthenticationManager for the authorization challenge endpoint", e);
+            }
+            eulerOAuth2AuthorizationServerConfigurer.authorizationChallengeEndpoint(
+                    authorizationChallengeEndpoint -> authorizationChallengeEndpoint
+                            .userAuthenticationManager(userAuthenticationManager)
+                            .endpointUri(authorizationChallengeEndpointUri));
         }
 
         // The jwt-bearer grant keeps only the parts RFC 6749 and RFC 7523 say the same for
